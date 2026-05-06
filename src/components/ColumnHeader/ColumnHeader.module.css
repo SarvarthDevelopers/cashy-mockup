@@ -1,0 +1,113 @@
+.container {
+    display: flex;
+    flex-direction: column;
+    width: 100%;
+    /* Default spacing below header if needed */
+    gap: var(--space-050); /* 2px */
+    font-family: var(--family-sans);
+}
+
+.header {
+    display: flex;
+    align-items: center;
+    justify-content: space-between;
+    gap: var(--space-100); /* 4px */
+    width: 100%;
+}
+
+.titleWrapper {
+    flex: 1;
+    min-width: 0;
+    display: flex;
+    align-items: center;
+    gap: var(--space-200); /* 8px */
+}
+
+.title {
+    margin: 0;
+    font-size: var(--body-size-large); /* 14px */
+    /* Wait, Figma has Scale 04 for title, verify token. Overridden later */
+    font-size: var(--scale-04); /* 16px */
+    font-weight: var(--weight-medium);
+    color: var(--text-primary);
+    white-space: nowrap;
+    overflow: hidden;
+    text-overflow: ellipsis;
+    line-height: 1.4;
+}
+
+.actions {
+    display: flex;
+    align-items: center;
+    gap: var(--space-100); /* 4px */
+    flex-shrink: 0;
+}
+
+.badge {
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    width: 32px;
+    height: 32px;
+    background-color: var(--utility-gray-gray-100);
+    border-radius: var(--radius-200); /* 8px */
+    color: var(--utility-gray-gray-800);
+    font-size: var(--heading-size-small); /* 14px */
+    font-weight: var(--weight-medium);
+    line-height: 1.4;
+    padding: var(--space-100); /* 4px */
+    box-sizing: border-box;
+    text-align: center;
+}
+
+[data-theme="dark"] .badge {
+    color: var(--text-primary); /* Ensuring clear UI in dark mode */
+}
+
+@media (prefers-color-scheme: dark) {
+    .badge {
+        color: var(--text-primary);
+    }
+}
+
+
+.iconButton {
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    width: 32px;
+    height: 32px;
+    background-color: var(--background-primary);
+    border: 1px solid var(--border-primary);
+    border-radius: var(--radius-200); /* 8px */
+    color: var(--text-subtle);
+    cursor: pointer;
+    box-sizing: border-box;
+    transition: background-color 0.2s ease, border-color 0.2s ease, color 0.2s ease;
+    padding: 0;
+    outline: none;
+}
+
+.iconButton:hover {
+    background-color: var(--background-secondary-hover);
+    border-color: var(--border-primary-hover);
+    color: var(--text-primary);
+}
+
+.iconButton:focus-visible {
+    box-shadow: 0 0 0 2px var(--background-primary), 0 0 0 4px var(--purple-200);
+}
+
+[data-theme="dark"] .iconButton:focus-visible {
+    box-shadow: 0 0 0 2px var(--background-primary), 0 0 0 4px var(--purple-800);
+}
+
+@media (prefers-color-scheme: dark) {
+    .iconButton:focus-visible {
+        box-shadow: 0 0 0 2px var(--background-primary), 0 0 0 4px var(--purple-800);
+    }
+}
+
+.iconButton > svg {
+    flex-shrink: 0;
+}

@@ -1,0 +1,64 @@
+import { Meta, Canvas, Controls } from '@storybook/blocks';
+import * as ButtonStories from './Button.stories';
+
+<Meta of={ButtonStories} />
+
+# Button
+
+Buttons trigger actions or navigation. Use the controls below to explore different configurations.
+
+## Variants
+
+Buttons come in different visual styles based on their semantic meaning:
+
+### Primary
+The main call-to-action on a page.
+<Canvas of={ButtonStories.Primary} />
+
+### Secondary
+Alternative actions or less prominent steps.
+<Canvas of={ButtonStories.Secondary} />
+
+### Tertiary
+Low-emphasis actions, often in toolbars or lists.
+<Canvas of={ButtonStories.Tertiary} />
+
+### Danger
+Destructive actions. Use `danger-bold` for high emphasis (e.g., Delete Account) and `danger-subtle` for lower emphasis (e.g., Remove Item).
+<Canvas of={ButtonStories.DangerBold} />
+<Canvas of={ButtonStories.DangerSubtle} />
+
+## States
+
+### Loading
+<Canvas of={ButtonStories.Loading} />
+
+### Disabled
+<Canvas of={ButtonStories.Disabled} />
+
+## Icon Only
+
+Buttons can contain only an icon. **Always provide an `aria-label` for accessibility.**
+<Canvas of={ButtonStories.IconOnly} />
+
+## Usage
+
+```tsx
+import { Button } from './Button';
+
+// Basic button
+<Button variant="primary" onClick={() => console.log('Clicked')}>
+  Click Me
+</Button>
+
+// With icon
+<Button variant="secondary" iconLeft={<Icon />}>
+  Back
+</Button>
+
+// Icon only (requires aria-label)
+<Button variant="tertiary" iconLeft={<Icon />} aria-label="Settings" />
+```
+
+## Properties
+<Controls />

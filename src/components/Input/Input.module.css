@@ -1,0 +1,160 @@
+.container {
+    display: flex;
+    flex-direction: column;
+    gap: var(--space-100);
+    font-family: var(--family-sans);
+    width: 100%;
+}
+
+.label {
+    font-size: var(--body-size-medium);
+    /* 12px */
+    font-weight: var(--weight-medium);
+    color: var(--text-subtle);
+    line-height: 1.5;
+}
+
+.inputWrapper {
+    position: relative;
+    display: flex;
+    align-items: center;
+    background-color: var(--background-primary);
+    border: 1px solid var(--border-subtle);
+    border-radius: var(--radius-200);
+    transition: border-color 0.2s ease, box-shadow 0.2s ease;
+    overflow: hidden;
+    box-sizing: border-box;
+    min-height: 40px;
+    /* Enforce standard height */
+}
+
+.inputWrapper *,
+.inputWrapper *::before,
+.inputWrapper *::after {
+    box-sizing: border-box;
+}
+
+.inputWrapper:hover:not(.disabled):not(.error) {
+    border-color: var(--border-primary-hover);
+}
+
+.inputWrapper:focus-within:not(.error) {
+    border-color: var(--border-focused);
+    box-shadow: 0 0 0 2px var(--background-primary), 0 0 0 4px var(--purple-200);
+    /* Focus ring */
+}
+
+/* Dark mode focus ring */
+[data-theme="dark"] .inputWrapper:focus-within:not(.error) {
+    box-shadow: 0 0 0 2px var(--background-primary), 0 0 0 4px var(--purple-800);
+}
+
+@media (prefers-color-scheme: dark) {
+    .inputWrapper:focus-within:not(.error) {
+        box-shadow: 0 0 0 2px var(--background-primary), 0 0 0 4px var(--purple-800);
+    }
+}
+
+.inputWrapper.error {
+    border-color: var(--border-error);
+}
+
+.inputWrapper.disabled {
+    background-color: var(--background-disabled);
+    border-color: var(--border-disabled);
+    cursor: not-allowed;
+}
+
+.input {
+    flex: 1;
+    border: none;
+    background: transparent;
+    padding: var(--space-200) var(--space-400);
+    /* 8px 16px */
+    font-size: var(--body-size-large);
+    /* 14px */
+    color: var(--text-primary);
+    width: 100%;
+    outline: none;
+    height: 100%;
+}
+
+/* Reduce padding when icons are present */
+.leftIcon+.input {
+    padding-left: 0;
+}
+
+.input:has(+ .rightIcon) {
+    padding-right: 0;
+}
+
+.input::placeholder {
+    font-size: var(--body-size-medium);
+    color: var(--text-subtlest);
+}
+
+.input:disabled {
+    cursor: not-allowed;
+    color: var(--text-disabled);
+}
+
+.leftIcon {
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    padding-left: var(--space-300);
+    /* 12px */
+    padding-right: var(--space-100);
+    /* 4px */
+    color: var(--text-subtle);
+}
+
+.rightIcon {
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    padding-left: var(--space-100);
+    /* 4px */
+    padding-right: var(--space-300);
+    /* 12px */
+    color: var(--text-subtle);
+}
+
+/* Number input spinner styling - completely transparent background */
+.input[type="number"]::-webkit-inner-spin-button,
+.input[type="number"]::-webkit-outer-spin-button {
+    opacity: 1;
+    cursor: pointer;
+    background: transparent !important;
+    background-color: transparent !important;
+    background-image: none !important;
+    border: none !important;
+    box-shadow: none !important;
+}
+
+/* Use color-scheme to make arrows adapt to theme */
+.input[type="number"] {
+    color-scheme: light;
+}
+
+[data-theme="dark"] .input[type="number"] {
+    color-scheme: dark;
+}
+
+@media (prefers-color-scheme: dark) {
+    .input[type="number"] {
+        color-scheme: dark;
+    }
+}
+
+.helperText {
+    font-size: var(--body-size-medium);
+    color: var(--text-subtlest);
+    margin-top: var(--space-050);
+}
+
+.errorMessage {
+    font-size: var(--body-size-medium);
+    color: var(--text-error);
+    margin-top: var(--space-050);
+}

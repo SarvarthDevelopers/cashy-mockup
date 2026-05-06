@@ -1,0 +1,162 @@
+/* Radio.css */
+
+.radio-group {
+    display: flex;
+    gap: var(--space-400);
+}
+
+.radio-group--vertical {
+    flex-direction: column;
+    gap: var(--space-200);
+}
+
+.radio-group--horizontal {
+    flex-direction: row;
+    flex-wrap: wrap;
+}
+
+/* Individual Radio */
+.radio {
+    display: inline-flex;
+    align-items: flex-start;
+    gap: var(--space-200);
+    cursor: pointer;
+    position: relative;
+    user-select: none;
+    font-family: var(--body-font-family, sans-serif);
+}
+
+.radio--disabled {
+    cursor: not-allowed;
+    opacity: 0.6;
+}
+
+/* Control Container */
+.radio__control-container {
+    position: relative;
+    display: inline-flex;
+    align-items: center;
+    flex-shrink: 0;
+}
+
+/* Hidden Input */
+.radio__input {
+    position: absolute;
+    width: 1px;
+    height: 1px;
+    padding: 0;
+    margin: -1px;
+    overflow: hidden;
+    clip: rect(0, 0, 0, 0);
+    border: 0;
+}
+
+/* Visible Control (Circle) */
+.radio__control {
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    border: 1px solid var(--border-subtle);
+    border-radius: 50%;
+    background-color: var(--background-primary);
+    transition: all 0.2s ease-in-out;
+}
+
+/* Inner Indicator (Dot) */
+.radio__indicator {
+    display: block;
+    border-radius: 50%;
+    background-color: var(--background-brand-solid);
+    transform: scale(0);
+    transition: transform 0.2s cubic-bezier(0.4, 0.0, 0.2, 1);
+}
+
+/* --- Sizes --- */
+
+/* Small */
+.radio--size-small .radio__control {
+    width: 16px;
+    height: 16px;
+}
+
+.radio--size-small .radio__indicator {
+    width: 8px;
+    height: 8px;
+}
+
+.radio--size-small .radio__content {
+    font-size: var(--scale-02);
+    line-height: 16px;
+}
+
+/* Medium (Default) */
+.radio--size-medium .radio__control {
+    width: 20px;
+    height: 20px;
+}
+
+.radio--size-medium .radio__indicator {
+    width: 10px;
+    height: 10px;
+}
+
+.radio--size-medium .radio__content {
+    font-size: var(--scale-03);
+    line-height: 20px;
+}
+
+/* Large */
+.radio--size-large .radio__control {
+    width: 24px;
+    height: 24px;
+}
+
+.radio--size-large .radio__indicator {
+    width: 12px;
+    height: 12px;
+}
+
+.radio--size-large .radio__content {
+    font-size: var(--scale-04);
+    line-height: 24px;
+}
+
+/* --- States --- */
+
+/* Checked */
+.radio__input:checked+.radio__control {
+    border-color: var(--border-brand);
+}
+
+.radio__input:checked+.radio__control .radio__indicator {
+    transform: scale(1);
+}
+
+/* Hover */
+.radio:not(.radio--disabled):hover .radio__control {
+    border-color: var(--border-brand-hover);
+    background-color: var(--background-secondary-hover);
+}
+
+/* Focus */
+.radio__input:focus-visible+.radio__control {
+    outline: 2px solid var(--border-focused);
+    outline-offset: 2px;
+}
+
+/* --- Label & Content --- */
+.radio__content {
+    display: flex;
+    flex-direction: column;
+}
+
+.radio__label-text {
+    font-weight: var(--weight-medium);
+    color: var(--text-primary);
+}
+
+.radio__description {
+    font-size: 0.85em;
+    color: var(--text-subtle);
+    margin-top: 2px;
+}

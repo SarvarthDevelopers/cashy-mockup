@@ -1,0 +1,155 @@
+.cashy-header {
+  /* Using exact tokens from Figma export */
+  background-color: var(--gray-950, #131518);
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  padding: 0 var(--space-600, 24px);
+  position: relative;
+  width: 100%;
+  height: 60px;
+  gap: var(--space-800, 32px);
+  box-sizing: border-box;
+}
+
+/* Left Group containing Logo & Nav Items */
+.cashy-header-left {
+  display: flex;
+  gap: var(--space-1200, 48px);
+  align-items: center;
+  flex-shrink: 0;
+}
+
+/* Logo wrapper */
+.cashy-header-logo {
+  height: 26px;
+  width: 87px;
+  overflow: clip;
+  position: relative;
+  flex-shrink: 0;
+  display: flex;
+  align-items: center;
+}
+
+/* Navigation Menu */
+.cashy-header-nav {
+  display: flex;
+  gap: var(--space-800, 32px);
+  align-items: center;
+  flex-shrink: 0;
+}
+
+.cashy-header-nav-item {
+  color: var(--text-primary, #fbfcfc);
+  font-family: var(--body-font-family, 'Inter', sans-serif);
+  font-weight: var(--body-font-weight-regular, 400);
+  font-size: var(--scale-04, 16px);
+  line-height: 1.4;
+  white-space: nowrap;
+  flex-shrink: 0;
+  cursor: pointer;
+  background: none;
+  border: none;
+  padding: 0;
+  margin: 0;
+  text-decoration: none;
+}
+
+.cashy-header-nav-item:hover {
+  opacity: 0.8; /* Simple generic hover state if none designed yet */
+}
+
+/* Right Group containing Buttons */
+.cashy-header-right {
+  display: flex;
+  align-items: center;
+  justify-content: flex-end;
+  gap: var(--space-300, 12px);
+  flex-shrink: 0;
+}
+
+.cashy-header-buttons-group {
+  display: flex;
+  align-items: center;
+  justify-content: flex-end;
+  gap: 10px; /* From Figma: gap-[10px] */
+  flex-shrink: 0;
+}
+
+/* Primary Action Button (e.g. "Create a Deal") 
+   Note: Usually this might use a standalone <Button> component, but as you requested 
+   standalone foundational representation, we build the custom structure here. */
+.cashy-header-primary-btn {
+  background-color: var(--background-brand-solid, #4649e5);
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  gap: var(--space-200, 8px);
+  height: 40px;
+  padding: var(--space-300, 12px);
+  border-radius: var(--radius-200, 8px);
+  border: none;
+  flex-shrink: 0;
+  cursor: pointer;
+  color: var(--text-white, white);
+  font-family: var(--body-font-family, 'Inter', sans-serif);
+  font-weight: var(--body-font-weight-strong, 600);
+  font-size: var(--scale-03, 14px);
+  line-height: 1.4;
+  white-space: nowrap;
+}
+
+.cashy-header-primary-btn:hover {
+  background-color: var(--background-brand-solid-hover, #383BCA); /* Example fallback assuming a darker shade */
+}
+
+/* Icon Action Buttons */
+.cashy-header-icon-btn-group {
+  display: flex;
+  align-items: center;
+  justify-content: flex-end;
+  gap: 10px;
+  flex-shrink: 0;
+}
+
+.cashy-header-icon-btn {
+  background-color: var(--gray-950, #131518);
+  border: 1px solid var(--border-primary, #4c5564);
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  gap: var(--space-200, 8px);
+  /* Make sure internal size is exactly 44x44 or handles padding correctly */
+  min-height: 44px;
+  min-width: 44px;
+  padding: var(--space-300, 12px);
+  border-radius: var(--radius-200, 8px);
+  flex-shrink: 0;
+  cursor: pointer;
+  box-sizing: border-box;
+}
+
+.cashy-header-icon-btn:hover {
+  border-color: var(--gray-600, #576272);
+  background-color: var(--gray-900, #131518);
+}
+
+.cashy-header-icon-wrapper {
+  width: 20px;
+  height: 20px;
+  overflow: clip;
+  position: relative;
+  flex-shrink: 0;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+}
+
+.cashy-header-icon-wrapper svg,
+.cashy-header-icon-wrapper img,
+.cashy-header-icon-btn svg {
+  width: 100%;
+  height: 100%;
+  display: block;
+  color: var(--text-white, white);
+}

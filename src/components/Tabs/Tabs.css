@@ -1,0 +1,265 @@
+/* Tabs.css */
+
+.tabs {
+    display: flex;
+    position: relative;
+    gap: var(--space-200);
+    /* Removed overflow-x: auto which caused clipping of active state margins/box-shadows */
+}
+
+.tabs--full-width {
+    display: flex;
+    width: 100%;
+}
+
+.tabs--full-width .tab {
+    flex: 1;
+}
+
+/* Base Tab Styles */
+.tab {
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    gap: var(--space-200);
+    flex-shrink: 0;
+    padding: var(--space-200) var(--space-300);
+    font-family: var(--body-font-family);
+    font-size: var(--scale-03);
+    /* Heading/Size Small (14px) */
+    font-weight: var(--weight-medium);
+    color: var(--text-subtle);
+    background: transparent;
+    border: none;
+    cursor: pointer;
+    position: relative;
+    transition: all 0.2s ease-in-out;
+    border-radius: var(--radius-200);
+    outline: none;
+    -webkit-tap-highlight-color: transparent;
+    /* Remove mobile tap highlight */
+}
+
+/* Only show focus ring when navigating with keyboard */
+.tab:focus {
+    outline: none;
+}
+
+.tab:focus-visible {
+    outline: 2px solid var(--border-focused);
+    outline-offset: 2px;
+    z-index: 1;
+    /* Ensure outline sits above siblings */
+}
+
+.tab:disabled {
+    cursor: not-allowed;
+    color: var(--text-disabled);
+    opacity: 0.5;
+}
+
+.tab:hover:not(:disabled):not(.tab--selected) {
+    color: var(--text-primary);
+    background-color: var(--background-hover);
+}
+
+/* Base tab contents (for subtitles) */
+.tab__content {
+    display: flex;
+    flex-direction: column;
+    align-items: center;
+    gap: 0;
+}
+
+.tab__label {
+    line-height: normal;
+}
+
+.tab__subtitle {
+    font-size: var(--scale-02, 12px);
+    font-weight: var(--weight-regular, 400);
+    color: var(--text-subtlest);
+    line-height: normal;
+    margin-top: 0;
+}
+
+/* Variant: Underline (Type A) */
+.tabs--underline {
+    border-bottom: 1px solid var(--border-primary);
+    gap: 0;
+    border-radius: 0;
+}
+
+.tabs--underline .tab {
+    border-radius: 0;
+    background: transparent !important;
+    border-bottom: 2px solid transparent;
+    /* Reserve space for active state to overlap container border */
+    margin-bottom: -1px;
+    padding-bottom: var(--space-200);
+}
+
+.tabs--underline .tab:hover:not(:disabled) {
+    color: var(--text-primary);
+    border-bottom-color: var(--border-primary);
+}
+
+.tabs--underline .tab--selected {
+    color: var(--text-brand, #17142b);
+    font-weight: var(--weight-medium);
+    border-bottom-color: var(--border-brand, #17142b);
+}
+
+.tabs--underline .tab--selected .tab__label,
+.tabs--underline .tab--selected .tab__subtitle {
+    color: var(--text-brand, #17142b);
+}
+
+/* Variant: Pill (Type B) */
+.tabs--pill {
+    padding: 4px;
+    margin: -4px;
+}
+
+.tabs--pill .tab--selected {
+    background-color: var(--background-primary);
+    color: var(--text-primary);
+    box-shadow: 0px 1px 3px 0px rgba(16, 24, 40, 0.1), 0px 1px 2px 0px rgba(16, 24, 40, 0.06);
+    /* Shadow/sm */
+}
+
+/* Variant: Ghost (Type C) */
+.tabs--ghost .tab--selected {
+    background-color: var(--background-brand-subtlest);
+    color: var(--text-brand);
+}
+
+/* Variant: Segment (Type D) */
+.tabs--segment {
+    background-color: var(--background-secondary, #fbfcfc);
+    border: 1px solid var(--border-subtle, #d7dbe0);
+    padding: var(--space-100, 4px);
+    border-radius: var(--radius-200, 8px);
+    gap: 0;
+}
+
+.tabs--segment .tab {
+    padding: var(--space-150, 6px) var(--space-300, 12px);
+    border-radius: var(--radius-100, 4px);
+    font-size: var(--scale-03, 14px);
+    font-weight: var(--weight-medium, 500);
+    transition: background-color 0.2s, box-shadow 0.2s;
+}
+
+.tabs--segment .tab:hover:not(:disabled):not(.tab--selected) {
+    background-color: transparent; /* No strong hover bg that conflicts with the wrapper */
+    color: var(--text-primary);
+}
+
+.tabs--segment .tab--selected {
+    background-color: var(--background-primary, #ffffff);
+    color: var(--text-primary);
+    box-shadow: 0px 1px 3px 0px rgba(16, 24, 40, 0.1), 0px 1px 2px 0px rgba(16, 24, 40, 0.06);
+}
+
+/* Variant: Underline Thick (Type E) */
+.tabs--underline-thick {
+    gap: var(--space-800, 32px);
+    border-radius: 0;
+}
+
+.tabs--underline-thick .tab {
+    border-radius: 0;
+    background: transparent !important;
+    border-bottom: 2px solid transparent;
+    padding: 0 0 var(--space-200, 8px) 0;
+    min-width: 100px;
+    align-items: flex-start;
+    justify-content: flex-start;
+    color: var(--text-disabled);
+}
+
+.tabs--underline-thick .tab__content {
+    align-items: flex-start;
+    text-align: left;
+    gap: var(--space-100, 4px);
+}
+
+.tabs--underline-thick .tab__label {
+    font-size: var(--heading-size-small, 14px);
+    font-weight: var(--weight-medium, 500);
+    color: inherit;
+}
+
+.tabs--underline-thick .tab__subtitle {
+    font-size: var(--scale-02, 12px);
+    color: inherit;
+}
+
+.tabs--underline-thick .tab:hover:not(:disabled) {
+    color: var(--text-subtle);
+}
+
+.tabs--underline-thick .tab--selected {
+    color: var(--text-primary);
+    border-bottom-color: var(--border-brand, #17142b);
+}
+
+.tabs--underline-thick .tab--selected .tab__label {
+    color: var(--text-primary);
+}
+
+.tabs--underline-thick .tab--selected .tab__subtitle {
+    color: var(--text-subtle);
+}
+
+
+/* Variant: Stepper (Type F) */
+.tabs--stepper {
+    gap: var(--space-100, 4px);
+    align-items: center;
+}
+
+.tab__stepper-separator {
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    width: 14px;
+    height: 14px;
+    flex-shrink: 0;
+}
+
+.tabs--stepper .tab {
+    padding: var(--space-150, 6px) var(--space-300, 12px);
+    border: 1px solid var(--border-primary, #b4bbc5);
+    border-radius: var(--radius-200, 8px);
+    font-size: var(--scale-02, 12px);
+    font-weight: var(--weight-medium, 500);
+    height: 32px;
+}
+
+.tabs--stepper .tab:hover:not(:disabled):not(.tab--stepper-active) {
+    background-color: var(--background-hover);
+    color: var(--text-primary);
+}
+
+.tabs--stepper .tab--stepper-active {
+    background-color: var(--background-brand-solid, #17142b) !important;
+    color: var(--text-white, #ffffff) !important;
+    border-color: var(--border-primary, #b4bbc5);
+}
+
+.tabs--stepper .tab--stepper-completed {
+    background-color: var(--background-secondary, #fbfcfc) !important;
+    color: var(--text-primary, #131518) !important;
+    border-color: var(--border-primary, #b4bbc5);
+}
+
+.tabs--stepper .tab--stepper-pending {
+    background-color: var(--background-primary, #ffffff) !important;
+    color: var(--text-subtlest, #6c798b) !important;
+    border-color: var(--border-primary, #b4bbc5);
+}
+
+/* Dark Mode Overrides (inferred from variables.css structure if needed, but variables usually handle this) */
+/* The variables used above should auto-adapt based on [data-theme="dark"] root class */

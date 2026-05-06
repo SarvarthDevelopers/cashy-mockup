@@ -1,0 +1,467 @@
+/* ─── FieldItem Base ───────────────────────────────────────────────────────── */
+
+.fi-card {
+  background-color: var(--background-primary);
+  border: 1px solid var(--border-subtle);
+  border-radius: var(--radius-200);
+  transition: all 0.2s ease;
+  overflow: hidden;
+  position: relative;
+  user-select: none;
+  width: 100%;
+  box-sizing: border-box;
+}
+
+/* ── Hover & Selection States ── */
+
+.fi-card:hover {
+  border-color: var(--border-primary-hover);
+  box-shadow: 0 4px 12px rgba(0, 0, 0, 0.05);
+}
+
+.fi-card--selected {
+  border-color: var(--border-focused);
+  box-shadow: 0 0 0 1px var(--border-focused), 0 4px 20px rgba(0, 0, 0, 0.08);
+}
+
+.fi-card--dragging {
+  opacity: 0.5;
+  border-style: dashed;
+  cursor: grabbing;
+}
+
+[data-theme="dark"] .fi-card:hover {
+  box-shadow: 0 4px 12px rgba(0, 0, 0, 0.3);
+}
+
+/* ─── Header ─────────────────────────────────────────────────────────────── */
+
+.fi-header {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  padding: var(--space-300) var(--space-500, 20px);
+  min-height: 64px;
+  cursor: pointer;
+}
+
+.fi-header__left {
+  display: flex;
+  align-items: center;
+  gap: var(--space-400);
+  flex: 1;
+}
+
+/* ── Drag Handle ── */
+.fi-drag-handle {
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  padding: var(--space-200);
+  cursor: grab;
+  color: var(--text-subtle);
+  transition: color 0.2s ease;
+}
+
+.fi-drag-handle:hover {
+  color: var(--text-primary);
+}
+
+/* ── Type Badge ── */
+.fi-type-badge {
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  width: 40px;
+  height: 40px;
+  background: var(--background-tertiary);
+  border-radius: var(--radius-200);
+  color: var(--text-primary);
+  flex-shrink: 0;
+  transition: background 0.2s ease;
+}
+
+.fi-card:hover .fi-type-badge {
+  background: var(--background-tertiary-hover);
+}
+
+.fi-type-badge svg {
+  width: 20px;
+  height: 20px;
+}
+
+.fi-type-badge__char {
+  font-size: var(--scale-03);
+  font-weight: var(--weight-semi-bold);
+}
+
+/* ── Info ── */
+.fi-info {
+  display: flex;
+  flex-direction: column;
+  gap: 2px;
+}
+
+.fi-info__title {
+  font-size: var(--scale-04);
+  font-weight: var(--body-font-weight-strong);
+  color: var(--text-primary);
+  line-height: 1.4;
+}
+
+.fi-info__subtitle {
+  font-size: var(--body-size-small);
+  color: var(--text-subtle);
+}
+
+/* ─── Header Actions ─────────────────────────────────────────────────────── */
+
+.fi-header__actions {
+  display: flex;
+  align-items: center;
+  gap: var(--space-400);
+}
+
+.fi-required-wrap {
+  display: flex;
+  align-items: center;
+  gap: var(--space-300);
+  padding: 0 var(--space-300);
+  border-right: 1px solid var(--border-subtle);
+}
+
+.fi-required-text {
+  font-size: var(--body-size-small);
+  color: var(--text-subtle);
+}
+
+.fi-header-btn-icon {
+  background: transparent;
+  border: none;
+  padding: var(--space-200);
+  border-radius: var(--radius-100);
+  color: var(--text-subtle);
+  cursor: pointer;
+  transition: all 0.2s ease;
+}
+
+.fi-header-btn-icon svg {
+  display: block;
+  width: 20px;
+  height: 20px;
+}
+
+.fi-header-btn-icon:hover {
+  background: var(--background-error-subtle);
+  color: var(--text-error);
+}
+
+.fi-collapse-text-btn {
+  background: transparent;
+  border: none;
+  color: var(--text-brand);
+  font-weight: var(--weight-medium);
+  font-size: var(--body-size-medium);
+  cursor: pointer;
+  padding: var(--space-200);
+}
+
+/* ─── Body (Expanded) ─────────────────────────────────────────────────────── */
+
+.fi-body {
+  border-top: 1px solid var(--border-subtle);
+  background: var(--background-secondary);
+}
+
+.fi-body__inner,
+.fi-body-content {
+  display: flex;
+  flex-direction: column;
+  gap: var(--space-400);
+}
+
+.fi-body__inner {
+  padding: var(--space-400) var(--space-500, 20px);
+}
+
+/* ── Section UI ── */
+.fi-section {
+  display: flex;
+  flex-direction: column;
+  gap: var(--space-400);
+}
+
+.fi-section__title {
+  font-size: var(--body-size-small);
+  text-transform: uppercase;
+  letter-spacing: 0.05em;
+  font-weight: var(--weight-bold);
+  color: var(--text-subtlest);
+}
+
+.fi-section__fields {
+  display: flex;
+  flex-direction: column;
+  gap: var(--space-400);
+}
+
+.fi-section__fields--cols2 {
+  display: grid;
+  grid-template-columns: 1fr 1fr;
+  gap: var(--space-400);
+}
+
+/* ── Input Styling (Matching Project Input) ── */
+.fi-field-group {
+  display: flex;
+  flex-direction: column;
+  gap: var(--space-100);
+}
+
+.fi-label {
+  font-size: var(--body-size-medium);
+  font-weight: var(--body-font-weight-medium);
+  color: var(--text-subtle);
+}
+
+.fi-input {
+  background-color: var(--background-primary);
+  border: 1px solid var(--border-subtle);
+  border-radius: var(--radius-200);
+  padding: var(--space-100) var(--space-300);
+  font-size: var(--body-size-large);
+  color: var(--text-primary);
+  outline: none;
+  transition: border-color 0.2s ease, box-shadow 0.2s ease;
+  min-height: 32px;
+}
+
+.fi-input:hover {
+  border-color: var(--border-primary-hover);
+}
+
+.fi-input:focus {
+  border-color: var(--border-focused);
+  box-shadow: 0 0 0 2px var(--background-primary), 0 0 0 4px var(--purple-200);
+}
+
+[data-theme="dark"] .fi-input:focus {
+  box-shadow: 0 0 0 2px var(--background-primary), 0 0 0 4px var(--purple-800);
+}
+
+/* ─── Toggles & Buttons ───────────────────────────────────────────────────── */
+
+.fi-pill-toggle {
+  width: 36px;
+  height: 20px;
+  background: var(--gray-300);
+  border: none;
+  border-radius: 10px;
+  position: relative;
+  cursor: pointer;
+  transition: background 0.2s ease;
+  padding: 0;
+}
+
+.fi-pill-toggle--on {
+  background: var(--lilac-500); /* Semantic brand color */
+}
+
+.fi-pill-toggle__handle {
+  width: 14px;
+  height: 14px;
+  background: white;
+  border-radius: 50%;
+  position: absolute;
+  top: 3px;
+  left: 3px;
+  transition: transform 0.2s ease;
+  box-shadow: 0 1px 3px rgba(0,0,0,0.1);
+}
+
+.fi-pill-toggle--on .fi-pill-toggle__handle {
+  transform: translateX(16px);
+}
+
+/* ─── Footer ─────────────────────────────────────────────────────────────── */
+
+.fi-footer {
+  margin-top: var(--space-100);
+  padding-top: var(--space-400);
+  border-top: 1px solid var(--border-subtle);
+  display: flex;
+  justify-content: flex-start;
+}
+
+.fi-required-footer {
+  display: flex;
+  align-items: center;
+  gap: var(--space-300);
+  background: transparent;
+  border: none;
+  padding: 0;
+  cursor: pointer;
+}
+
+/* ── Options Stack ── */
+.fi-options-stack {
+  display: flex;
+  flex-direction: column;
+  gap: var(--space-200);
+}
+
+.fi-option-row {
+  display: flex;
+  gap: var(--space-200);
+  align-items: center;
+}
+
+.fi-option-row .fi-input {
+  flex: 1;
+}
+
+.fi-option-row__remove {
+  background: transparent;
+  border: none;
+  color: var(--text-subtlest);
+  cursor: pointer;
+  padding: var(--space-100);
+}
+
+.fi-option-row__remove:hover {
+  color: var(--text-error);
+}
+
+.fi-option-add {
+  display: flex;
+  gap: var(--space-200);
+  margin-top: var(--space-200);
+}
+
+.fi-btn-add-primary {
+  background: var(--lilac-600);
+  color: white;
+  border: none;
+  border-radius: var(--radius-200);
+  padding: 0 var(--space-600);
+  font-size: var(--body-size-medium);
+  font-weight: var(--weight-medium);
+  cursor: pointer;
+  transition: background 0.2s ease;
+}
+
+.fi-btn-add-primary:hover {
+  background: var(--lilac-700);
+}
+
+/* ─── Dual View Layout (Storybook Only) ─────────────────────────────────── */
+
+.fi-dual-view {
+  display: flex;
+  flex-direction: column;
+  gap: var(--space-800);
+}
+
+.fi-preview-section {
+  display: flex;
+  flex-direction: column;
+  gap: var(--space-400);
+}
+
+.fi-section-header {
+  display: flex;
+  align-items: center;
+  gap: var(--space-200);
+  margin-bottom: var(--space-200);
+}
+
+.fi-section-badge {
+  font-size: var(--body-size-small);
+  font-weight: var(--weight-bold);
+  padding: var(--space-050) var(--space-200);
+  border-radius: var(--radius-full);
+  text-transform: uppercase;
+  letter-spacing: 0.05em;
+}
+
+.fi-section-badge--builder {
+  background: var(--background-tertiary);
+  color: var(--text-subtle);
+}
+
+.fi-section-badge--preview {
+  background: var(--lilac-50);
+  color: var(--lilac-600);
+}
+
+[data-theme="dark"] .fi-section-badge--preview {
+  background: var(--lilac-900);
+  color: var(--lilac-200);
+}
+
+.fi-divider {
+  display: flex;
+  align-items: center;
+  gap: var(--space-400);
+  margin: var(--space-200) 0;
+}
+
+.fi-divider__line {
+  flex: 1;
+  height: 1px;
+  background: var(--border-subtlest);
+}
+
+.fi-divider__text {
+  font-size: 10px;
+  font-weight: var(--weight-bold);
+  color: var(--text-subtlest);
+  text-transform: uppercase;
+}
+
+/* ─── Deal Wizard (Front-End) Fields ─────────────────────────────────────── */
+
+.dw-field {
+  display: flex;
+  flex-direction: column;
+  gap: var(--space-200);
+  max-width: 100%;
+}
+
+.dw-label {
+  font-size: var(--body-size-large);
+  font-weight: var(--body-font-weight-medium);
+  color: var(--text-primary);
+  display: flex;
+  align-items: center;
+  gap: var(--space-100);
+}
+
+.dw-required-star {
+  color: var(--text-error);
+}
+
+.dw-options-grid {
+  display: grid;
+  grid-template-columns: repeat(auto-fill, minmax(200px, 1fr));
+  gap: var(--space-300);
+}
+
+.dw-upload-zone {
+  border: 2px dashed var(--border-primary);
+  border-radius: var(--radius-400);
+  padding: var(--space-800);
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  justify-content: center;
+  gap: var(--space-400);
+  background: var(--background-secondary);
+  cursor: pointer;
+  transition: all 0.2s ease;
+}
+
+.dw-upload-zone:hover {
+  border-color: var(--border-brand);
+  background: var(--background-brand-subtlest);
+}

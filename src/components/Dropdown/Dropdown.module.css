@@ -1,0 +1,178 @@
+.container {
+    display: flex;
+    flex-direction: column;
+    gap: var(--space-100); /* 4px */
+    font-family: var(--body-font-family);
+    width: 100%;
+    position: relative;
+}
+
+.label {
+    font-size: var(--body-size-medium);
+    font-weight: var(--weight-medium);
+    color: var(--text-subtle);
+    line-height: 1.5;
+}
+
+.trigger {
+    position: relative;
+    display: flex;
+    align-items: center;
+    justify-content: space-between;
+    gap: var(--space-400); /* Adds distance between text and chevron */
+    background-color: var(--background-primary);
+    border: 1px solid var(--border-primary);
+    border-radius: var(--radius-200); /* 8px */
+    padding: var(--space-200) var(--space-300); /* 8px 12px */
+    min-height: 40px;
+    cursor: pointer;
+    box-sizing: border-box;
+    transition: border-color 0.2s ease, box-shadow 0.2s ease;
+    width: 100%;
+    outline: none;
+    text-align: left;
+}
+
+.trigger:hover:not(.disabled):not(.error) {
+    border-color: var(--border-primary-hover);
+}
+
+.trigger.isOpen:not(.error) {
+    border-color: var(--border-focused);
+    box-shadow: 0 0 0 2px var(--background-primary), 0 0 0 4px var(--purple-200);
+}
+
+[data-theme="dark"] .trigger.isOpen:not(.error) {
+    box-shadow: 0 0 0 2px var(--background-primary), 0 0 0 4px var(--purple-800);
+}
+
+@media (prefers-color-scheme: dark) {
+    .trigger.isOpen:not(.error) {
+        box-shadow: 0 0 0 2px var(--background-primary), 0 0 0 4px var(--purple-800);
+    }
+}
+
+.trigger.error {
+    border-color: var(--border-error);
+}
+
+.trigger.disabled {
+    background-color: var(--background-disabled-subtle);
+    border-color: var(--border-disabled-subtle);
+    cursor: not-allowed;
+}
+
+.content {
+    display: flex;
+    gap: var(--space-200); /* 8px */
+    align-items: center;
+    flex: 1;
+    overflow: hidden;
+}
+
+.value {
+    font-size: var(--scale-04); /* 16px */
+    font-weight: var(--body-font-weight-regular);
+    color: var(--text-primary);
+    white-space: nowrap;
+    overflow: hidden;
+    text-overflow: ellipsis;
+    line-height: 1.4;
+}
+
+.placeholder {
+    color: var(--text-subtlest);
+}
+
+.trigger.disabled .value,
+.trigger.disabled .placeholder {
+    color: var(--text-disabled);
+}
+
+.icon {
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    color: var(--text-subtle);
+    width: 20px;
+    height: 20px;
+    flex-shrink: 0;
+}
+
+/* Dropdown List Wrapper */
+.dropdownList {
+    position: absolute;
+    top: calc(100% + var(--space-100));
+    left: 0;
+    width: 100%;
+    max-height: 250px;
+    overflow-y: auto;
+    background-color: var(--background-primary);
+    border-radius: var(--radius-200);
+    padding: var(--space-150); /* 6px */
+    box-shadow: 0px 4px 8px 0px rgba(16,24,40,0.1), 0px 2px 4px 0px rgba(16,24,40,0.06);
+    z-index: 10;
+    display: flex;
+    flex-direction: column;
+    box-sizing: border-box;
+    /* Reset ul defaults */
+    list-style: none;
+    margin: 0;
+}
+
+[data-theme="dark"] .dropdownList {
+    box-shadow: 0px 4px 8px 0px rgba(0,0,0,0.4), 0px 2px 4px 0px rgba(0,0,0,0.2);
+    border: 1px solid var(--border-primary);
+}
+
+.item {
+    display: flex;
+    align-items: center;
+    min-height: 46px;
+    padding: var(--space-200) var(--space-300); /* 8px 12px */
+    background-color: var(--background-primary);
+    border-radius: var(--radius-100); /* 4px */
+    cursor: pointer;
+    font-family: inherit;
+    font-size: var(--scale-04); /* 16px */
+    font-weight: var(--body-font-weight-regular);
+    color: var(--text-primary);
+    line-height: 1.4;
+    transition: background-color 0.2s ease;
+    box-sizing: border-box;
+    width: 100%;
+    list-style: none;
+    text-align: left;
+    flex-shrink: 0;
+    /* Reset list-item default margin/padding */
+    margin: 0;
+    outline: none;
+}
+
+.item:hover {
+    background-color: var(--background-secondary-hover);
+}
+
+/* Keyboard-focus highlight (driven by focusedIndex in JS) */
+.item.focused {
+    background-color: var(--background-secondary-hover);
+}
+
+.item.selected {
+    background-color: var(--background-secondary-hover);
+}
+
+
+
+/* Helper & Error Texts */
+.helperText {
+    font-size: var(--body-size-medium);
+    color: var(--text-subtlest);
+    margin-top: var(--space-050);
+}
+
+.errorMessage {
+    font-size: var(--body-size-medium);
+    color: var(--text-error);
+    margin-top: var(--space-050);
+}

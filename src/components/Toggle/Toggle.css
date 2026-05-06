@@ -1,0 +1,180 @@
+/* Toggle.css */
+
+.toggle {
+    display: inline-flex;
+    align-items: flex-start;
+    /* Align to top to handle multi-line labels */
+    gap: var(--space-200);
+    cursor: pointer;
+    position: relative;
+    user-select: none;
+    font-family: var(--body-font-family, sans-serif);
+}
+
+.toggle--disabled {
+    cursor: not-allowed;
+    opacity: 0.6;
+}
+
+/* Control Container (Track + Handle) */
+.toggle__control {
+    position: relative;
+    display: inline-flex;
+    align-items: center;
+    flex-shrink: 0;
+}
+
+/* Input (Hidden but accessible) */
+.toggle__input {
+    position: absolute;
+    width: 1px;
+    height: 1px;
+    padding: 0;
+    margin: -1px;
+    overflow: hidden;
+    clip: rect(0, 0, 0, 0);
+    border: 0;
+}
+
+/* Track */
+.toggle__track {
+    display: block;
+    width: 100%;
+    height: 100%;
+    background-color: var(--background-tertiary);
+    /* Inactive state per variables.css */
+    border-radius: var(--radius-full);
+    transition: background-color 0.2s ease-in-out;
+    position: relative;
+}
+
+/* Handle */
+.toggle__handle {
+    display: block;
+    background-color: var(--element-white);
+    border-radius: 50%;
+    position: absolute;
+    top: 2px;
+    left: 2px;
+    transition: transform 0.2s cubic-bezier(0.4, 0.0, 0.2, 1);
+    box-shadow: 0 1px 2px rgba(0, 0, 0, 0.1);
+}
+
+/* --- Sizes --- */
+
+/* Small */
+.toggle--size-small .toggle__control {
+    width: 28px;
+    height: 16px;
+}
+
+.toggle--size-small .toggle__track {
+    border-radius: var(--radius-full);
+}
+
+.toggle--size-small .toggle__handle {
+    width: 12px;
+    height: 12px;
+}
+
+.toggle--size-small .toggle__content {
+    font-size: var(--scale-02);
+    line-height: 16px;
+    /* Align with toggle height */
+}
+
+/* Medium (Default) */
+.toggle--size-medium .toggle__control {
+    width: 44px;
+    height: 24px;
+}
+
+.toggle--size-medium .toggle__track {
+    border-radius: var(--radius-full);
+}
+
+.toggle--size-medium .toggle__handle {
+    width: 20px;
+    height: 20px;
+}
+
+.toggle--size-medium .toggle__content {
+    font-size: var(--scale-03);
+    line-height: 24px;
+}
+
+/* Large */
+.toggle--size-large .toggle__control {
+    width: 56px;
+    height: 32px;
+}
+
+.toggle--size-large .toggle__track {
+    border-radius: var(--radius-full);
+}
+
+.toggle--size-large .toggle__handle {
+    width: 28px;
+    height: 28px;
+}
+
+.toggle--size-large .toggle__content {
+    font-size: var(--scale-04);
+    line-height: 32px;
+}
+
+/* --- States --- */
+
+/* Checked */
+.toggle__input:checked+.toggle__track {
+    background-color: var(--background-brand-solid);
+    /* Active state */
+}
+
+/* Handle Movement */
+.toggle--size-small .toggle__input:checked+.toggle__track .toggle__handle {
+    transform: translateX(12px);
+}
+
+.toggle--size-medium .toggle__input:checked+.toggle__track .toggle__handle {
+    transform: translateX(20px);
+}
+
+.toggle--size-large .toggle__input:checked+.toggle__track .toggle__handle {
+    transform: translateX(24px);
+}
+
+/* Hover */
+.toggle:not(.toggle--disabled):hover .toggle__track {
+    background-color: var(--background-tertiary-hover);
+}
+
+.toggle:not(.toggle--disabled) .toggle__input:checked:hover+.toggle__track {
+    background-color: var(--background-brand-solid-hover);
+}
+
+/* Focus */
+.toggle__input:focus-visible+.toggle__track {
+    outline: 2px solid var(--border-focused);
+    outline-offset: 2px;
+}
+
+/* --- Label & Content --- */
+.toggle__content {
+    display: flex;
+    flex-direction: column;
+    justify-content: center;
+}
+
+.toggle__label-text {
+    font-weight: var(--weight-medium);
+    color: var(--text-primary);
+}
+
+.toggle__description {
+    font-size: 0.85em;
+    color: var(--text-subtle);
+    margin-top: 2px;
+}
+
+/* Label Position Adjustments */

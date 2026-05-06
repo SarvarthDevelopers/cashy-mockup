@@ -1,0 +1,604 @@
+@import "../../tokens/variables.css";
+
+/* ========================================
+   TaskCardLarge — Display Card
+   ======================================== */
+
+.task-card {
+  background-color: var(--element-white);
+  border: 1px solid var(--border-primary);
+  border-radius: var(--radius-200);
+  display: flex;
+  flex-direction: column;
+  gap: var(--space-200, 8px);
+  align-items: flex-start;
+  min-height: 96px;
+  min-width: 264px;
+  max-width: 264px;
+  width: 264px;
+  padding: 12px 12px 16px 12px;
+  position: relative;
+  box-sizing: border-box;
+  transition: border-color 0.2s ease-in-out, box-shadow 0.3s ease;
+  flex-shrink: 0;
+}
+
+/* Highlighted state for newly created task */
+.task-card--highlighted {
+  border-color: var(--border-brand-hover);
+  box-shadow: 0 0 0 1px var(--border-brand-hover);
+  animation: task-card-highlight-pulse 1.5s ease-in-out 1;
+}
+
+@keyframes task-card-highlight-pulse {
+  0% { box-shadow: 0 0 0 2px var(--border-brand-hover); }
+  50% { box-shadow: 0 0 0 3px var(--border-focused); }
+  100% { box-shadow: 0 0 0 1px var(--border-brand-hover); }
+}
+
+.task-card:hover {
+  border-color: var(--border-primary-hover);
+}
+
+/* Priority background variants */
+.task-card--priority-high {
+  background-color: var(--utility-red-red-50);
+}
+
+/* No priority / medium — blue tint */
+.task-card--priority-medium {
+  background-color: var(--utility-blue-blue-50);
+}
+
+/* Low priority — clean white */
+.task-card--priority-low {
+  background-color: var(--element-white);
+}
+
+/* --- Row layout (shared pattern from DealCard) --- */
+.task-card__row {
+  display: flex;
+  align-items: center;
+  position: relative;
+  width: 100%;
+  padding: 0;
+  flex-shrink: 0;
+}
+
+.task-card__row--header {
+  justify-content: space-between;
+  min-height: 18px;
+}
+
+.task-card__row--title {
+  gap: 0;
+  min-height: 18px;
+}
+
+.task-card__row--description {
+  justify-content: space-between;
+  min-height: 20px;
+  align-items: flex-start;
+}
+
+/* --- Header meta info --- */
+.task-card__meta {
+  display: flex;
+  gap: var(--space-100);
+  align-items: center;
+  font-family: var(--family-sans);
+  font-weight: var(--weight-regular);
+  font-size: 8px;
+  line-height: 14px;
+  color: var(--text-subtlest);
+  white-space: nowrap;
+  flex: 1 0 0;
+  min-width: 1px;
+  min-height: 1px;
+}
+
+/* --- More button --- */
+.task-card__more-button {
+  overflow: clip;
+  position: relative;
+  flex-shrink: 0;
+  width: 16px;
+  height: 16px;
+  color: var(--element-subtle);
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  cursor: pointer;
+  border-radius: var(--radius-100);
+  border: none;
+  background: transparent;
+  padding: 0;
+}
+
+.task-card__more-button:hover {
+  background-color: var(--background-secondary-hover);
+}
+
+.task-card__more-button svg {
+  width: 12px;
+  height: 12px;
+}
+
+/* --- Title --- */
+.task-card__title-container {
+  display: flex;
+  flex: 1 0 0;
+  gap: var(--space-050);
+  align-items: center;
+  min-width: 1px;
+  min-height: 1px;
+}
+
+.task-card__title {
+  font-family: var(--heading-font-family);
+  font-weight: var(--heading-font-weight);
+  font-size: var(--scale-03);
+  line-height: 16px;
+  color: var(--text-subtle);
+  text-transform: capitalize;
+  flex: 1 0 0;
+  min-width: 1px;
+  min-height: 1px;
+  margin: 0;
+  /* Allow multi-line wrapping for long titles */
+  word-break: break-word;
+  overflow-wrap: break-word;
+}
+
+/* --- Description --- */
+.task-card__description {
+  font-family: var(--body-font-family);
+  font-weight: var(--body-font-weight-regular);
+  font-size: var(--scale-02);
+  line-height: 1.4;
+  color: var(--text-subtle);
+  width: 248px;
+  margin: 0;
+  /* Allow multi-line for full description display */
+  word-break: break-word;
+  overflow-wrap: break-word;
+}
+
+/* ========================================
+   TaskCreateCardLarge — Inline Create Card
+   ======================================== */
+
+.task-create-card {
+  background-color: var(--element-white);
+  border: 1px solid var(--border-primary);
+  border-radius: var(--radius-200);
+  display: flex;
+  flex-direction: column;
+  gap: var(--space-200, 8px);
+  align-items: flex-start;
+  min-height: 96px;
+  min-width: 264px;
+  max-width: 264px;
+  width: 264px;
+  padding: 12px 12px 16px 12px;
+  position: relative;
+  box-sizing: border-box;
+  flex-shrink: 0;
+}
+
+/* --- Header --- */
+.task-create-card__header {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  width: 100%;
+  flex-shrink: 0;
+}
+
+.task-create-card__header-title {
+  font-family: var(--body-font-family);
+  font-weight: var(--body-font-weight-medium);
+  font-size: var(--body-size-large);
+  line-height: 1.4;
+  color: var(--text-subtle);
+  white-space: nowrap;
+  margin: 0;
+}
+
+.task-create-card__header-buttons {
+  display: flex;
+  gap: 4px;
+  align-items: center;
+}
+
+.task-create-card__btn {
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  padding: var(--space-200) var(--space-300);
+  border-radius: var(--radius-200);
+  border: none;
+  cursor: pointer;
+  font-family: var(--body-font-family);
+  font-weight: var(--body-font-weight-strong);
+  font-size: var(--scale-03);
+  line-height: 1.4;
+  white-space: nowrap;
+  transition: background-color 0.2s ease;
+}
+
+.task-create-card__btn--cancel {
+  background-color: transparent;
+  color: var(--text-subtle);
+}
+
+.task-create-card__btn--cancel:hover {
+  color: var(--text-primary);
+  background-color: transparent;
+  text-decoration: underline;
+}
+
+.task-create-card__btn--add {
+  background-color: var(--background-success-solid);
+  color: var(--text-white);
+}
+
+.task-create-card__btn--add:hover {
+  background-color: var(--green-700);
+}
+
+.task-create-card__btn:disabled {
+  opacity: 0.6;
+  cursor: not-allowed;
+  pointer-events: none;
+}
+
+/* --- Content (inputs) --- */
+.task-create-card__content {
+  display: flex;
+  flex-direction: column;
+  gap: var(--space-200);
+  align-items: flex-start;
+  width: 100%;
+  flex-shrink: 0;
+}
+
+/* Title input */
+.task-create-card__input {
+  border: 1px solid var(--border-primary);
+  border-radius: var(--radius-200);
+  height: 40px;
+  width: 100%;
+  display: flex;
+  align-items: center;
+  box-sizing: border-box;
+  padding: var(--space-200) var(--space-300);
+  gap: var(--space-200);
+  font-family: var(--body-font-family);
+  font-weight: var(--body-font-weight-regular);
+  font-size: var(--scale-02);
+  line-height: 24px;
+  color: var(--text-primary);
+  background: transparent;
+  outline: none;
+  transition: border-color 0.2s ease;
+}
+
+.task-create-card__input::placeholder {
+  color: var(--text-subtlest);
+}
+
+.task-create-card__input:focus {
+  border-color: var(--border-focused);
+}
+
+/* Description textarea */
+.task-create-card__textarea {
+  border: 1px solid var(--border-primary);
+  border-radius: var(--radius-200);
+  height: 90px;
+  width: 100%;
+  display: flex;
+  box-sizing: border-box;
+  padding: 10px 14px;
+  font-family: var(--body-font-family);
+  font-weight: var(--body-font-weight-regular);
+  font-size: var(--scale-02);
+  line-height: 1.4;
+  color: var(--text-primary);
+  background: transparent;
+  outline: none;
+  resize: none;
+  box-shadow: 0px 1px 2px 0px rgba(16, 24, 40, 0.05);
+  transition: border-color 0.2s ease;
+}
+
+.task-create-card__textarea::placeholder {
+  color: var(--text-subtlest);
+}
+
+.task-create-card__textarea:focus {
+  border-color: var(--border-focused);
+}
+
+/* --- Priority row --- */
+.task-create-card__priority {
+  display: flex;
+  gap: var(--space-100);
+  align-items: center;
+  flex-shrink: 0;
+}
+
+.task-create-card__priority-label {
+  font-family: var(--body-font-family);
+  font-weight: var(--body-font-weight-medium);
+  font-size: var(--body-size-large);
+  line-height: 1.4;
+  color: var(--text-subtle);
+  white-space: nowrap;
+  margin: 0;
+}
+
+.task-create-card__priority-pills {
+  display: flex;
+  gap: var(--space-200);
+  align-items: center;
+}
+
+/* Priority pill/badge button */
+.task-create-card__pill {
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  padding: var(--space-100) var(--space-200);
+  border-radius: var(--radius-200);
+  border: none;
+  cursor: pointer;
+  background-color: var(--utility-gray-gray-100);
+  font-family: var(--body-font-family);
+  font-weight: var(--body-font-weight-medium);
+  font-size: var(--heading-size-small);
+  line-height: 1.4;
+  color: var(--utility-gray-gray-800);
+  text-align: center;
+  white-space: nowrap;
+  transition: background-color 0.15s ease, color 0.15s ease;
+}
+
+.task-create-card__pill:hover {
+  background-color: var(--utility-gray-gray-200);
+}
+
+/* Active/selected pill state */
+
+/* Today — subtle red tint, not alarming */
+.task-create-card__pill--active-high {
+  background-color: var(--utility-red-red-50);
+  color: var(--utility-red-red-400);
+}
+
+/* Tomorrow — blue to match medium/no-priority card colour */
+.task-create-card__pill--active-medium {
+  background-color: var(--utility-blue-blue-50);
+  color: var(--utility-blue-blue-600);
+}
+
+/* Calendar (low priority) — stays blue-100, slightly richer than today pill */
+.task-create-card__pill--active-low {
+  background-color: var(--utility-blue-blue-100);
+  color: var(--utility-blue-blue-700);
+}
+
+/* Calendar icon pill */
+.task-create-card__pill--icon {
+  min-width: 28px;
+  max-width: 28px;
+  min-height: 28px;
+  max-height: 28px;
+  padding: var(--space-150) var(--space-200);
+}
+
+.task-create-card__pill--icon svg {
+  width: 14px;
+  height: 14px;
+  flex-shrink: 0;
+}
+
+/* ========================================
+   Calendar Small
+   ======================================== */
+
+.task-calendar {
+  background-color: var(--background-primary);
+  border: 1px solid var(--border-primary);
+  border-radius: var(--radius-200);
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  width: 240px;
+  box-sizing: border-box;
+  box-shadow: 0px 4px 16px rgba(0, 0, 0, 0.12);
+}
+
+/* Calendar header */
+.task-calendar__header {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  padding: var(--space-200);
+  width: 100%;
+  box-sizing: border-box;
+}
+
+.task-calendar__nav-btn {
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  width: 16px;
+  height: 16px;
+  border: none;
+  background: transparent;
+  cursor: pointer;
+  color: var(--element-primary);
+  padding: 0;
+  border-radius: var(--radius-100);
+}
+
+.task-calendar__nav-btn:hover {
+  background-color: var(--background-secondary-hover);
+}
+
+.task-calendar__nav-btn svg {
+  width: 16px;
+  height: 16px;
+}
+
+.task-calendar__month-year {
+  font-family: var(--body-font-family);
+  font-weight: var(--body-font-weight-strong);
+  font-size: var(--scale-02);
+  line-height: 1.4;
+  color: var(--text-primary);
+  text-align: center;
+  white-space: nowrap;
+  margin: 0;
+}
+
+/* Calendar divider */
+.task-calendar__divider {
+  width: 100%;
+  height: 1px;
+  background-color: var(--border-subtle);
+  flex-shrink: 0;
+}
+
+/* Calendar body */
+.task-calendar__body {
+  display: flex;
+  flex-direction: column;
+  gap: 2px;
+  align-items: flex-start;
+  padding: var(--space-050) var(--space-100) var(--space-200);
+  width: 100%;
+  box-sizing: border-box;
+}
+
+/* Day names row */
+.task-calendar__day-names {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  padding: 4px 4px;
+  width: 100%;
+  box-sizing: border-box;
+}
+
+.task-calendar__day-name {
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  width: 28px;
+  padding: 1px 2px;
+  font-family: var(--family-sans);
+  font-weight: var(--weight-medium);
+  font-size: var(--body-size-small);
+  line-height: 16px;
+  color: var(--text-subtlest);
+  letter-spacing: 0.25px;
+  white-space: nowrap;
+  box-sizing: border-box;
+}
+
+/* Date rows */
+.task-calendar__date-row {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  padding: 2px 4px;
+  width: 100%;
+  box-sizing: border-box;
+}
+
+/* Individual date cell */
+.task-calendar__date {
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  justify-content: center;
+  width: 28px;
+  height: 28px;
+  padding: 0;
+  box-sizing: border-box;
+  font-family: var(--family-sans);
+  font-weight: var(--weight-medium);
+  font-size: var(--scale-02);
+  line-height: 16px;
+  color: var(--text-primary);
+  text-align: center;
+  letter-spacing: 0.25px;
+  white-space: nowrap;
+  border-radius: 100px;
+  border: none;
+  background: transparent;
+  cursor: pointer;
+  transition: background-color 0.15s ease;
+}
+
+.task-calendar__date:hover:not(.task-calendar__date--selected):not(.task-calendar__date--disabled) {
+  background-color: var(--background-hover);
+}
+
+.task-calendar__date--selected {
+  background-color: var(--background-brand-solid);
+  color: var(--text-white);
+}
+
+.task-calendar__date--disabled {
+  color: var(--text-disabled);
+  cursor: default;
+}
+
+.task-calendar__date--today:not(.task-calendar__date--selected) {
+  font-weight: var(--weight-bold);
+}
+
+/* ========================================
+   Calendar Portal Overlay
+   ======================================== */
+
+.task-calendar-portal {
+  position: fixed;
+  z-index: 9999;
+}
+
+/* ========================================
+   Toast Notification
+   ======================================== */
+
+.task-toast {
+  position: fixed;
+  bottom: var(--space-600);
+  left: 50%;
+  transform: translateX(-50%) translateY(20px);
+  background-color: var(--background-brand-solid);
+  color: var(--text-white);
+  font-family: var(--body-font-family);
+  font-weight: var(--body-font-weight-medium);
+  font-size: var(--scale-03);
+  line-height: 1.4;
+  padding: var(--space-300) var(--space-400);
+  border-radius: var(--radius-200);
+  box-shadow: 0px 8px 24px rgba(0, 0, 0, 0.16);
+  opacity: 0;
+  pointer-events: none;
+  z-index: 9999;
+  white-space: nowrap;
+  animation: task-toast-in 3s ease forwards;
+}
+
+@keyframes task-toast-in {
+  0%   { opacity: 0; transform: translateX(-50%) translateY(20px); }
+  10%  { opacity: 1; transform: translateX(-50%) translateY(0); }
+  80%  { opacity: 1; transform: translateX(-50%) translateY(0); }
+  100% { opacity: 0; transform: translateX(-50%) translateY(-10px); }
+}

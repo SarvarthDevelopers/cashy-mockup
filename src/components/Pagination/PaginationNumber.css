@@ -1,0 +1,51 @@
+/* PaginationNumber.css */
+
+.pagination-number {
+    display: inline-flex;
+    align-items: center;
+    justify-content: center;
+    border: none;
+    cursor: pointer;
+    background-color: transparent;
+}
+
+.pagination-number:focus {
+    outline: none;
+}
+
+.pagination-number {
+    color: var(--text-subtle);
+    border-radius: var(--radius-200);
+    transition: all 0.2s ease-in-out;
+    height: 32px;
+    width: 32px;
+    font-family: var(--body-font-family);
+    font-size: var(--scale-03);
+    font-weight: var(--weight-medium);
+    font-weight: var(--weight-medium);
+    outline: none;
+    /* Remove default focus ring */
+}
+
+.pagination-number:focus-visible {
+    outline: 2px solid var(--border-focused);
+    outline-offset: 2px;
+    z-index: 1;
+}
+
+.pagination-number:hover:not(:disabled):not(.pagination-number--active) {
+    background-color: var(--background-secondary-hover);
+    color: var(--text-primary);
+}
+
+.pagination-number--active {
+    background-color: transparent;
+    color: var(--text-brand);
+    font-weight: var(--weight-bold);
+}
+
+.pagination-number:disabled {
+    cursor: not-allowed;
+    color: var(--text-disabled);
+    opacity: 0.5;
+}

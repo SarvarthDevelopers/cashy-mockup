@@ -1,0 +1,424 @@
+@import "../../tokens/variables.css";
+
+/* DealCardLarge Container */
+.deal-card {
+  background-color: var(--element-white);
+  border: 1px solid var(--border-primary);
+  border-radius: var(--radius-200);
+  display: flex;
+  flex-direction: column;
+  gap: var(--space-100);
+  align-items: flex-start;
+  min-height: 96px;
+  min-width: 264px;
+  max-width: 264px;
+  width: 264px;
+  padding: var(--space-200);
+  position: relative;
+  box-sizing: border-box;
+  transition: border-color 0.2s ease-in-out;
+  cursor: pointer;
+}
+
+.deal-card:hover,
+.deal-card--hover {
+  border-color: var(--border-primary-hover);
+}
+
+.deal-card:focus,
+.deal-card:active,
+.deal-card--selected {
+  border-color: var(--border-brand-hover);
+  outline: none; /* Optional: rely purely on the design system's border explicitly for focus */
+}
+
+/* Common Container rows */
+.deal-card-row {
+  align-content: stretch;
+  display: flex;
+  align-items: center;
+  position: relative;
+  width: 100%;
+  padding: var(--space-0);
+  flex-shrink: 0;
+}
+
+.deal-card-row--header {
+  justify-content: space-between;
+  min-height: 18px;
+}
+
+.deal-card-row--customer {
+  gap: var(--space-0);
+  min-height: 18px;
+}
+
+.deal-card-row--items {
+  justify-content: space-between;
+  min-height: 16px;
+}
+
+.deal-card-row--footer {
+  justify-content: space-between;
+  min-height: 24px;
+}
+
+.deal-card-left {
+  flex: 1 0 0;
+  min-height: 1px;
+  min-width: 1px;
+  position: relative;
+  display: flex;
+  align-items: center;
+}
+
+.deal-card-right {
+  position: relative;
+  flex-shrink: 0;
+  display: flex;
+  align-items: center;
+}
+
+.deal-card-header-left {
+  background-clip: padding-box;
+  border: 0 solid transparent;
+  align-content: stretch;
+  display: flex;
+  gap: var(--space-100);
+  align-items: center;
+  position: relative;
+  width: 100%;
+}
+
+.deal-card-customer-left {
+  align-content: stretch;
+  display: flex;
+  flex: 1 0 0;
+  gap: var(--space-050);
+  align-items: center;
+  min-height: 1px;
+  min-width: 1px;
+  padding: var(--space-0);
+  position: relative;
+}
+
+.deal-card-items-left {
+  background-clip: padding-box;
+  border: 0 solid transparent;
+  align-content: stretch;
+  display: flex;
+  flex-direction: column;
+  gap: var(--space-0);
+  align-items: flex-start;
+  padding: var(--space-0);
+  position: relative;
+  width: 100%;
+}
+
+.deal-card-footer-left-wrap {
+    display: flex;
+    flex: 1 0 0;
+    flex-direction: row;
+    align-items: center;
+    align-self: stretch;
+}
+
+.deal-card-footer-left {
+  align-content: stretch;
+  display: flex;
+  flex: 1 0 0;
+  flex-direction: column;
+  gap: var(--space-050);
+  height: 100%;
+  align-items: flex-start;
+  min-height: 1px;
+  min-width: 1px;
+  padding: var(--space-0);
+  position: relative;
+  overflow: hidden; /* Allows clipping to width without affecting the children's borders vertically if centered */
+}
+
+.deal-card-footer-right-wrap {
+    display: flex;
+    flex-direction: row;
+    align-items: center;
+    align-self: stretch;
+}
+
+.deal-card-header-right-container {
+    background-clip: padding-box;
+    border: 0 solid transparent;
+    align-content: stretch;
+    display: flex;
+    gap: var(--space-050); /* 0px in Figma */
+    align-items: center;
+    position: relative;
+}
+
+/* Typography styles inside Card */
+.deal-card-booking-no {
+  font-family: var(--family-sans);
+  font-weight: var(--weight-regular);
+  font-style: normal;
+  line-height: 14px;
+  position: relative;
+  flex-shrink: 0;
+  font-size: 8px; /* No scale variable exists for 8px */
+  color: var(--text-subtlest);
+  white-space: nowrap;
+}
+
+.deal-card-customer-name {
+  font-family: var(--family-sans);
+  font-weight: var(--weight-semi-bold);
+  line-height: 16px;
+  font-style: normal;
+  position: relative;
+  flex-shrink: 0;
+  color: var(--text-subtle);
+  font-size: var(--scale-02);
+  white-space: nowrap;
+  overflow: hidden;
+  text-overflow: ellipsis;
+}
+
+.deal-card-due-date {
+  font-family: var(--family-sans);
+  font-weight: var(--weight-regular);
+  line-height: 14px;
+  font-style: normal;
+  position: relative;
+  flex-shrink: 0;
+  color: var(--text-subtle);
+  font-size: var(--body-size-small); /* 10px */
+  white-space: nowrap;
+}
+
+.deal-card-amount {
+  font-family: var(--family-sans);
+  font-weight: var(--weight-semi-bold);
+  line-height: 16px;
+  font-style: normal;
+  position: relative;
+  flex-shrink: 0;
+  color: var(--text-subtle);
+  font-size: var(--scale-02);
+  text-align: right;
+  white-space: nowrap;
+}
+
+/* More Button */
+.deal-card-more-button {
+  overflow: clip;
+  position: relative;
+  flex-shrink: 0;
+  width: 16px;
+  height: 16px;
+  color: var(--element-subtle);
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  cursor: pointer;
+  border-radius: 4px; /* standard practice for icon buttons */
+}
+.deal-card-more-button:hover {
+    background-color: var(--background-secondary-hover);
+}
+.deal-card-more-button svg {
+    /* 41.67% 12.5% padding translates to 2px horizontal, ~6px vertical roughly */
+    width: 12px;
+    height: 12px;
+}
+
+
+/* --- ShopLabel --- */
+.shop-label {
+  transform: translateX(0); /* Removed -translate-x-1/2 as it breaks layout */
+  align-content: stretch;
+  display: flex;
+  gap: var(--space-050);
+  height: 18px;
+  align-items: center;
+  justify-content: center;
+  padding: 4px; /* Not matching a specific --space variable perfectly, but matches Figma */
+  position: relative;
+  border-radius: 4px; /* matches radius-100 */
+  box-sizing: border-box;
+}
+
+/* ShopLabel variants */
+.shop-label--green { background-color: var(--utility-green-green-100, #dcfce7); }
+.shop-label--lime { background-color: var(--utility-yellow-yellow-100, #fef9c3); }
+.shop-label--rose { background-color: var(--utility-rosa-rosa-100, #ffe4e6); }
+.shop-label--pink { background-color: var(--utility-fuchsia-fuchsia-100, #fce8ff); } /* mapped to fuchsia */
+.shop-label--blue {
+  background-color: var(--utility-blue-blue-50);
+  color: var(--utility-blue-blue-600);
+}
+.shop-label--turquoise { background-color: var(--utility-turquoise-turquoise-100, #cffafe); }
+
+
+.shop-label-text {
+  font-family: var(--family-sans);
+  font-weight: var(--weight-regular);
+  position: relative;
+  flex-shrink: 0;
+  font-size: 8px;
+  line-height: 10px;
+  color: var(--text-primary);
+  white-space: nowrap;
+}
+
+
+.categories-card {
+  display: flex;
+  flex-direction: row;
+  align-items: center;
+  gap: var(--space-050);
+  width: 100%;       
+  max-width: 100%;
+  flex-wrap: nowrap; 
+  padding: 1px 0; /* Give borders breathing room so they don't clip */
+}
+
+/* Base Category UI */
+.categories-tag {
+  border: 0.5px solid var(--border-primary);
+  align-content: stretch;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  padding: 3px 7px;
+  position: relative;
+  border-radius: var(--radius-100);
+  flex-shrink: 0;
+  box-sizing: border-box;
+  background-color: var(--background-primary);
+}
+
+.categories-text {
+  display: flex;
+  flex-direction: column;
+  font-family: var(--family-sans);
+  font-weight: var(--weight-regular);
+  justify-content: center;
+  line-height: 0;
+  font-style: normal;
+  position: relative;
+  flex-shrink: 0;
+  color: var(--text-subtlest);
+  font-size: var(--body-size-small); /* 10px */
+  white-space: nowrap;
+}
+
+.categories-text p {
+  line-height: 14px;
+  margin: 0;
+}
+
+.categories-plus-wrapper {
+  display: flex;
+  flex-direction: row;
+  align-items: center;
+  align-self: stretch;
+}
+
+.categories-plus {
+  border: 0.5px solid var(--border-primary);
+  align-content: stretch;
+  display: flex;
+  gap: 2px;
+  height: 100%;
+  align-items: center;
+  justify-content: center;
+  padding: 3px 7px;
+  position: relative;
+  border-radius: var(--radius-100);
+  flex-shrink: 0;
+  box-sizing: border-box;
+  background-color: var(--background-primary);
+}
+
+.categories-plus-icon {
+  position: relative;
+  flex-shrink: 0;
+  width: 4.8px;
+  height: 4.8px;
+  color: var(--text-subtlest);
+}
+
+/* --- ItemsDealCard --- */
+.items-card {
+  align-content: stretch;
+  display: flex;
+  align-items: center;
+  padding: var(--space-0);
+  position: relative;
+  gap: var(--space-050);
+  width: 100%;
+  max-width: 100%;
+  overflow: hidden;
+  flex-wrap: nowrap;
+}
+
+.items-text {
+  display: flex;
+  flex-direction: column;
+  font-family: var(--family-sans);
+  font-weight: var(--weight-regular);
+  justify-content: center;
+  line-height: 0;
+  font-style: normal;
+  position: relative;
+  flex-shrink: 0;
+  color: var(--text-subtlest);
+  font-size: var(--body-size-small); /* 10px */
+  white-space: nowrap;
+}
+.items-text p {
+    line-height: 14px;
+    margin: 0;
+}
+
+.items-comma {
+  font-family: var(--family-sans);
+  font-weight: var(--weight-regular);
+  line-height: 14px;
+  font-style: normal;
+  position: relative;
+  flex-shrink: 0;
+  font-size: var(--body-size-small);
+  color: var(--text-subtlest);
+  white-space: nowrap;
+  margin: 0;
+}
+
+.items-plus-container {
+    align-content: stretch;
+    display: flex;
+    gap: var(--space-050);
+    align-items: center;
+    position: relative;
+    flex-shrink: 0;
+}
+.items-plus-icon {
+    position: relative;
+    flex-shrink: 0;
+    width: 4.8px;
+    height: 4.8px;
+    color: var(--text-subtlest);
+}
+
+/* --- Priority --- */
+.priority-icon {
+  position: relative;
+  width: 18px;
+  height: 18px;
+  flex-shrink: 0;
+  overflow: hidden;
+}
+
+/* High/Highest colors mapped to Red, Yellow, Blue 500 series */
+.priority--highest, .priority--high { color: var(--utility-red-red-500); }
+.priority--medium { color: var(--utility-yellow-yellow-500); } 
+.priority--low, .priority--lowest { color: var(--utility-blue-blue-500); }

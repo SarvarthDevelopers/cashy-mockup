@@ -1,0 +1,221 @@
+/* ColorPicker.css */
+
+/* ─── Root container ───────────────────────────────────────────── */
+
+.color-picker {
+    display: flex;
+    flex-direction: column;
+    gap: var(--space-150); /* 6px */
+    align-items: flex-start;
+    width: 260px;
+    box-sizing: border-box;
+}
+
+.color-picker *,
+.color-picker *::before,
+.color-picker *::after {
+    box-sizing: border-box;
+}
+
+/* ─── Label ─────────────────────────────────────────────────────── */
+
+.color-picker__label {
+    font-family: var(--body-font-family);
+    font-size: var(--heading-size-small);   /* 14px */
+    font-weight: var(--weight-medium);      /* 500 */
+    line-height: 1.4;
+    color: var(--text-subtle);
+    white-space: nowrap;
+}
+
+/* ─── Row (holds swatches or hex row) ───────────────────────────── */
+
+.color-picker__row {
+    display: flex;
+    align-items: center;
+    justify-content: space-between;
+    gap: var(--space-100); /* 4px minimum gap */
+    width: 100%;
+    height: 28px;
+}
+
+/* ─── Preset colour swatches ────────────────────────────────────── */
+
+.color-picker__swatch {
+    flex-shrink: 0;
+    width: 28px;
+    height: 28px;
+    border-radius: var(--radius-100);   /* 4px */
+    border: none;
+    cursor: pointer;
+    padding: 0;
+    transition: box-shadow 0.15s ease, transform 0.1s ease;
+}
+
+.color-picker__swatch:hover:not(.color-picker__swatch--selected) {
+    transform: scale(1.08);
+}
+
+.color-picker__swatch:focus-visible {
+    outline: 2px solid var(--border-focused);
+    outline-offset: 2px;
+}
+
+.color-picker__swatch--selected {
+    box-shadow: inset 0 0 0 2px var(--border-brand);  /* --brand-600 → #151027 */
+    cursor: default;
+}
+
+/* ─── Hex trigger button (the # button) ─────────────────────────── */
+
+.color-picker__hex-btn {
+    flex-shrink: 0;
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    width: 28px;
+    height: 28px;
+    padding: var(--space-100);          /* 4px */
+    background-color: var(--background-primary);
+    border: none;
+    box-shadow: inset 0 0 0 1px var(--border-primary);
+    border-radius: var(--radius-100);   /* 4px */
+    color: var(--text-primary);
+    cursor: pointer;
+    transition: background-color 0.15s ease, box-shadow 0.15s ease;
+    -webkit-appearance: none;
+    appearance: none;
+}
+
+.color-picker__hex-btn:hover {
+    background-color: var(--background-secondary-hover);
+    box-shadow: inset 0 0 0 1px var(--border-primary-hover);
+}
+
+.color-picker__hex-btn:focus-visible {
+    outline: 2px solid var(--border-focused);
+    outline-offset: 2px;
+}
+
+/* ─── HEX mode layout ───────────────────────────────────────────── */
+
+.color-picker__hex-section {
+    display: flex;
+    align-items: center;
+    gap: var(--space-100);              /* 4px */
+    flex: 1 0 0;
+    min-width: 0;
+    height: 100%;
+}
+
+/* Colour preview swatch in hex mode */
+.color-picker__hex-preview {
+    flex-shrink: 0;
+    width: 28px;
+    height: 28px;
+    border-radius: var(--radius-100);   /* 4px */
+    border: 1px solid var(--border-subtle); /* subtle fallback border for mobile rendering */
+}
+
+/* Text input wrapper with bottom border */
+.color-picker__hex-input-wrapper {
+    display: flex;
+    flex-direction: column;
+    justify-content: center;
+    flex: 1 0 0;
+    min-width: 0;
+    height: 100%;
+    border-bottom: 1px solid var(--text-primary);
+}
+
+.color-picker__hex-input {
+    width: 100%;
+    min-width: 0;
+    border: none;
+    outline: none;
+    background: transparent;
+    font-family: var(--body-font-family);
+    font-size: var(--scale-02);         /* 12px */
+    font-weight: var(--weight-regular);
+    line-height: normal;
+    color: var(--text-primary);
+    padding: 0;
+    letter-spacing: 0.04em;
+    text-transform: uppercase;
+    
+    /* Mobile/iOS safeguards */
+    -webkit-appearance: none;
+    appearance: none;
+    border-radius: 0;
+    opacity: 1;
+    -webkit-text-fill-color: var(--text-primary);
+}
+
+.color-picker__hex-input::placeholder {
+    color: var(--text-placeholder);
+    opacity: 1; /* Reset iOS default placeholder opacity */
+    -webkit-text-fill-color: var(--text-placeholder);
+}
+
+/* ─── HEX mode action buttons (confirm / cancel) ────────────────── */
+
+.color-picker__hex-actions {
+    display: flex;
+    align-items: center;
+    gap: var(--space-100);              /* 4px */
+    flex-shrink: 0;
+    height: 100%;
+}
+
+.color-picker__icon-btn {
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    width: 28px;
+    height: 28px;
+    padding: 0;
+    background-color: var(--background-primary);
+    border: none;
+    box-shadow: inset 0 0 0 1px var(--border-primary);
+    border-radius: var(--radius-200);   /* 8px */
+    color: var(--text-subtle);
+    cursor: pointer;
+    transition: background-color 0.15s ease, color 0.15s ease, box-shadow 0.15s ease;
+    -webkit-appearance: none;
+    appearance: none;
+}
+
+.color-picker__icon-btn:hover:not(:disabled) {
+    background-color: var(--background-secondary-hover);
+    color: var(--text-primary);
+}
+
+.color-picker__icon-btn:focus-visible {
+    outline: 2px solid var(--border-focused);
+    outline-offset: 2px;
+}
+
+.color-picker__icon-btn:disabled {
+    opacity: 0.4;
+    cursor: not-allowed;
+}
+
+/* ─── Danger-subtle modifier (cancel button) ────────────────────── */
+
+.color-picker__icon-btn--danger {
+    color: var(--text-error);
+    background-color: var(--background-error-primary);
+    box-shadow: none;
+}
+
+.color-picker__icon-btn--danger:hover:not(:disabled) {
+    background-color: var(--background-error-subtle);
+    color: var(--text-error-on-subtle);
+}
+
+/* ─── Custom colour swatch (6th slot) ───────────────────────────── */
+
+.color-picker__swatch--custom {
+    /* Subtle inset ring so the user can tell it's not a factory preset */
+    box-shadow: inset 0 0 0 1.5px rgba(0, 0, 0, 0.15);
+}

@@ -2,7 +2,7 @@ import React, { useState } from 'react';
 import { KanBanBoard } from '../components/Board/KanBanBoard';
 import { ColumnHeader } from '../components/ColumnHeader/ColumnHeader';
 import { DealCardLarge } from '../components/Card/DealCardLarge';
-import { COLUMNS, INITIAL_DEALS } from '../data/mockData';
+import { COLUMNS } from '../data/mockData';
 import type { ColumnId, DealData } from '../data/mockData';
 import { TaskCardLarge, type TaskPriority } from '../components/TaskCard/TaskCardLarge';
 import { TaskCreateCardLarge } from '../components/TaskCard/TaskCreateCardLarge';
@@ -18,10 +18,10 @@ interface TaskData {
 
 interface LandingPageProps {
     onSelectDeal: (deal: DealData) => void;
+    dealsByColumn: Record<ColumnId, DealData[]>;
 }
 
-export const LandingPage: React.FC<LandingPageProps> = ({ onSelectDeal }) => {
-    const [dealsByColumn] = useState<Record<ColumnId, DealData[]>>(INITIAL_DEALS);
+export const LandingPage: React.FC<LandingPageProps> = ({ onSelectDeal, dealsByColumn }) => {
     const [tasksByColumn, setTasksByColumn] = useState<Record<ColumnId, TaskData[]>>({} as any);
     const [addingToColumn, setAddingToColumn] = useState<ColumnId | null>(null);
 

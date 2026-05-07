@@ -12,6 +12,7 @@ export interface DealWizardModalProps {
     initialStep?: string;
     isNew?: boolean;
     onCreateDeal?: (deal: DealData) => void;
+    onUpdateDeal?: (deal: DealData) => void;
 }
 
 export const DealWizardModal: React.FC<DealWizardModalProps> = ({ 
@@ -20,7 +21,8 @@ export const DealWizardModal: React.FC<DealWizardModalProps> = ({
     dealData,
     initialStep = 'step2',
     isNew = false,
-    onCreateDeal
+    onCreateDeal,
+    onUpdateDeal
 }) => {
     const [activeStep, setActiveStep] = useState(isNew ? 'step1' : initialStep);
     const [isCreated, setIsCreated] = useState(!isNew);
@@ -57,8 +59,10 @@ export const DealWizardModal: React.FC<DealWizardModalProps> = ({
         items: true
     });
 
+    const [lastSyncedId, setLastSyncedId] = useState<string | null>(null);
+
     useEffect(() => {
-        if (isOpen && dealData) {
+        if (isOpen && dealData && (dealData.id !== lastSyncedId)) {
             setCustomerData({
                 mode: 'Registered',
                 email: dealData.wizardData?.email || 'franz.k@example.com',
@@ -83,14 +87,20 @@ export const DealWizardModal: React.FC<DealWizardModalProps> = ({
                     expanded: idx === 0
                 })));
             }
+            setLastSyncedId(dealData.id);
         }
-    }, [isOpen, dealData]);
+    }, [isOpen, dealData, lastSyncedId]);
 
     useEffect(() => {
         if (isOpen) {
+            if (!isNew) {
+                // If it's not a new deal, we reset the synced ID so it re-syncs when opened
+                // Actually, if we use isNew we might need more logic
+            }
             setActiveStep(isNew ? 'step1' : initialStep);
             setIsCreated(!isNew);
             setCreationFinalized(!isNew);
+            if (isNew) setLastSyncedId(null);
         }
     }, [isOpen, isNew, initialStep]);
 
@@ -113,23 +123,23 @@ export const DealWizardModal: React.FC<DealWizardModalProps> = ({
                 id: `deal-${Math.floor(Math.random() * 10000)}`,
                 countryCode: 'AT',
                 branch: 'Vienna',
-                firstName: 'Franz',
-                lastName: 'Kürsten',
-                amount: '€45,200',
+                firstName: customerData.firstName,
+                lastName: customerData.lastName,
+                amount: `€${formattedTotal}`,
                 items: items.map(i => i.title || 'Unknown Item'),
                 dealType: dealMode,
                 businessArea: items[0]?.category || 'Automotive',
                 wizardData: {
-                    customerName: 'Franz Kürsten',
-                    email: 'franz.k@example.com',
-                    phone: '+43 660 123 456',
-                    branch: 'Vienna',
-                    company: 'CASHY_AUT',
+                    customerName: `${customerData.firstName} ${customerData.lastName}`,
+                    email: customerData.email,
+                    phone: customerData.phone,
+                    branch: metadata.branch,
+                    company: metadata.company,
                     businessArea: items[0]?.category || 'Automotive',
-                    categoryPath: 'Automotive > Passenger Car',
-                    dealDuration: '6 months',
+                    categoryPath: `Automotive > ${items[0]?.category || 'General'}`,
+                    dealDuration: `${metadata.duration} days`,
                     payoutType: dealMode,
-                    amount: '€45,200',
+                    amount: `€${formattedTotal}`,
                     item: items[0]?.title || 'Unknown Item'
                 }
             };
@@ -141,6 +151,33 @@ export const DealWizardModal: React.FC<DealWizardModalProps> = ({
             setActiveStep('step2');
         }, 2400);
     };
+
+    // --- AUTO-SAVE LOGIC ---
+    useEffect(() => {
+        if (isCreated && creationFinalized && onUpdateDeal && dealData) {
+            const updatedDeal: DealData = {
+                ...dealData,
+                firstName: customerData.firstName,
+                lastName: customerData.lastName,
+                amount: `€${formattedTotal}`,
+                items: items.map(i => i.title || 'Unknown Item'),
+                dueDate: metadata.dueDate,
+                branch: metadata.branch,
+                wizardData: {
+                    ...dealData.wizardData,
+                    customerName: `${customerData.firstName} ${customerData.lastName}`,
+                    email: customerData.email,
+                    phone: customerData.phone,
+                    branch: metadata.branch,
+                    company: metadata.company,
+                    dealDuration: `${metadata.duration} days`,
+                    amount: `€${formattedTotal}`,
+                    item: items[0]?.title || 'Unknown Item'
+                }
+            };
+            onUpdateDeal(updatedDeal);
+        }
+    }, [customerData, metadata, items, isCreated, creationFinalized]);
 
     const toggleSection = (section: string) => {
         setExpandedSections(prev => ({ ...prev, [section]: !prev[section] }));
@@ -350,7 +387,7 @@ export const DealWizardModal: React.FC<DealWizardModalProps> = ({
                                     </button>
                                     <Button variant="secondary" size="small" className="h-10 px-5 font-bold border-gray-200" style={{ color: 'var(--brand-500)' }}>Payback</Button>
                                     <Button variant="secondary" size="small" className="h-10 px-5 font-bold border-gray-200" style={{ color: 'var(--brand-500)' }}>Extend</Button>
-                                    {activeStep === 'step1' ? (
+                                    {activeStep === 'step1' && !isCreated ? (
                                         <Button 
                                             variant="primary" 
                                             size="small" 
@@ -512,9 +549,6 @@ export const DealWizardModal: React.FC<DealWizardModalProps> = ({
                                         <div className="bg-white rounded-2xl border border-gray-200 overflow-hidden shadow-sm">
                                             <div className="flex items-center justify-between p-4 border-b border-gray-50">
                                                 <h3 className="text-sm font-bold text-gray-900 uppercase tracking-wider m-0">Items ({items.length})</h3>
-                                                <Button variant="secondary" size="small" onClick={addItem} className="h-8 border-dashed bg-white">
-                                                    <Plus size={14} className="mr-1" /> Add Item
-                                                </Button>
                                             </div>
                                             <div className="p-4 space-y-4 max-h-[600px] overflow-y-auto">
                                                 {items.map((item, index) => (
@@ -575,6 +609,13 @@ export const DealWizardModal: React.FC<DealWizardModalProps> = ({
                                                         )}
                                                     </div>
                                                 ))}
+
+                                                <div 
+                                                    className="flex items-center gap-2 text-[#4649E5] text-[13px] font-bold cursor-pointer hover:underline w-fit pt-2"
+                                                    onClick={addItem}
+                                                >
+                                                    <Plus size={14} /> Add Item
+                                                </div>
                                             </div>
                                         </div>
 
@@ -621,7 +662,7 @@ export const DealWizardModal: React.FC<DealWizardModalProps> = ({
                     </div>
 
                     {/* Right Sidebar */}
-                    <div className={`bg-white border-l border-gray-100 flex flex-col shrink-0 transition-all duration-300 overflow-hidden ${creationFinalized && activeStep !== 'step1' ? 'w-[380px] opacity-100' : 'w-0 opacity-0'}`}>
+                    <div className={`bg-white border-l border-gray-100 flex flex-col shrink-0 transition-all duration-300 overflow-hidden ${creationFinalized ? 'w-[380px] opacity-100' : 'w-0 opacity-0'}`}>
                         <div className="flex border-b border-gray-100 px-4">
                             <button className={`flex-1 py-4 text-sm font-semibold flex items-center justify-center gap-2 border-b-2 ${sidebarTab === 'comments' ? 'border-gray-900 text-gray-900' : 'border-transparent text-gray-400'}`} onClick={() => setSidebarTab('comments')}>
                                 <MessageSquare size={18} /> Comments

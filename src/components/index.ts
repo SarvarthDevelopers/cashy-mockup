@@ -8,3 +8,7 @@ export * from './Header';
 export * from './Dropdown/Dropdown';
 export * from './ColumnHeader/ColumnHeader';
 export * from './TaskCard';
+export * from './Tabs/Tabs';
+export * from './Tabs/Tab';
+export * from './Input/Input';
+export * from './TextArea/TextArea';

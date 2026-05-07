@@ -59,14 +59,14 @@ export const Tabs = React.forwardRef<HTMLDivElement, TabsProps>(({
 
     const tabValues = React.Children.toArray(children)
         .filter(React.isValidElement)
-        .map(child => (child as React.ReactElement).props.value as string);
+        .map(child => (child as any).props.value as string);
 
     const renderChildren = () => {
         if (variant !== 'stepper') return children;
 
         const childrenArray = React.Children.toArray(children).filter(React.isValidElement);
         return childrenArray.map((child, index) => (
-            <React.Fragment key={(child as React.ReactElement).props.value || index}>
+            <React.Fragment key={(child as any).props.value || index}>
                 {child}
                 {index < childrenArray.length - 1 && (
                     <div className="tab__stepper-separator" aria-hidden="true">

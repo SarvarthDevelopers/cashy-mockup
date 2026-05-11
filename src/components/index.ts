@@ -12,3 +12,5 @@ export * from './Tabs/Tabs';
 export * from './Tabs/Tab';
 export * from './Input/Input';
 export * from './TextArea/TextArea';
+export * from './FileUpload/FileUpload';
+export * from './ImageUpload/ImageUpload';

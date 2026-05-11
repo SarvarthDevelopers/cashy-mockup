@@ -1,5 +1,5 @@
 import React, { useState, useEffect } from 'react';
-import { Package, MessageSquare, History, ChevronUp, ChevronDown, Plus, Trash2, AlertCircle, Loader2 } from 'lucide-react';
+import { Package, MessageSquare, History, ChevronUp, ChevronDown, Plus, Trash2, AlertCircle, Loader2, X } from 'lucide-react';
 import { 
     Button, 
     Tabs, 
@@ -9,7 +9,9 @@ import {
     Dropdown, 
     RadioGroup, 
     Radio, 
-    Checkbox 
+    Checkbox,
+    FileUpload,
+    ImageUpload
 } from '../';
 import { ShopLabel } from '../Card/ShopLabel';
 import type { DealData } from '../../data/mockData';
@@ -50,6 +52,11 @@ export const DealWizardModal: React.FC<DealWizardModalProps> = ({
     const [creationStep, setCreationStep] = useState(0);
     const [sidebarTab, setSidebarTab] = useState('comments');
     const [activeItemIndex, setActiveItemIndex] = useState(0);
+    
+    // Continuous Scroll Refs
+    const contentRef = React.useRef<HTMLDivElement>(null);
+    const sectionRefs = React.useRef<Map<string, HTMLDivElement>>(new Map());
+    const [isAutoScrolling, setIsAutoScrolling] = useState(false);
     
     // --- CREATE DEAL FORM STATE ---
     const [dealMode, setDealMode] = useState<'Pawn' | 'Purchase'>('Pawn');
@@ -290,99 +297,144 @@ export const DealWizardModal: React.FC<DealWizardModalProps> = ({
         }))
     ];
 
-    const renderStepFields = () => {
-        const item = items[activeItemIndex];
+    const renderStepItemFields = (stepId: string, itemIdx: number) => {
+        const item = items[itemIdx];
         const wizard = getWizardForCategory(item?.category || 'Car');
-        const fields = (wizard?.fields || []).filter((f: { stepId: string }) => f.stepId === activeStep);
+        const fields = (wizard?.fields || []).filter((f: { stepId: string }) => f.stepId === stepId);
 
         if (fields.length === 0) {
             return (
-                <div className="h-full flex flex-col items-center justify-center text-center p-12 bg-white rounded-2xl border border-dashed border-gray-100">
-                    <div className="w-20 h-20 bg-gray-50 rounded-full flex items-center justify-center mb-6">
-                        <Package className="text-gray-200" size={32} />
+                <div className="h-full flex flex-col items-center justify-center text-center p-12 bg-white rounded-2xl border border-dashed border-gray-100 min-h-[400px]">
+                    <div className="w-16 h-16 bg-gray-50 rounded-full flex items-center justify-center mb-6">
+                        <Package className="text-gray-200" size={24} />
                     </div>
-                    <h4 className="text-xl font-bold text-gray-900 mb-2">Phase Not Required</h4>
-                    <p className="text-sm text-gray-400 max-w-xs leading-relaxed">
-                        The <span className="font-bold text-gray-500">{item?.category || 'Standard'}</span> category does not require specific data entry during the <span className="font-bold text-gray-500">{steps.find(s => s.id === activeStep)?.title}</span> phase.
+                    <h4 className="text-lg font-bold text-gray-900 mb-2">Phase Not Required</h4>
+                    <p className="text-[13px] text-gray-400 max-w-xs leading-relaxed">
+                        The <span className="font-bold text-gray-500">{item?.category || 'Standard'}</span> category does not require specific data entry during the <span className="font-bold text-gray-500">{steps.find(s => s.id === stepId)?.title}</span> phase.
                     </p>
-                    <button 
-                        onClick={() => {
-                            if (activeItemIndex < items.length - 1) {
-                                setActiveItemIndex(prev => prev + 1);
-                            } else {
-                                handleNextStep();
-                                setActiveItemIndex(0);
-                            }
-                        }}
-                        className="mt-8 px-6 py-2 bg-gray-900 text-white rounded-full text-sm font-bold hover:bg-black transition-all shadow-lg shadow-gray-200"
-                    >
-                        Continue to Next {activeItemIndex < items.length - 1 ? 'Item' : 'Phase'}
-                    </button>
                 </div>
             );
         }
 
         return (
-            <div className="grid grid-cols-2 gap-x-8 gap-y-6 animate-in fade-in slide-in-from-bottom-4 duration-500">
-                {fields.map((field: any) => (
-                    <div key={field.id} className={field.type === 'checkbox' || field.type === 'textarea' ? 'col-span-2' : ''}>
-                        {field.type === 'checkbox' ? (
-                            <Checkbox 
-                                label={field.label} 
-                            />
-                        ) : field.type === 'select' ? (
-                            <Dropdown 
-                                label={field.label} 
-                                options={(field.options || []).map((opt: string) => ({ label: opt, value: opt }))} 
-                            />
-                        ) : field.type === 'textarea' ? (
-                            <TextArea 
-                                label={field.label} 
-                                placeholder={field.placeholder} 
-                            />
-                        ) : (
-                            <Input 
-                                label={field.label} 
-                                placeholder={field.placeholder} 
-                                type={field.type} 
-                            />
-                        )}
-                    </div>
-                ))}
+            <div className="bg-white rounded-2xl border border-gray-100 shadow-sm p-10">
+                <div className="flex items-center justify-between mb-8">
+                    <h3 className="text-[10px] uppercase font-extrabold tracking-widest text-gray-400">
+                        {steps.find(s => s.id === stepId)?.title} Details — {item?.title || 'Unknown Item'}
+                    </h3>
+                    {items.length > 1 && (
+                        <span className="text-[10px] font-bold text-[#4649E5] bg-blue-50 px-3 py-1 rounded-full border border-blue-100 uppercase tracking-tight">
+                            Item {itemIdx + 1} of {items.length}
+                        </span>
+                    )}
+                </div>
+                
+                <div className="grid grid-cols-2 gap-x-8 gap-y-10">
+                    {fields.map((field: any) => (
+                        <div 
+                            key={field.id} 
+                            className={
+                                field.type === 'checkbox' || 
+                                field.type === 'textarea' || 
+                                field.type === 'file' || 
+                                field.type === 'image' || 
+                                field.type === 'url' 
+                                    ? 'col-span-2' 
+                                    : ''
+                            }
+                        >
+                            {field.type === 'checkbox' ? (
+                                <Checkbox 
+                                    label={field.label} 
+                                />
+                            ) : field.type === 'select' || field.type === 'dropdown' ? (
+                                <Dropdown 
+                                    label={field.label} 
+                                    options={(field.options || []).map((opt: string) => ({ label: opt, value: opt }))} 
+                                />
+                            ) : field.type === 'textarea' ? (
+                                <TextArea 
+                                    label={field.label} 
+                                    placeholder={field.placeholder || `Enter ${field.label}...`}
+                                    rows={4}
+                                />
+                            ) : (field.type === 'file' || field.type === 'fileUpload') ? (
+                                (field.label.toLowerCase().includes('image') || 
+                                 field.label.toLowerCase().includes('photo') || 
+                                 field.label.toLowerCase().includes('picture')) ? (
+                                    <ImageUpload 
+                                        label={field.label}
+                                    />
+                                ) : (
+                                    <FileUpload 
+                                        label={field.label}
+                                        description={field.placeholder}
+                                    />
+                                )
+                            ) : field.type === 'image' || field.type === 'imageUpload' ? (
+                                <ImageUpload 
+                                    label={field.label}
+                                />
+                            ) : (
+                                <Input 
+                                    label={field.label} 
+                                    placeholder={field.placeholder || `Enter ${field.label}...`}
+                                    type={field.type === 'url' ? 'text' : field.type} 
+                                />
+                            )}
+                        </div>
+                    ))}
+                </div>
             </div>
         );
     };
 
-    const handleNextStep = () => {
-        const currentIndex = steps.findIndex(s => s.id === activeStep);
-        if (currentIndex < steps.length - 1) {
-            setActiveStep(steps[currentIndex + 1].id);
+    const scrollToSection = (stepId: string, itemIdx?: number) => {
+        setIsAutoScrolling(true);
+        const key = itemIdx !== undefined ? `${stepId}-${itemIdx}` : stepId;
+        const el = sectionRefs.current.get(key);
+        if (el) {
+            el.scrollIntoView({ behavior: 'smooth', block: 'start' });
+            setActiveStep(stepId);
+            if (itemIdx !== undefined) setActiveItemIndex(itemIdx);
         }
+        setTimeout(() => setIsAutoScrolling(false), 800);
     };
 
-    const handleScroll = (e: React.UIEvent<HTMLDivElement>) => {
-        if (!creationFinalized || activeStep === 'step1') return;
+    const handleScroll = () => {
+        if (!creationFinalized || isAutoScrolling || !contentRef.current) return;
         
-        const target = e.currentTarget;
-        const isAtBottom = Math.abs(target.scrollHeight - target.clientHeight - target.scrollTop) < 1;
-        
-        if (isAtBottom) {
-            // Debounce or add a small delay for premium feel
-            setTimeout(() => {
-                if (activeItemIndex < items.length - 1) {
-                    setActiveItemIndex(prev => prev + 1);
-                    target.scrollTop = 0;
-                } else if (activeStep !== 'step7') {
-                    handleNextStep();
-                    setActiveItemIndex(0);
+        const container = contentRef.current;
+        const containerTop = container.getBoundingClientRect().top;
+        const scrollThreshold = 200; // Pixels from top to trigger change
+
+        let currentStepId = activeStep;
+        let currentItemIdx = activeItemIndex;
+
+        // Iterate through all possible sections and find the one closest to the threshold
+        sectionRefs.current.forEach((el, key) => {
+            const rect = el.getBoundingClientRect();
+            if (rect.top - containerTop < scrollThreshold && rect.bottom - containerTop > scrollThreshold) {
+                if (key.includes('-')) {
+                    const [stepId, idx] = key.split('-');
+                    currentStepId = stepId;
+                    currentItemIdx = parseInt(idx);
+                } else {
+                    currentStepId = key;
                 }
-            }, 300);
-        }
+            }
+        });
+
+        if (currentStepId !== activeStep) setActiveStep(currentStepId);
+        if (currentItemIdx !== activeItemIndex) setActiveItemIndex(currentItemIdx);
     };
 
     return (
-        <div className="fixed inset-0 z-[200] flex items-center justify-center bg-white animate-in fade-in duration-200">
-            <div className="w-full h-full flex flex-col bg-white overflow-hidden" onClick={(e) => e.stopPropagation()}>
+        <div className="fixed inset-0 z-[200] flex items-center justify-center bg-[#131518]/60 backdrop-blur-sm animate-in fade-in duration-200 p-4 md:p-8" onClick={(e: React.MouseEvent) => { e.stopPropagation(); onClose(); }}>
+            <div 
+                className="w-full max-w-[1400px] h-[95vh] flex flex-col bg-white overflow-hidden rounded-[32px] shadow-[0_32px_64px_-16px_rgba(0,0,0,0.3)] border border-white/20" 
+                onClick={(e: React.MouseEvent) => e.stopPropagation()}
+            >
                 
                 {/* --- HEADER --- */}
                 <div className="border-b border-gray-100 shrink-0 bg-white" style={{ padding: 'var(--space-600) var(--space-800)' }}>
@@ -419,17 +471,41 @@ export const DealWizardModal: React.FC<DealWizardModalProps> = ({
                         )}
 
                         {!creationFinalized ? (
-                            <div className="flex flex-col items-end">
-                                <div className="text-[24px] font-bold tabular-nums" style={{ color: 'var(--brand-500)' }}>
-                                    € {formattedTotal}
+                            <div className="flex items-center gap-6">
+                                <div className="flex flex-col items-end">
+                                    <div className="text-[24px] font-bold tabular-nums" style={{ color: 'var(--brand-500)' }}>
+                                        € {formattedTotal}
+                                    </div>
+                                    <span className="text-[10px] font-extrabold uppercase tracking-widest" style={{ color: 'var(--gray-400)' }}>
+                                        Est. Payout
+                                    </span>
                                 </div>
-                                <span className="text-[10px] font-extrabold uppercase tracking-widest" style={{ color: 'var(--gray-400)' }}>
-                                    Est. Payout
-                                </span>
+                                <button 
+                                    onClick={onClose}
+                                    className="w-10 h-10 flex items-center justify-center rounded-full bg-gray-50 hover:bg-gray-100 text-gray-400 hover:text-[#131518] transition-all"
+                                >
+                                    <X size={18} />
+                                </button>
                             </div>
                         ) : (
-                            <div className={`text-[32px] font-bold tabular-nums transition-colors text-[#17142B]`} style={{ color: 'var(--brand-500)' }}>
-                                € {formattedTotal}
+                            <div className="flex items-center gap-6">
+                                <div className="flex flex-col items-end gap-1">
+                                    <div className="flex items-center gap-2">
+                                        <div className="px-2 py-0.5 rounded bg-blue-50 text-[#4649E5] text-[10px] font-bold uppercase tracking-tight border border-blue-100">
+                                            {dealMode}
+                                        </div>
+                                        <div className="text-[32px] font-bold tabular-nums ml-2" style={{ color: 'var(--brand-500)' }}>
+                                            € {formattedTotal}
+                                        </div>
+                                    </div>
+                                    <span className="text-[10px] font-extrabold uppercase tracking-widest text-gray-400">Total Payout</span>
+                                </div>
+                                <button 
+                                    onClick={onClose}
+                                    className="w-12 h-12 flex items-center justify-center rounded-full bg-gray-50 hover:bg-gray-100 text-gray-400 hover:text-[#131518] transition-all"
+                                >
+                                    <X size={24} />
+                                </button>
                             </div>
                         )}
                     </div>
@@ -442,9 +518,8 @@ export const DealWizardModal: React.FC<DealWizardModalProps> = ({
                             variant="stepper" 
                             value={activeStep} 
                             onValueChange={(val) => {
-                                const step = steps.find(s => s.id === val);
-                                if (step && (val === 'step1' || isCreated)) {
-                                    setActiveStep(val);
+                                if (val === 'step1' || isCreated) {
+                                    scrollToSection(val);
                                 }
                             }}
                             className="overflow-x-auto scrollbar-hide pr-12 scroll-smooth"
@@ -529,23 +604,27 @@ export const DealWizardModal: React.FC<DealWizardModalProps> = ({
 
                 {/* --- CONTENT AREA --- */}
                 <div className="flex-1 flex overflow-hidden">
-                    <div className="flex-1 flex flex-col min-w-0 bg-[#F8F9FA] relative">
-                        {creationFinalized && activeStep !== 'step1' && items.length > 1 && (
-                            <div className="px-8 bg-white border-b border-gray-100 flex gap-8">
+                    <div className="flex-1 flex flex-col min-w-0 bg-[#FBFCFC] relative">
+                        {creationFinalized && activeStep !== 'step1' && (
+                            <div className="px-8 bg-white border-b border-gray-100 flex gap-8 shrink-0 overflow-x-auto scrollbar-hide z-10">
                                 {items.map((item, idx) => (
                                     <button 
                                         key={idx}
-                                        onClick={() => setActiveItemIndex(idx)}
-                                        className={`py-4 px-2 border-b-2 transition-all text-left ${activeItemIndex === idx ? 'border-[#4649E5] text-[#17142B]' : 'border-transparent text-gray-400'}`}
+                                        onClick={() => scrollToSection(activeStep, idx)}
+                                        className={`py-4 px-2 border-b-2 transition-all text-left shrink-0 ${activeItemIndex === idx ? 'border-[#4649E5] text-[#131518]' : 'border-transparent text-gray-400'}`}
                                     >
                                         <p className="text-sm font-bold m-0">Item {idx + 1}</p>
-                                        <p className="text-[11px] font-medium m-0">{item.title || 'Unknown Item'}</p>
+                                        <p className="text-[11px] font-medium m-0 truncate max-w-[150px]">{item.title || 'New Item'}</p>
                                     </button>
                                 ))}
                             </div>
                         )}
 
-                        <div className="flex-1 overflow-y-auto p-8" onScroll={handleScroll}>
+                        <div 
+                            ref={contentRef}
+                            className="flex-1 overflow-y-auto slick-scrollbar scroll-smooth" 
+                            onScroll={handleScroll}
+                        >
                             {isCreating ? (
                                 <div className="h-full flex flex-col items-center justify-center">
                                     <div className="w-[500px] space-y-8 animate-in fade-in zoom-in duration-500">
@@ -569,203 +648,230 @@ export const DealWizardModal: React.FC<DealWizardModalProps> = ({
                                         </div>
                                     </div>
                                 </div>
-                            ) : activeStep === 'step1' ? (
-                                <div className="max-w-[800px] mx-auto space-y-8 pb-20 animate-in fade-in slide-in-from-bottom-4 duration-500">
-                                    {/* --- Customer Section --- */}
-                                    <div className="bg-white rounded-2xl border border-gray-100 shadow-sm overflow-hidden transition-all hover:shadow-md">
-                                        <div className="px-8 py-5 border-b border-gray-50 flex items-center justify-between">
-                                            <h3 className="text-xs font-bold text-[#17142B] uppercase tracking-wider m-0">Customer Profile</h3>
-                                            <div className="flex items-center gap-2 text-[#4649E5] text-[12px] font-bold cursor-pointer hover:opacity-70 transition-opacity">
-                                                <Plus size={14} /> Add Secondary
+                            ) : (
+                                <div className="max-w-[800px] mx-auto space-y-12 py-20 px-8">
+                                    {/* --- Section 1: Basic Info --- */}
+                                    <div 
+                                        id="section-step1" 
+                                        ref={(el) => { if (el) sectionRefs.current.set('step1', el); }}
+                                        className="space-y-8 scroll-mt-20"
+                                    >
+                                        <div className="px-2">
+                                            <h2 className="text-2xl font-bold text-[#131518]">Basic Information</h2>
+                                            <p className="text-sm text-gray-400">Initialize the core deal and customer details.</p>
+                                        </div>
+
+                                        {/* --- Customer Section --- */}
+                                        <div className="bg-white rounded-2xl border border-gray-100 shadow-sm overflow-hidden transition-all hover:shadow-md">
+                                            <div className="px-8 py-5 border-b border-gray-50 flex items-center justify-between">
+                                                <h3 className="text-xs font-bold text-[#131518] uppercase tracking-wider m-0">Customer Profile</h3>
+                                                <div className="flex items-center gap-2 text-[#4649E5] text-[12px] font-bold cursor-pointer hover:opacity-70 transition-opacity">
+                                                    <Plus size={14} /> Add Secondary
+                                                </div>
+                                            </div>
+                                            <div className="p-8 space-y-8">
+                                                <RadioGroup 
+                                                    direction="horizontal" 
+                                                    value={customerData.mode} 
+                                                    onChange={(val) => setCustomerData({...customerData, mode: val as any})}
+                                                    className="gap-8"
+                                                >
+                                                    <Radio value="Registered" label="Registered" />
+                                                    <Radio value="Guest" label="Guest" />
+                                                    <Radio value="Create New" label="Create New" />
+                                                </RadioGroup>
+
+                                                <div className="grid grid-cols-2 gap-6">
+                                                    <Input 
+                                                        label="Email Address" 
+                                                        placeholder="customer@example.com" 
+                                                        type="email" 
+                                                        value={customerData.email}
+                                                        onChange={(e) => setCustomerData({...customerData, email: e.target.value})}
+                                                        required
+                                                    />
+                                                    <Input 
+                                                        label="Phone Number" 
+                                                        placeholder="+43 660 123 456" 
+                                                        type="tel" 
+                                                        value={customerData.phone}
+                                                        onChange={(e) => setCustomerData({...customerData, phone: e.target.value})}
+                                                    />
+                                                </div>
                                             </div>
                                         </div>
-                                        <div className="p-8 space-y-8">
-                                            <RadioGroup 
-                                                direction="horizontal" 
-                                                value={customerData.mode} 
-                                                onChange={(val) => setCustomerData({...customerData, mode: val as any})}
-                                                className="gap-8"
-                                            >
-                                                <Radio value="Registered" label="Registered" />
-                                                <Radio value="Guest" label="Guest" />
-                                                <Radio value="Create New" label="Create New" />
-                                            </RadioGroup>
 
-                                            <div className="grid grid-cols-2 gap-6">
-                                                <Input 
-                                                    label="Email Address" 
-                                                    placeholder="customer@example.com" 
-                                                    type="email" 
-                                                    value={customerData.email}
-                                                    onChange={(e) => setCustomerData({...customerData, email: e.target.value})}
-                                                    required
-                                                />
-                                                <Input 
-                                                    label="Phone Number" 
-                                                    placeholder="+43 660 123 456" 
-                                                    type="tel" 
-                                                    value={customerData.phone}
-                                                    onChange={(e) => setCustomerData({...customerData, phone: e.target.value})}
-                                                />
+                                        {/* --- Items Section --- */}
+                                        <div className="space-y-6">
+                                            <div className="flex items-center justify-between px-2">
+                                                <h3 className="text-xs font-bold text-[#131518] uppercase tracking-wider m-0">Items & Valuation ({items.length})</h3>
                                             </div>
-                                        </div>
-                                    </div>
-
-                                    {/* --- Items Section --- */}
-                                    <div className="space-y-4">
-                                        <div className="flex items-center justify-between px-2">
-                                            <h3 className="text-xs font-bold text-[#17142B] uppercase tracking-wider m-0">Items & Valuation ({items.length})</h3>
-                                            <Button 
-                                                variant="secondary" 
-                                                size="small" 
-                                                onClick={addItem}
-                                                className="h-8 gap-2 font-bold bg-white border-gray-200"
-                                            >
-                                                <Plus size={14} /> Add Item
-                                            </Button>
-                                        </div>
-                                        
-                                        <div className="space-y-4">
-                                            {items.map((item, index) => (
-                                                <div key={item.id} className="bg-white rounded-2xl border border-gray-100 shadow-sm transition-all hover:shadow-md relative">
-                                                    <div className="px-6 py-4 bg-gray-50/30 border-b border-gray-50 flex items-center justify-between cursor-pointer rounded-t-2xl" onClick={() => toggleItem(item.id)}>
-                                                        <div className="flex items-center gap-4">
-                                                            <div className="w-8 h-8 rounded-full bg-white border border-gray-100 flex items-center justify-center text-[11px] font-bold text-gray-400">#{index + 1}</div>
-                                                            <div>
-                                                                <p className="text-[13px] font-bold text-[#17142B] m-0">{item.title || 'New Item'}</p>
-                                                                <p className="text-[10px] font-bold text-gray-400 m-0 uppercase tracking-tight">{item.category || 'No Category'}</p>
+                                            
+                                            <div className="space-y-4">
+                                                {items.map((item, index) => (
+                                                    <div key={item.id} className="bg-white rounded-2xl border border-gray-100 shadow-sm transition-all hover:shadow-md relative">
+                                                        <div className="px-6 py-4 bg-[#FBFCFC] border-b border-gray-50 flex items-center justify-between cursor-pointer rounded-t-2xl" onClick={() => toggleItem(item.id)}>
+                                                            <div className="flex items-center gap-4">
+                                                                <div className="w-8 h-8 rounded-full bg-white border border-gray-100 flex items-center justify-center text-[11px] font-bold text-gray-400">#{index + 1}</div>
+                                                                <div>
+                                                                    <p className="text-[13px] font-bold text-[#131518] m-0">{item.title || 'New Item'}</p>
+                                                                    <p className="text-[10px] font-bold text-gray-400 m-0 uppercase tracking-tight">{item.category || 'No Category'}</p>
+                                                                </div>
+                                                            </div>
+                                                            <div className="flex items-center gap-4">
+                                                                {!isCreated && (
+                                                                    <button 
+                                                                        onClick={(e) => { e.stopPropagation(); removeItem(item.id); }} 
+                                                                        className="p-1.5 text-gray-300 hover:text-red-500 hover:bg-red-50 rounded-lg transition-all"
+                                                                    >
+                                                                        <Trash2 size={14} />
+                                                                    </button>
+                                                                )}
+                                                                {item.expanded ? <ChevronUp size={16} className="text-gray-400" /> : <ChevronDown size={16} className="text-gray-400" />}
                                                             </div>
                                                         </div>
-                                                        <div className="flex items-center gap-4">
-                                                            <button 
-                                                                onClick={(e) => { e.stopPropagation(); removeItem(item.id); }} 
-                                                                className="p-1.5 text-gray-300 hover:text-red-500 hover:bg-red-50 rounded-lg transition-all"
-                                                            >
-                                                                <Trash2 size={14} />
-                                                            </button>
-                                                            {item.expanded ? <ChevronUp size={16} className="text-gray-400" /> : <ChevronDown size={16} className="text-gray-400" />}
-                                                        </div>
-                                                    </div>
-                                                    {item.expanded && (
-                                                        <div className="p-8 grid grid-cols-2 gap-6 animate-in fade-in duration-300">
-                                                            <Dropdown 
-                                                                label="Category" 
-                                                                options={[
-                                                                    { label: 'Car', value: 'Car' },
-                                                                    { label: 'Watches', value: 'Watches' },
-                                                                    { label: 'Electronics', value: 'General Electronics' },
-                                                                    { label: 'Luxury', value: 'Luxury' }
-                                                                ]}
-                                                                value={item.category}
-                                                                onChange={(val) => handleItemChange(item.id, 'category', val)}
-                                                            />
-                                                            {/* VIN Field for Car */}
-                                                            {item.category === 'Car' && (
-                                                                <Input 
-                                                                    label="VIN Number" 
-                                                                    placeholder="Enter 17-digit VIN..." 
-                                                                    value={item.vin}
-                                                                    maxLength={17}
-                                                                    onChange={(e) => handleItemChange(item.id, 'vin', e.target.value.toUpperCase())}
+                                                        {item.expanded && (
+                                                            <div className="p-8 grid grid-cols-2 gap-6 animate-in fade-in duration-300">
+                                                                <Dropdown 
+                                                                    label="Category" 
+                                                                    options={[
+                                                                        { label: 'Car', value: 'Car' },
+                                                                        { label: 'Watches', value: 'Watches' },
+                                                                        { label: 'Electronics', value: 'General Electronics' },
+                                                                        { label: 'Luxury', value: 'Luxury' }
+                                                                    ]}
+                                                                    value={item.category}
+                                                                    onChange={(val) => handleItemChange(item.id, 'category', val)}
+                                                                    disabled={isCreated}
                                                                 />
-                                                            )}
-
-                                                            {/* Standard Item Title for non-car items */}
-                                                            {item.category !== 'Car' && item.category !== '' && (
-                                                                <Input 
-                                                                    label="Item Title" 
-                                                                    placeholder={item.category === 'Smartphones' ? "e.g. iPhone 14 Pro" : "e.g. Rolex Datejust"} 
-                                                                    value={item.title}
-                                                                    onChange={(e) => handleItemChange(item.id, 'title', e.target.value)}
-                                                                />
-                                                            )}
-
-                                                            {/* Indicata Search Simulation for Car */}
-                                                            {item.category === 'Car' && item.indicataStatus === 'searching' && (
-                                                                <div className="col-span-2 p-4 bg-blue-50 border border-blue-100 rounded-xl flex items-center gap-3 animate-pulse">
-                                                                    <Loader2 size={18} className="text-[#4649E5] animate-spin" />
-                                                                    <span className="text-[13px] font-bold text-[#4649E5]">Searching Indicata records...</span>
-                                                                </div>
-                                                            )}
-
-                                                            {item.category === 'Car' && item.indicataStatus === 'not_found' && (
-                                                                <>
-                                                                    <div className="col-span-2 p-4 bg-red-50 border border-red-100 rounded-xl flex items-center gap-3 animate-in fade-in zoom-in duration-300">
-                                                                        <AlertCircle size={18} className="text-[#E11D48]" />
-                                                                        <span className="text-[13px] font-bold text-[#E11D48]">No records found on Indicata. Please enter details manually.</span>
-                                                                    </div>
-                                                                    
-                                                                    {/* Dynamic Car Fields */}
-                                                                    <Dropdown 
-                                                                        label="Vehicle Make" 
-                                                                        options={Object.keys(CAR_DATA).map(m => ({ label: m, value: m }))}
-                                                                        value={item.make}
-                                                                        onChange={(val) => handleItemChange(item.id, 'make', val)}
-                                                                    />
-                                                                    <Dropdown 
-                                                                        label="Vehicle Model" 
-                                                                        options={(item.make ? CAR_DATA[item.make] || [] : []).map(m => ({ label: m, value: m }))}
-                                                                        value={item.model}
-                                                                        onChange={(val) => handleItemChange(item.id, 'model', val)}
-                                                                        disabled={!item.make}
-                                                                    />
+                                                                {/* VIN Field for Car */}
+                                                                {item.category === 'Car' && (
                                                                     <Input 
-                                                                        label="Vehicle Year" 
-                                                                        placeholder="2022" 
-                                                                        type="number"
-                                                                        value={item.year}
-                                                                        onChange={(e) => handleItemChange(item.id, 'year', e.target.value)}
+                                                                        label="VIN Number" 
+                                                                        placeholder="Enter 17-digit VIN..." 
+                                                                        value={item.vin}
+                                                                        maxLength={17}
+                                                                        onChange={(e) => handleItemChange(item.id, 'vin', e.target.value.toUpperCase())}
+                                                                        disabled={isCreated}
                                                                     />
-                                                                    <div className="relative">
-                                                                        <Input 
-                                                                            label="Odometer" 
-                                                                            placeholder="45000" 
-                                                                            type="number"
-                                                                            value={item.odometer}
-                                                                            onChange={(e) => handleItemChange(item.id, 'odometer', e.target.value)}
-                                                                        />
-                                                                        <span className="absolute right-4 bottom-2.5 text-[11px] font-bold text-gray-400">KM</span>
-                                                                    </div>
-                                                                    <div className="col-span-2">
-                                                                        <Input 
-                                                                            label="Suggested Market Value" 
-                                                                            placeholder="15000" 
-                                                                            type="number"
-                                                                            value={item.suggestedValue}
-                                                                            onChange={(e) => handleItemChange(item.id, 'suggestedValue', e.target.value)}
-                                                                        />
-                                                                    </div>
+                                                                )}
 
+                                                                {/* Standard Item Title for non-car items */}
+                                                                {item.category !== 'Car' && item.category !== '' && (
                                                                     <Input 
-                                                                        label="Item Name (Generated)" 
-                                                                        placeholder="Make + Model + Year" 
+                                                                        label="Item Title" 
+                                                                        placeholder={item.category === 'Smartphones' ? "e.g. iPhone 14 Pro" : "e.g. Rolex Datejust"} 
                                                                         value={item.title}
-                                                                        readOnly
-                                                                        className="col-span-2 bg-gray-50/50"
+                                                                        onChange={(e) => handleItemChange(item.id, 'title', e.target.value)}
+                                                                        disabled={isCreated}
                                                                     />
-                                                                </>
-                                                            )}
-                                                            <Dropdown 
-                                                                label="Condition" 
-                                                                options={[
-                                                                    { label: 'New', value: 'New' },
-                                                                    { label: 'Used', value: 'Used' },
-                                                                    { label: 'Worn', value: 'Worn' }
-                                                                ]}
-                                                                value={item.condition}
-                                                                onChange={(val) => handleItemChange(item.id, 'condition', val)}
-                                                            />
-                                                            <Input 
-                                                                label="Requested Payout (€)" 
-                                                                placeholder="0,00" 
-                                                                type="number" 
-                                                                value={item.requestedPayout}
-                                                                onChange={(e) => handleItemChange(item.id, 'requestedPayout', e.target.value)}
-                                                            />
+                                                                )}
+
+                                                                {/* Indicata Search Simulation for Car */}
+                                                                {item.category === 'Car' && item.indicataStatus === 'searching' && (
+                                                                    <div className="col-span-2 p-4 bg-blue-50 border border-blue-100 rounded-xl flex items-center gap-3 animate-pulse">
+                                                                        <Loader2 size={18} className="text-[#4649E5] animate-spin" />
+                                                                        <span className="text-[13px] font-bold text-[#4649E5]">Searching Indicata records...</span>
+                                                                    </div>
+                                                                )}
+
+                                                                {item.category === 'Car' && item.indicataStatus === 'not_found' && (
+                                                                    <>
+                                                                        <div className="col-span-2 p-4 bg-red-50 border border-red-100 rounded-xl flex items-center gap-3 animate-in fade-in zoom-in duration-300">
+                                                                            <AlertCircle size={18} className="text-[#E11D48]" />
+                                                                            <span className="text-[13px] font-bold text-[#E11D48]">No records found on Indicata. Please enter details manually.</span>
+                                                                        </div>
+                                                                        
+                                                                        {/* Dynamic Car Fields */}
+                                                                        <Dropdown 
+                                                                            label="Vehicle Make" 
+                                                                            options={Object.keys(CAR_DATA).map(m => ({ label: m, value: m }))}
+                                                                            value={item.make}
+                                                                            onChange={(val) => handleItemChange(item.id, 'make', val)}
+                                                                            disabled={isCreated}
+                                                                        />
+                                                                        <Dropdown 
+                                                                            label="Vehicle Model" 
+                                                                            options={(item.make ? CAR_DATA[item.make] || [] : []).map(m => ({ label: m, value: m }))}
+                                                                            value={item.model}
+                                                                            onChange={(val) => handleItemChange(item.id, 'model', val)}
+                                                                            disabled={!item.make || isCreated}
+                                                                        />
+                                                                        <Input 
+                                                                            label="Vehicle Year" 
+                                                                            placeholder="2022" 
+                                                                            type="number"
+                                                                            value={item.year}
+                                                                            onChange={(e) => handleItemChange(item.id, 'year', e.target.value)}
+                                                                            disabled={isCreated}
+                                                                        />
+                                                                        <div className="relative">
+                                                                            <Input 
+                                                                                label="Odometer" 
+                                                                                placeholder="45000" 
+                                                                                type="number"
+                                                                                value={item.odometer}
+                                                                                onChange={(e) => handleItemChange(item.id, 'odometer', e.target.value)}
+                                                                                disabled={isCreated}
+                                                                            />
+                                                                            <span className="absolute right-4 bottom-2.5 text-[11px] font-bold text-gray-400">KM</span>
+                                                                        </div>
+                                                                        <div className="col-span-2">
+                                                                            <Input 
+                                                                                label="Suggested Market Value" 
+                                                                                placeholder="15000" 
+                                                                                type="number"
+                                                                                value={item.suggestedValue}
+                                                                                onChange={(e) => handleItemChange(item.id, 'suggestedValue', e.target.value)}
+                                                                                disabled={isCreated}
+                                                                            />
+                                                                        </div>
+
+                                                                        <Input 
+                                                                            label="Item Name (Generated)" 
+                                                                            placeholder="Make + Model + Year" 
+                                                                            value={item.title}
+                                                                            readOnly
+                                                                            className="col-span-2 bg-gray-50/50"
+                                                                        />
+                                                                    </>
+                                                                )}
+                                                                <Dropdown 
+                                                                    label="Condition" 
+                                                                    options={[
+                                                                        { label: 'New', value: 'New' },
+                                                                        { label: 'Used', value: 'Used' },
+                                                                        { label: 'Worn', value: 'Worn' }
+                                                                    ]}
+                                                                    value={item.condition}
+                                                                    onChange={(val) => handleItemChange(item.id, 'condition', val)}
+                                                                    disabled={isCreated}
+                                                                />
+                                                                <Input 
+                                                                    label="Requested Payout (€)" 
+                                                                    placeholder="0,00" 
+                                                                    type="number" 
+                                                                    value={item.requestedPayout}
+                                                                    onChange={(e) => handleItemChange(item.id, 'requestedPayout', e.target.value)}
+                                                                    disabled={isCreated}
+                                                                />
+                                                            </div>
+                                                        )}
+                                                    </div>
+                                                ))}
+
+                                                {!isCreated && (
+                                                    <button 
+                                                        onClick={addItem}
+                                                        className="w-full py-6 border-2 border-dashed border-gray-100 rounded-2xl flex flex-col items-center justify-center gap-2 text-gray-400 hover:border-[#4649E5] hover:text-[#4649E5] hover:bg-blue-50/50 transition-all group"
+                                                    >
+                                                        <div className="w-10 h-10 rounded-full bg-gray-50 flex items-center justify-center group-hover:bg-white group-hover:shadow-sm transition-all">
+                                                            <Plus size={20} />
                                                         </div>
-                                                    )}
-                                                </div>
-                                            ))}
+                                                        <span className="text-sm font-bold uppercase tracking-widest">Add Another Item</span>
+                                                    </button>
+                                                )}
+                                            </div>
                                         </div>
                                     </div>
 
@@ -830,41 +936,34 @@ export const DealWizardModal: React.FC<DealWizardModalProps> = ({
                                             rows={4}
                                         />
                                     </div>
-                                </div>
-                            ) : (
-                                <div className="max-w-[800px] mx-auto w-full h-full pb-20">
-                                    <div className="bg-white border border-gray-100 rounded-2xl shadow-sm p-10 min-h-fit flex flex-col animate-in fade-in slide-in-from-bottom-4 duration-500">
-                                        <h3 className="text-2xl font-bold text-[#17142B] mb-12 flex items-center justify-between">
-                                            <span>
-                                                {steps.find(s => s.id === activeStep)?.title}
-                                            </span>
-                                            <span className="text-[10px] font-extrabold uppercase tracking-widest text-gray-400 bg-gray-50 px-3 py-1 rounded-full border border-gray-100">
-                                                Wizard: {items[activeItemIndex]?.category || 'Standard'} Flow
-                                            </span>
-                                        </h3>
-                                        
-                                        <div className="flex-1">
-                                            {renderStepFields()}
-                                        </div>
 
-                                        {/* Next Item/Step Preview Footer */}
-                                        {activeStep !== 'step1' && (activeStep !== 'step7' || activeItemIndex < items.length - 1) && (
-                                            <div className="mt-20 pt-12 border-t border-gray-100 flex flex-col items-center">
-                                                <p className="text-[10px] font-extrabold uppercase tracking-widest text-gray-300 mb-4">
-                                                    {activeItemIndex < items.length - 1 ? 'Scroll for next item' : 'Keep scrolling for next step'}
-                                                </p>
-                                                <div className="flex items-center gap-4 opacity-40">
-                                                    <div className="w-10 h-[1px] bg-gray-200" />
-                                                    <span className="text-sm font-bold text-gray-400">
-                                                        {activeItemIndex < items.length - 1 
-                                                            ? `Item ${activeItemIndex + 2}: ${items[activeItemIndex + 1]?.title || 'Unknown'}` 
-                                                            : `Next Step: ${steps[Math.max(0, steps.findIndex(s => s.id === activeStep)) + 1]?.title || 'Finish'}`}
-                                                    </span>
-                                                    <div className="w-10 h-[1px] bg-gray-200" />
-                                                </div>
+                                    {/* --- Dynamic Phases Sections --- */}
+                                    {creationFinalized && steps.slice(1).map((step) => (
+                                        <div 
+                                            key={step.id} 
+                                            id={`section-${step.id}`}
+                                            ref={(el) => { if (el) sectionRefs.current.set(step.id, el); }}
+                                            className="space-y-10 scroll-mt-20"
+                                        >
+                                            <div className="px-2">
+                                                <h2 className="text-2xl font-bold text-[#131518]">{step.title}</h2>
+                                                <p className="text-sm text-gray-400">Complete the {step.title.toLowerCase()} process for all deal items.</p>
                                             </div>
-                                        )}
-                                    </div>
+
+                                            <div className="space-y-8">
+                                                {items.map((_, idx) => (
+                                                    <div 
+                                                        key={`${step.id}-${idx}`}
+                                                        id={`section-${step.id}-${idx}`}
+                                                        ref={(el) => { if (el) sectionRefs.current.set(`${step.id}-${idx}`, el); }}
+                                                        className="scroll-mt-40"
+                                                    >
+                                                        {renderStepItemFields(step.id, idx)}
+                                                    </div>
+                                                ))}
+                                            </div>
+                                        </div>
+                                    ))}
                                 </div>
                             )}
                         </div>
@@ -872,15 +971,17 @@ export const DealWizardModal: React.FC<DealWizardModalProps> = ({
 
                     {/* Right Sidebar */}
                     <div className={`bg-white border-l border-gray-100 flex flex-col shrink-0 transition-all duration-300 overflow-hidden ${creationFinalized || activeStep === 'step1' ? 'w-[380px] opacity-100' : 'w-0 opacity-0'}`}>
+                        {/* Summary removed as it's now in the header */}
+
                         {activeStep === 'step1' ? (
                             <div className="flex-1 flex flex-col overflow-hidden">
-                                <div className="border-b border-gray-100 px-6 py-5 bg-gray-50/50">
+                                <div className="border-b border-gray-100 px-6 py-5 bg-[#FBFCFC]">
                                     <div className="flex items-center gap-2 m-0">
                                         <Package size={18} className="text-[#4649E5]" />
-                                        <h3 className="text-sm font-bold text-[#17142B] uppercase tracking-wider m-0">Deal Summary</h3>
+                                        <h3 className="text-sm font-bold text-[#131518] uppercase tracking-wider m-0">Deal Summary</h3>
                                     </div>
                                 </div>
-                                <div className="flex-1 overflow-y-auto p-6 space-y-6">
+                                <div className="flex-1 overflow-y-auto p-6 space-y-6 slick-scrollbar">
                                     <div className="space-y-4">
                                         <div className="flex justify-between items-center text-[13px] font-bold text-gray-400 uppercase tracking-widest">
                                             <span>Itemized Breakdown</span>
@@ -889,11 +990,11 @@ export const DealWizardModal: React.FC<DealWizardModalProps> = ({
                                             <div key={item.id} className="p-4 rounded-xl border border-gray-100 bg-gray-50/30 space-y-2">
                                                 <div className="flex justify-between items-start">
                                                     <div>
-                                                        <p className="text-[13px] font-bold text-[#17142B] m-0">{item.title || `Item ${idx + 1}`}</p>
+                                                        <p className="text-[13px] font-bold text-[#131518] m-0">{item.title || `Item ${idx + 1}`}</p>
                                                         <p className="text-[11px] font-medium text-gray-400 m-0 uppercase tracking-tight">{item.category || 'Select Category'}</p>
                                                     </div>
                                                     <div className="text-right">
-                                                        <p className="text-[13px] font-bold text-[#17142B] m-0">€ {parseFloat(item.requestedPayout || '0').toLocaleString('de-DE', { minimumFractionDigits: 2 })}</p>
+                                                        <p className="text-[13px] font-bold text-[#131518] m-0">€ {parseFloat(item.requestedPayout || '0').toLocaleString('de-DE', { minimumFractionDigits: 2 })}</p>
                                                         <p className="text-[10px] font-bold text-gray-400 m-0 uppercase">Requested</p>
                                                     </div>
                                                 </div>
@@ -904,14 +1005,14 @@ export const DealWizardModal: React.FC<DealWizardModalProps> = ({
                                     <div className="pt-6 border-t border-gray-100 space-y-4">
                                         <div className="flex justify-between items-center">
                                             <span className="text-sm font-medium text-gray-500">Subtotal</span>
-                                            <span className="text-sm font-bold text-[#17142B]">€ {formattedTotal}</span>
+                                            <span className="text-sm font-bold text-[#131518]">€ {formattedTotal}</span>
                                         </div>
                                         <div className="flex justify-between items-center">
                                             <span className="text-sm font-medium text-gray-500">Service Fees (est.)</span>
                                             <span className="text-sm font-bold text-gray-400">€ 0,00</span>
                                         </div>
                                         <div className="flex justify-between items-center pt-4 border-t border-dashed border-gray-100">
-                                            <span className="text-base font-bold text-[#17142B]">Total Payout</span>
+                                            <span className="text-base font-bold text-[#131518]">Total Payout</span>
                                             <span className="text-xl font-extrabold text-[#4649E5]">€ {formattedTotal}</span>
                                         </div>
                                     </div>
@@ -923,27 +1024,62 @@ export const DealWizardModal: React.FC<DealWizardModalProps> = ({
                                 </div>
                             </div>
                         ) : (
-                            <>
-                                <div className="flex border-b border-gray-100 px-4">
-                                    <button className={`flex-1 py-4 text-sm font-semibold flex items-center justify-center gap-2 border-b-2 ${sidebarTab === 'comments' ? 'border-gray-900 text-gray-900' : 'border-transparent text-gray-400'}`} onClick={() => setSidebarTab('comments')}>
-                                        <MessageSquare size={18} /> Comments
+                            <div className="flex-1 flex flex-col overflow-hidden">
+                                <div className="flex border-b border-gray-100 px-4 shrink-0 bg-white">
+                                    <button className={`flex-1 py-4 text-[11px] uppercase tracking-widest font-extrabold flex items-center justify-center gap-2 border-b-2 transition-colors ${sidebarTab === 'comments' ? 'border-[#4649E5] text-[#131518]' : 'border-transparent text-gray-300 hover:text-gray-400'}`} onClick={() => setSidebarTab('comments')}>
+                                        <MessageSquare size={16} /> Comments
                                     </button>
-                                    <button className={`flex-1 py-4 text-sm font-semibold flex items-center justify-center gap-2 border-b-2 ${sidebarTab === 'timeline' ? 'border-gray-900 text-gray-900' : 'border-transparent text-gray-400'}`} onClick={() => setSidebarTab('timeline')}>
-                                        <History size={18} /> Timeline
+                                    <button className={`flex-1 py-4 text-[11px] uppercase tracking-widest font-extrabold flex items-center justify-center gap-2 border-b-2 transition-colors ${sidebarTab === 'timeline' ? 'border-[#4649E5] text-[#131518]' : 'border-transparent text-gray-300 hover:text-gray-400'}`} onClick={() => setSidebarTab('timeline')}>
+                                        <History size={16} /> Timeline
                                     </button>
                                 </div>
-                                <div className="flex-1 overflow-y-auto p-6 space-y-8">
-                                    <CommentItem initials="TW" name="Thomas Weber" time="09:15" text="Initial assessment complete. Waiting for documents." />
-                                    <CommentItem initials="MS" name="Maria Schmidt" time="Yesterday" text="Customer requested cash payout." />
+                                <div className="flex-1 overflow-y-auto p-6 space-y-8 slick-scrollbar">
+                                    {sidebarTab === 'comments' ? (
+                                        <>
+                                            <CommentItem initials="TW" name="Thomas Weber" time="09:15" text="Initial assessment complete. Waiting for documents." />
+                                            <CommentItem initials="MS" name="Maria Schmidt" time="Yesterday" text="Customer requested cash payout." />
+                                            <CommentItem initials="AK" name="Admin Kernel" time="2 days ago" text="New item added to the deal." />
+                                        </>
+                                    ) : (
+                                        <div className="space-y-6">
+                                            <TimelineItem 
+                                                icon={<Package size={14} />} 
+                                                title="Deal Created" 
+                                                user="Thomas Weber" 
+                                                time="10 May, 14:20" 
+                                                color="blue"
+                                            />
+                                            <TimelineItem 
+                                                icon={<History size={14} />} 
+                                                title="Item Added: Rolex Datejust" 
+                                                user="Maria Schmidt" 
+                                                time="10 May, 14:45" 
+                                                color="indigo"
+                                            />
+                                            <TimelineItem 
+                                                icon={<AlertCircle size={14} />} 
+                                                title="Condition Verified: Used" 
+                                                user="Thomas Weber" 
+                                                time="Today, 09:15" 
+                                                color="green"
+                                            />
+                                            <TimelineItem 
+                                                icon={<Plus size={14} />} 
+                                                title="Payout Updated: € 1.200,00" 
+                                                user="Admin Kernel" 
+                                                time="Today, 10:30" 
+                                                color="purple"
+                                            />
+                                        </div>
+                                    )}
                                 </div>
-                                <div className="p-6 border-t border-gray-50 bg-gray-50/30">
-                                    <textarea placeholder="Add a comment..." className="w-full h-20 p-3 border border-gray-200 rounded-xl text-sm bg-white focus:outline-none resize-none mb-3" />
-                                    <Button variant="secondary" className="w-full justify-center font-bold">Post Comment</Button>
+                                <div className="p-6 border-t border-gray-100 bg-gray-50/30">
+                                    <textarea placeholder="Add a comment..." className="w-full h-24 p-4 border border-gray-200 rounded-xl text-sm bg-white focus:outline-none focus:border-[#4649E5] focus:ring-1 focus:ring-[#4649E5] transition-all resize-none mb-4 shadow-sm" />
+                                    <Button variant="secondary" className="w-full justify-center font-bold h-11 bg-white border-gray-200 hover:border-[#4649E5] hover:text-[#4649E5]">Post Comment</Button>
                                 </div>
-                            </>
+                            </div>
                         )}
                     </div>
-
                 </div>
             </div>
         </div>
@@ -979,7 +1115,7 @@ const DetailItem = ({ label, value, isBadge }: any) => (
         {isBadge ? (
             <div className="inline-flex px-2 py-1 rounded-md bg-blue-50 border border-blue-100 text-[#4649E5] text-[11px] font-bold w-fit leading-none">{value}</div>
         ) : (
-            <span className="text-[14px] font-bold text-[#17142B]">{value}</span>
+            <span className="text-[14px] font-bold text-[#131518]">{value}</span>
         )}
     </div>
 );
@@ -989,10 +1125,38 @@ const CommentItem = ({ initials, name, time, text }: any) => (
         <div className="w-10 h-10 rounded-full bg-gray-100 flex items-center justify-center text-xs font-bold text-gray-500 shrink-0">{initials}</div>
         <div className="flex-1 min-w-0">
             <div className="flex items-center justify-between mb-1">
-                <span className="text-sm font-bold text-[#17142B]">{name}</span>
+                <span className="text-sm font-bold text-[#131518]">{name}</span>
                 <span className="text-[11px] text-gray-400 font-medium">{time}</span>
             </div>
             <p className="text-sm text-gray-500 leading-relaxed m-0">{text}</p>
         </div>
     </div>
 );
+
+const TimelineItem = ({ icon, title, user, time, color }: any) => {
+    const colorMap: Record<string, string> = {
+        blue: 'bg-blue-500',
+        indigo: 'bg-indigo-500',
+        green: 'bg-emerald-500',
+        purple: 'bg-purple-500',
+        amber: 'bg-amber-500'
+    };
+    
+    return (
+        <div className="relative pl-8 pb-8 last:pb-0">
+            <div className="absolute left-0 top-0 h-full w-[1px] bg-gray-100 last:hidden" style={{ left: '15px' }} />
+            <div className={`absolute left-0 top-0 w-8 h-8 rounded-full border-4 border-white flex items-center justify-center text-white shadow-sm z-10 ${colorMap[color] || 'bg-gray-400'}`} style={{ 
+                left: '-1px'
+            }}>
+                {icon}
+            </div>
+            <div className="pt-1">
+                <div className="flex justify-between items-start mb-1">
+                    <h4 className="text-sm font-bold text-[#131518] leading-tight">{title}</h4>
+                    <span className="text-[10px] font-bold text-gray-400 uppercase tracking-tight shrink-0 ml-4">{time}</span>
+                </div>
+                <p className="text-[11px] font-medium text-gray-400">by <span className="text-[#4649E5]">{user}</span></p>
+            </div>
+        </div>
+    );
+};

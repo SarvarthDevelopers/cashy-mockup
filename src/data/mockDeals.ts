@@ -258,7 +258,7 @@ function getItemsForCategory(businessArea: Deal['businessArea']): { items: DealI
 
 const SAMPLE_ROWS: Deal[] = [
   {
-    dealId: 'DEAL-000001',
+    dealId: '000001',
     mode: 'deal',
     status: 'PAYED_AND_STORED',
     company: 'CASHY_AUT',
@@ -285,7 +285,7 @@ const SAMPLE_ROWS: Deal[] = [
     notes: 'VIN pending verification',
   },
   {
-    dealId: 'DEAL-000023',
+    dealId: '000023',
     mode: 'deal',
     status: 'BOOKED',
     company: 'CASHY_DE',
@@ -312,7 +312,7 @@ const SAMPLE_ROWS: Deal[] = [
     notes: 'Photos attached',
   },
   {
-    dealId: 'DEAL-000077',
+    dealId: '000077',
     mode: 'custom_deal',
     status: 'REVIEWING',
     company: 'CASHY_DE',
@@ -347,22 +347,22 @@ const SAMPLE_ROWS: Deal[] = [
 
 export function generateMockDeals(count = 100): Deal[] {
   const deals: Deal[] = [...SAMPLE_ROWS];
-  const usedIds = new Set(['DEAL-000001', 'DEAL-000023', 'DEAL-000077']);
+  const usedIds = new Set(['000001', '000023', '000077']);
 
   // Indices for distribution tracking
   let customDealAccepted = 0;
-  let archivedCount = 1; // DEAL-000077 area counts
+  let archivedCount = 1; // 000077 area counts
 
-  let highValueCarCount = 1; // DEAL-000001 already high-value
-  let mixedMultiItemCount = 1; // DEAL-000077 already multi-item mixed
+  let highValueCarCount = 1; // 000001 already high-value
+  let mixedMultiItemCount = 1; // 000077 already multi-item mixed
   let duplicateNameIdx = 0;
 
   for (let i = deals.length; i < count; i++) {
     let dealNum = randomInt(2, 99999);
-    let dealId = `DEAL-${String(dealNum).padStart(6, '0')}`;
+    let dealId = `${String(dealNum).padStart(6, '0')}`;
     while (usedIds.has(dealId)) {
       dealNum = randomInt(2, 99999);
-      dealId = `DEAL-${String(dealNum).padStart(6, '0')}`;
+      dealId = `${String(dealNum).padStart(6, '0')}`;
     }
     usedIds.add(dealId);
 

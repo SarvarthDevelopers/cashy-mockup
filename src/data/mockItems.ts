@@ -18,6 +18,6 @@ export const MOCK_ITEMS: Item[] = [
     status: 'IN_STOCK',
     marketValue: 999,
     shop: 'Vienna Central',
-    dealId: 'DEAL-000001'
+    dealId: '000001'
   }
 ];

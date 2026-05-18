@@ -16,8 +16,8 @@ export function Header({ onCreateDealClick, currentPage }: HeaderProps) {
   const getActivePage = () => {
     if (currentPage) return currentPage;
     if (location.pathname === '/wizard-builder') return 'wizard-builder';
-    if (location.pathname === '/' || location.pathname === '/deals') return 'deals';
-    return 'wizard-builder';
+    if (location.pathname === '/deals') return 'deals';
+    return '';
   };
   const activePage = getActivePage();
 

@@ -439,6 +439,126 @@ export const DealWizardModal: React.FC<DealWizardModalProps> = ({
         if (currentItemIdx !== activeItemIndex) setActiveItemIndex(currentItemIdx);
     };
 
+    const renderActionButtons = (mode: 'desktop' | 'mobile') => {
+        const isMobile = mode === 'mobile';
+        const containerClasses = isMobile ? "flex gap-2 w-full" : "hidden md:flex gap-2";
+        
+        return (
+            <div className={containerClasses}>
+                {!isCreated && (
+                    <div className={`${isMobile ? 'flex flex-1' : 'flex'} items-center gap-3 mr-2`}>
+                        {!isMobile && <span className="text-[11px] font-bold uppercase tracking-wider text-gray-400">Deal Type</span>}
+                        <Tabs 
+                            variant="segment" 
+                            value={dealMode} 
+                            onValueChange={(val) => setDealMode(val as 'Pawn' | 'Purchase')}
+                            className="h-10 w-full"
+                        >
+                            <Tab value="Pawn">Pawn</Tab>
+                            <Tab value="Purchase">Purchase</Tab>
+                        </Tabs>
+                    </div>
+                )}
+
+                {creationFinalized ? (
+                    <>
+                        <button className={`${isMobile ? 'hidden' : 'flex'} w-10 h-10 items-center justify-center rounded-lg border border-gray-200 hover:bg-gray-50 transition-colors`} style={{ color: 'var(--brand-500)' }}>
+                            <div className="w-5 h-5 border-2 rounded-[4px] relative" style={{ borderColor: 'var(--brand-500)' }}>
+                                <div className="absolute top-0.5 left-0.5 right-0.5 h-0.5" style={{ backgroundColor: 'var(--brand-500)' }} />
+                            </div>
+                        </button>
+                        {isCreated ? (
+                            <>
+                                <Button variant="secondary" size="small" className={`${isMobile ? 'flex-1' : ''} font-bold`}>Payback</Button>
+                                <Button variant="secondary" size="small" className={`${isMobile ? 'flex-1' : ''} font-bold`}>Extend</Button>
+                                <Button variant="primary" size="small" className={`${isMobile ? 'flex-1' : ''} font-bold`} onClick={onClose}>Close</Button>
+                            </>
+                        ) : (
+                            <>
+                                <Button variant="secondary" size="small" className={`${isMobile ? 'flex-1' : ''} font-bold`} onClick={onClose}>Cancel</Button>
+                                <Button 
+                                    variant="primary" 
+                                    size="small" 
+                                    className={`${isMobile ? 'flex-[2]' : ''} font-bold`} 
+                                    onClick={() => setActiveStep('step2')}
+                                >
+                                    Create {dealMode} Deal
+                                </Button>
+                            </>
+                        )}
+                    </>
+                ) : (
+                    <>
+                        {!isCreating && <Button variant="secondary" size="small" className={`${isMobile ? 'flex-1' : ''} h-10 px-6 font-bold border-gray-200`} style={{ color: 'var(--brand-500)' }} onClick={onClose}>Cancel</Button>}
+                        <Button 
+                            variant="primary" 
+                            size="small" 
+                            isLoading={isCreating}
+                            disabled={isCreating}
+                            className={`${isMobile ? 'flex-[2]' : ''} h-10 px-8 border-none font-bold`}
+                            style={{ backgroundColor: 'var(--lilac-600)' }}
+                            onClick={handleCreateDeal}
+                        >
+                            {isCreating ? 'Creating...' : `Create ${dealMode} Deal`}
+                        </Button>
+                    </>
+                )}
+            </div>
+        );
+    };
+
+    const renderDealSummary = () => (
+        <div className="flex-1 flex flex-col overflow-hidden">
+            <div className="border-b border-gray-100 px-6 py-5 bg-[#FBFCFC]">
+                <div className="flex items-center gap-2 m-0">
+                    <Package size={18} className="text-[#4649E5]" />
+                    <h3 className="text-sm font-bold text-[#131518] uppercase tracking-wider m-0">Deal Summary</h3>
+                </div>
+            </div>
+            <div className="flex-1 overflow-y-auto p-6 space-y-6 slick-scrollbar">
+                <div className="space-y-4">
+                    <div className="flex justify-between items-center text-[13px] font-bold text-gray-400 uppercase tracking-widest">
+                        <span>Itemized Breakdown</span>
+                    </div>
+                    {items.map((item, idx) => (
+                        <div key={item.id} className="p-4 rounded-xl border border-gray-100 bg-gray-50/30 space-y-2">
+                            <div className="flex justify-between items-start">
+                                <div>
+                                    <p className="text-[13px] font-bold text-[#131518] m-0">{item.title || `Item ${idx + 1}`}</p>
+                                    <p className="text-[11px] font-medium text-gray-400 m-0 uppercase tracking-tight">{item.category || 'Select Category'}</p>
+                                </div>
+                                <div className="text-right">
+                                    <p className="text-[13px] font-bold text-[#131518] m-0">€ {parseFloat(item.requestedPayout || '0').toLocaleString('de-DE', { minimumFractionDigits: 2 })}</p>
+                                    <p className="text-[10px] font-bold text-gray-400 m-0 uppercase">Requested</p>
+                                </div>
+                            </div>
+                        </div>
+                    ))}
+                </div>
+
+                <div className="pt-6 border-t border-gray-100 space-y-4">
+                    <div className="flex justify-between items-center">
+                        <span className="text-sm font-medium text-gray-500">Subtotal</span>
+                        <span className="text-sm font-bold text-[#131518]">€ {formattedTotal}</span>
+                    </div>
+                    <div className="flex justify-between items-center">
+                        <span className="text-sm font-medium text-gray-500">Service Fees (est.)</span>
+                        <span className="text-sm font-bold text-gray-400">€ 0,00</span>
+                    </div>
+                    <div className="flex justify-between items-center pt-4 border-t border-dashed border-gray-100">
+                        <span className="text-base font-bold text-[#131518]">Total Payout</span>
+                        <span className="text-xl font-extrabold text-[#4649E5]">€ {formattedTotal}</span>
+                    </div>
+                </div>
+            </div>
+            <div className="p-6 border-t border-gray-50 bg-gray-50/30">
+                <p className="text-[11px] text-gray-400 font-medium leading-relaxed m-0 text-center">
+                    Calculations are based on the current item values and conditions. Final payout may vary after verification.
+                </p>
+            </div>
+        </div>
+    );
+
     return (
         <div className="fixed inset-0 z-[200] flex items-center justify-center bg-[#131518]/60 backdrop-blur-sm animate-in fade-in duration-200 p-0 md:p-8" onClick={(e: React.MouseEvent) => { e.stopPropagation(); onClose(); }}>
             <div 
@@ -549,66 +669,7 @@ export const DealWizardModal: React.FC<DealWizardModalProps> = ({
                     </div>
 
                     <div className="flex items-center gap-3">
-                        <div className="flex gap-2">
-                            {!isCreated && (
-                                <div className="flex items-center gap-3 mr-2">
-                                    <span className="text-[11px] font-bold uppercase tracking-wider text-gray-400">Deal Type</span>
-                                    <Tabs 
-                                        variant="segment" 
-                                        value={dealMode} 
-                                        onValueChange={(val) => setDealMode(val as 'Pawn' | 'Purchase')}
-                                        className="h-10"
-                                    >
-                                        <Tab value="Pawn">Pawn</Tab>
-                                        <Tab value="Purchase">Purchase</Tab>
-                                    </Tabs>
-                                </div>
-                            )}
-
-                            {creationFinalized ? (
-                                <>
-                                    <button className="w-10 h-10 flex items-center justify-center rounded-lg border border-gray-200 hover:bg-gray-50 transition-colors" style={{ color: 'var(--brand-500)' }}>
-                                        <div className="w-5 h-5 border-2 rounded-[4px] relative" style={{ borderColor: 'var(--brand-500)' }}>
-                                            <div className="absolute top-0.5 left-0.5 right-0.5 h-0.5" style={{ backgroundColor: 'var(--brand-500)' }} />
-                                        </div>
-                                    </button>
-                                    {isCreated ? (
-                                        <>
-                                            <Button variant="secondary" size="small" className="font-bold">Payback</Button>
-                                            <Button variant="secondary" size="small" className="font-bold">Extend</Button>
-                                            <Button variant="primary" size="small" className="font-bold" onClick={onClose}>Close</Button>
-                                        </>
-                                    ) : (
-                                        <>
-                                            <Button variant="secondary" size="small" className="font-bold" onClick={onClose}>Cancel</Button>
-                                            <Button 
-                                                variant="primary" 
-                                                size="small" 
-                                                className="font-bold" 
-                                                onClick={() => setActiveStep('step2')}
-                                            >
-                                                Create {dealMode} Deal
-                                            </Button>
-                                        </>
-                                    )}
-                                </>
-                            ) : (
-                                <>
-                                    {!isCreating && <Button variant="secondary" size="small" className="h-10 px-6 font-bold border-gray-200" style={{ color: 'var(--brand-500)' }} onClick={onClose}>Cancel</Button>}
-                                    <Button 
-                                        variant="primary" 
-                                        size="small" 
-                                        isLoading={isCreating}
-                                        disabled={isCreating}
-                                        className={`h-10 px-8 border-none font-bold`}
-                                        style={{ backgroundColor: 'var(--lilac-600)' }}
-                                        onClick={handleCreateDeal}
-                                    >
-                                        {isCreating ? 'Creating...' : `Create ${dealMode} Deal`}
-                                    </Button>
-                                </>
-                            )}
-                        </div>
+                        {renderActionButtons('desktop')}
                     </div>
                 </div>
 
@@ -659,7 +720,7 @@ export const DealWizardModal: React.FC<DealWizardModalProps> = ({
                                     </div>
                                 </div>
                             ) : (
-                                <div className="max-w-[800px] mx-auto space-y-12 py-20 px-8">
+                                <div className="max-w-[800px] mx-auto space-y-12 py-8 md:py-20 px-4 md:px-8 pb-32 md:pb-20">
                                     {/* --- Section 1: Basic Info --- */}
                                     <div 
                                         id="section-step1" 
@@ -673,25 +734,25 @@ export const DealWizardModal: React.FC<DealWizardModalProps> = ({
 
                                         {/* --- Customer Section --- */}
                                         <div className="bg-white rounded-2xl border border-gray-100 shadow-sm overflow-hidden transition-all hover:shadow-md">
-                                            <div className="px-8 py-5 border-b border-gray-50 flex items-center justify-between">
+                                            <div className="px-6 md:px-8 py-4 md:py-5 border-b border-gray-50 flex items-center justify-between">
                                                 <h3 className="text-xs font-bold text-[#131518] uppercase tracking-wider m-0">Customer Profile</h3>
                                                 <div className="flex items-center gap-2 text-[#4649E5] text-[12px] font-bold cursor-pointer hover:opacity-70 transition-opacity">
                                                     <Plus size={14} /> Add Secondary
                                                 </div>
                                             </div>
-                                            <div className="p-8 space-y-8">
+                                            <div className="p-6 md:p-8 space-y-6 md:space-y-8">
                                                 <RadioGroup 
                                                     direction="horizontal" 
                                                     value={customerData.mode} 
                                                     onChange={(val) => setCustomerData({...customerData, mode: val as any})}
-                                                    className="gap-8"
+                                                    className="gap-4 md:gap-8 flex-wrap"
                                                 >
                                                     <Radio value="Registered" label="Registered" />
                                                     <Radio value="Guest" label="Guest" />
                                                     <Radio value="Create New" label="Create New" />
                                                 </RadioGroup>
 
-                                                <div className="grid grid-cols-2 gap-6">
+                                                <div className="grid grid-cols-1 md:grid-cols-2 gap-6">
                                                     <Input 
                                                         label="Email Address" 
                                                         placeholder="customer@example.com" 
@@ -741,7 +802,7 @@ export const DealWizardModal: React.FC<DealWizardModalProps> = ({
                                                             </div>
                                                         </div>
                                                         {item.expanded && (
-                                                            <div className="p-8 grid grid-cols-2 gap-6 animate-in fade-in duration-300">
+                                                            <div className="p-6 md:p-8 grid grid-cols-1 md:grid-cols-2 gap-6 animate-in fade-in duration-300">
                                                                 <Dropdown 
                                                                     label="Category" 
                                                                     options={[
@@ -886,10 +947,10 @@ export const DealWizardModal: React.FC<DealWizardModalProps> = ({
                                     </div>
 
                                     {/* --- Deal Metadata & Transport --- */}
-                                    <div className="grid grid-cols-2 gap-6">
-                                        <div className="bg-white rounded-2xl border border-gray-100 shadow-sm p-10">
+                                    <div className="grid grid-cols-1 md:grid-cols-2 gap-6">
+                                        <div className="bg-white rounded-2xl border border-gray-100 shadow-sm p-6 md:p-10">
                                             <h3 className="text-[10px] uppercase font-extrabold tracking-widest text-gray-400 mb-8">Deal Metadata</h3>
-                                            <div className="grid grid-cols-2 gap-8">
+                                            <div className="grid grid-cols-1 md:grid-cols-2 gap-6 md:gap-8">
                                                 <Dropdown 
                                                     label="Company" 
                                                     options={[{ label: 'CASHY_AUT', value: 'CASHY_AUT' }, { label: 'CASHY_GER', value: 'CASHY_GER' }]}
@@ -917,9 +978,9 @@ export const DealWizardModal: React.FC<DealWizardModalProps> = ({
                                             </div>
                                         </div>
 
-                                        <div className="bg-white rounded-2xl border border-gray-100 shadow-sm p-10">
+                                        <div className="bg-white rounded-2xl border border-gray-100 shadow-sm p-6 md:p-10">
                                             <h3 className="text-[10px] uppercase font-extrabold tracking-widest text-gray-400 mb-8">Transport & Payout</h3>
-                                            <div className="grid grid-cols-2 gap-8">
+                                            <div className="grid grid-cols-1 md:grid-cols-2 gap-6 md:gap-8">
                                                 <Dropdown 
                                                     label="Transport Method" 
                                                     options={[{ label: 'Pickup: SHOP', value: 'Pickup: SHOP' }, { label: 'Courier', value: 'Courier' }]}
@@ -939,13 +1000,20 @@ export const DealWizardModal: React.FC<DealWizardModalProps> = ({
                                     </div>
 
                                     {/* --- Additional Notes --- */}
-                                    <div className="bg-white rounded-2xl border border-gray-100 shadow-sm p-10">
+                                    <div className="bg-white rounded-2xl border border-gray-100 shadow-sm p-6 md:p-10">
                                         <h3 className="text-[10px] uppercase font-extrabold tracking-widest text-gray-400 mb-8">Additional Notes</h3>
                                         <TextArea 
                                             placeholder="e.g. Special handling for car keys, documents needed..." 
                                             rows={4}
                                         />
                                     </div>
+
+                                    {/* Mobile Deal Summary */}
+                                    {activeStep === 'step1' && (
+                                        <div className="lg:hidden mt-8 bg-white rounded-2xl border border-gray-100 shadow-sm overflow-hidden">
+                                            {renderDealSummary()}
+                                        </div>
+                                    )}
 
                                     {/* --- Dynamic Phases Sections --- */}
                                     {creationFinalized && steps.slice(1).map((step) => (
@@ -977,62 +1045,19 @@ export const DealWizardModal: React.FC<DealWizardModalProps> = ({
                                 </div>
                             )}
                         </div>
+
+                        {/* Sticky Mobile Action Bar */}
+                        <div className="md:hidden fixed bottom-0 left-0 right-0 p-4 bg-white border-t border-gray-100 shadow-[0_-4px_24px_rgba(0,0,0,0.05)] z-50">
+                            {renderActionButtons('mobile')}
+                        </div>
                     </div>
 
                     {/* Right Sidebar */}
-                    <div className={`bg-white border-l border-gray-100 flex flex-col shrink-0 transition-all duration-300 overflow-hidden ${creationFinalized || activeStep === 'step1' ? 'w-[380px] opacity-100' : 'w-0 opacity-0'}`}>
+                    <div className={`hidden lg:flex bg-white border-l border-gray-100 flex-col shrink-0 transition-all duration-300 overflow-hidden ${creationFinalized || activeStep === 'step1' ? 'w-[380px] opacity-100' : 'w-0 opacity-0'}`}>
                         {/* Summary removed as it's now in the header */}
 
                         {activeStep === 'step1' ? (
-                            <div className="flex-1 flex flex-col overflow-hidden">
-                                <div className="border-b border-gray-100 px-6 py-5 bg-[#FBFCFC]">
-                                    <div className="flex items-center gap-2 m-0">
-                                        <Package size={18} className="text-[#4649E5]" />
-                                        <h3 className="text-sm font-bold text-[#131518] uppercase tracking-wider m-0">Deal Summary</h3>
-                                    </div>
-                                </div>
-                                <div className="flex-1 overflow-y-auto p-6 space-y-6 slick-scrollbar">
-                                    <div className="space-y-4">
-                                        <div className="flex justify-between items-center text-[13px] font-bold text-gray-400 uppercase tracking-widest">
-                                            <span>Itemized Breakdown</span>
-                                        </div>
-                                        {items.map((item, idx) => (
-                                            <div key={item.id} className="p-4 rounded-xl border border-gray-100 bg-gray-50/30 space-y-2">
-                                                <div className="flex justify-between items-start">
-                                                    <div>
-                                                        <p className="text-[13px] font-bold text-[#131518] m-0">{item.title || `Item ${idx + 1}`}</p>
-                                                        <p className="text-[11px] font-medium text-gray-400 m-0 uppercase tracking-tight">{item.category || 'Select Category'}</p>
-                                                    </div>
-                                                    <div className="text-right">
-                                                        <p className="text-[13px] font-bold text-[#131518] m-0">€ {parseFloat(item.requestedPayout || '0').toLocaleString('de-DE', { minimumFractionDigits: 2 })}</p>
-                                                        <p className="text-[10px] font-bold text-gray-400 m-0 uppercase">Requested</p>
-                                                    </div>
-                                                </div>
-                                            </div>
-                                        ))}
-                                    </div>
-
-                                    <div className="pt-6 border-t border-gray-100 space-y-4">
-                                        <div className="flex justify-between items-center">
-                                            <span className="text-sm font-medium text-gray-500">Subtotal</span>
-                                            <span className="text-sm font-bold text-[#131518]">€ {formattedTotal}</span>
-                                        </div>
-                                        <div className="flex justify-between items-center">
-                                            <span className="text-sm font-medium text-gray-500">Service Fees (est.)</span>
-                                            <span className="text-sm font-bold text-gray-400">€ 0,00</span>
-                                        </div>
-                                        <div className="flex justify-between items-center pt-4 border-t border-dashed border-gray-100">
-                                            <span className="text-base font-bold text-[#131518]">Total Payout</span>
-                                            <span className="text-xl font-extrabold text-[#4649E5]">€ {formattedTotal}</span>
-                                        </div>
-                                    </div>
-                                </div>
-                                <div className="p-6 border-t border-gray-50 bg-gray-50/30">
-                                    <p className="text-[11px] text-gray-400 font-medium leading-relaxed m-0 text-center">
-                                        Calculations are based on the current item values and conditions. Final payout may vary after verification.
-                                    </p>
-                                </div>
-                            </div>
+                            renderDealSummary()
                         ) : (
                             <div className="flex-1 flex flex-col overflow-hidden">
                                 <div className="flex border-b border-gray-100 px-4 shrink-0 bg-white">

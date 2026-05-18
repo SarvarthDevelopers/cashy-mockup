@@ -110,7 +110,6 @@ export const LandingPage: React.FC<LandingPageProps> = ({ onSelectDeal, dealsByC
                                                 dueDate={deal.dueDate || deal.appointmentDate || 'No Date'}
                                                 priority={isHighPriority}
                                                 priorityType={isHighPriority ? "Highest" : "Medium"}
-                                                shopLabelColor="Green"
                                                 shopLabelCountry={deal.countryCode}
                                                 shopLabelBranch={deal.branch}
                                                 items={deal.items}

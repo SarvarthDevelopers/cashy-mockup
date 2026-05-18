@@ -283,6 +283,16 @@ export const DealWizardModal: React.FC<DealWizardModalProps> = ({
         }
     }, [isOpen]);
 
+    useEffect(() => {
+        const handleKeyDown = (e: KeyboardEvent) => {
+            if (e.key === 'Escape') onClose();
+        };
+        if (isOpen) {
+            window.addEventListener('keydown', handleKeyDown);
+        }
+        return () => window.removeEventListener('keydown', handleKeyDown);
+    }, [isOpen, onClose]);
+
     if (!isOpen) return null;
 
     const getWizardForCategory = (category: string) => {
@@ -341,7 +351,7 @@ export const DealWizardModal: React.FC<DealWizardModalProps> = ({
                                 field.type === 'url' 
                                     ? 'col-span-2' 
                                     : ''
-                            }
+                             }
                         >
                             {field.type === 'checkbox' ? (
                                 <Checkbox 
@@ -430,14 +440,14 @@ export const DealWizardModal: React.FC<DealWizardModalProps> = ({
     };
 
     return (
-        <div className="fixed inset-0 z-[200] flex items-center justify-center bg-[#131518]/60 backdrop-blur-sm animate-in fade-in duration-200 p-4 md:p-8" onClick={(e: React.MouseEvent) => { e.stopPropagation(); onClose(); }}>
+        <div className="fixed inset-0 z-[200] flex items-center justify-center bg-[#131518]/60 backdrop-blur-sm animate-in fade-in duration-200 p-0 md:p-8" onClick={(e: React.MouseEvent) => { e.stopPropagation(); onClose(); }}>
             <div 
-                className="w-full max-w-[1400px] h-[95vh] flex flex-col bg-white overflow-hidden rounded-[32px] shadow-[0_32px_64px_-16px_rgba(0,0,0,0.3)] border border-white/20" 
+                className="w-full md:max-w-[1400px] h-full md:h-[95vh] flex flex-col bg-white overflow-hidden rounded-none md:rounded-[32px] shadow-[0_32px_64px_-16px_rgba(0,0,0,0.3)] border-none md:border md:border-white/20 animate-in slide-in-from-bottom duration-300" 
                 onClick={(e: React.MouseEvent) => e.stopPropagation()}
             >
                 
                 {/* --- HEADER --- */}
-                <div className="border-b border-gray-100 shrink-0 bg-white" style={{ padding: 'var(--space-600) var(--space-800)' }}>
+                <div className="border-b border-gray-100 shrink-0 bg-white" style={{ padding: 'var(--space-400) var(--space-800)' }}>
                     <div className="flex items-center justify-between">
                         {!creationFinalized ? (
                             <div className="flex items-center gap-4">
@@ -454,7 +464,7 @@ export const DealWizardModal: React.FC<DealWizardModalProps> = ({
                         ) : (
                             <div className="flex items-center" style={{ gap: 'var(--space-600)' }}>
                                 <div className="flex items-center gap-3">
-                                    <ShopLabel color="Green" country={dealData?.countryCode || 'AT'} branch={dealData?.branch || 'Wien'} />
+                                    <ShopLabel country={dealData?.countryCode || 'AT'} branch={dealData?.branch || 'Wien'} />
                                     <div>
                                         <h2 className="text-xl font-bold m-0 leading-tight" style={{ color: 'var(--brand-500)' }}>{`${customerData.firstName} ${customerData.lastName}`}</h2>
                                         <p className="text-sm font-medium m-0" style={{ color: 'var(--gray-400)' }}>Primary Customer</p>
@@ -512,7 +522,7 @@ export const DealWizardModal: React.FC<DealWizardModalProps> = ({
                 </div>
 
                 {/* --- STEPPER & ACTIONS --- */}
-                <div className="border-b border-gray-100 shrink-0 bg-white flex items-center justify-between" style={{ padding: 'var(--space-400) var(--space-800)' }}>
+                <div className="border-b border-gray-100 shrink-0 bg-white flex items-center justify-between" style={{ padding: 'var(--space-300) var(--space-800)' }}>
                     <div className="flex-1 relative overflow-hidden group">
                         <Tabs 
                             variant="stepper" 

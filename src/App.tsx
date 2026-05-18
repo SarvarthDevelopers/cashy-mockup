@@ -2,6 +2,7 @@ import { useState } from 'react';
 import { Routes, Route } from 'react-router';
 import { LandingPage } from './pages/LandingPage';
 import { WizardBuilderPage } from './pages/AdminBuilderPage';
+import { DealsPage } from './pages/DealsPage';
 import { Header } from './components/Header/Header';
 import { DealWizardModal } from './components/DealWizardModal/DealWizardModal';
 import { ToastProvider } from './components/Toast/ToastContext';
@@ -63,6 +64,7 @@ function App() {
         <main className="flex-1 overflow-hidden relative">
           <Routes>
             <Route path="/" element={<LandingPage onSelectDeal={handleSelectDeal} dealsByColumn={dealsByColumn} />} />
+            <Route path="/deals" element={<DealsPage onSelectDeal={handleSelectDeal} onNewDealClick={handleCreateDeal} />} />
             <Route path="/wizard-builder" element={<WizardBuilderPage />} />
             <Route path="/wizard-builder/builder/:id" element={<WizardBuilderPage />} />
             <Route path="*" element={<LandingPage onSelectDeal={handleSelectDeal} dealsByColumn={dealsByColumn} />} />

@@ -24,7 +24,7 @@ export function Header({ onCreateDealClick, currentPage }: HeaderProps) {
   const handleNavClick = (page: string) => {
     switch (page) {
       case 'deals':
-        navigate('/');
+        navigate('/deals');
         break;
       case 'wizard-builder':
         navigate('/wizard-builder');

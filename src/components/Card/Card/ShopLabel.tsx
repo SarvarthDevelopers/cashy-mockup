@@ -7,13 +7,26 @@ export type ShopLabelProps = {
   country?: string;
 };
 
+const COLORS: Array<"Green" | "Lime" | "Rose" | "Pink" | "Blue" | "Turquoise"> = [
+  "Green", "Lime", "Rose", "Pink", "Blue", "Turquoise"
+];
+
+const getColorForBranch = (branch: string) => {
+  let hash = 0;
+  for (let i = 0; i < branch.length; i++) {
+    hash = branch.charCodeAt(i) + ((hash << 5) - hash);
+  }
+  return COLORS[Math.abs(hash) % COLORS.length];
+};
+
 export const ShopLabel = ({
   className = "",
   branch = "Wien",
-  color = "Green",
+  color,
   country = "AT",
 }: ShopLabelProps) => {
-  const colorClass = `shop-label--${color.toLowerCase()}`;
+  const actualColor = color || getColorForBranch(branch);
+  const colorClass = `shop-label--${actualColor.toLowerCase()}`;
 
   return (
     <div className={`shop-label ${colorClass} ${className}`}>

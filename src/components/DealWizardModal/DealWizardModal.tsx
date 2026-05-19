@@ -599,6 +599,49 @@ export const DealWizardModal: React.FC<DealWizardModalProps> = ({
                     </button>
                 </div>
 
+                {/* --- MOBILE STEP BAR (black, sticky context strip) --- */}
+                {creationFinalized && (
+                    <div className="md:hidden shrink-0 bg-[#131518] flex items-center justify-between px-4" style={{ height: '36px' }}>
+                        <div className="flex items-center gap-2 min-w-0">
+                            <span className="text-[9px] font-extrabold uppercase tracking-widest text-white/40 shrink-0">Step</span>
+                            <span className="text-[11px] font-extrabold text-white tabular-nums shrink-0">
+                                {steps.findIndex(s => s.id === activeStep) + 1}
+                                <span className="text-white/30 mx-1">/</span>
+                                {steps.length}
+                            </span>
+                            <span className="text-white/20 mx-2 shrink-0">—</span>
+                            <span className="text-[11px] font-extrabold uppercase tracking-wide text-white truncate">
+                                {steps.find(s => s.id === activeStep)?.title}
+                            </span>
+                        </div>
+                        <button
+                            onClick={() => setIsLeftSidebarOpen(true)}
+                            className="text-[9px] font-bold uppercase tracking-widest text-white/30 hover:text-white/70 transition-colors shrink-0 ml-3"
+                        >
+                            All Steps ›
+                        </button>
+                    </div>
+                )}
+
+                {/* --- MOBILE ITEM BAR (white, horizontally scrollable) --- */}
+                {creationFinalized && activeStep !== 'step1' && (
+                    <div className="md:hidden shrink-0 bg-[var(--background-primary)] border-b border-[var(--border-subtlest)] flex items-center gap-2 px-3 overflow-x-auto scrollbar-hide" style={{ height: '44px' }}>
+                        {items.map((item, idx) => (
+                            <button
+                                key={idx}
+                                onClick={() => scrollToSection(activeStep, idx)}
+                                className={`shrink-0 h-7 px-3 rounded-full text-[10px] font-bold uppercase tracking-tight transition-all whitespace-nowrap border ${
+                                    activeItemIndex === idx
+                                        ? 'bg-[#131518] text-white border-[#131518]'
+                                        : 'bg-transparent text-[var(--text-subtlest)] border-[var(--border-subtlest)] hover:bg-[var(--background-hover)]'
+                                }`}
+                            >
+                                {idx + 1} · {item.title || 'New Item'}
+                            </button>
+                        ))}
+                    </div>
+                )}
+
                 {/* --- DESKTOP HEADER --- */}
                 <div className="hidden md:block border-b border-gray-100 shrink-0 bg-white" style={{ padding: 'var(--space-400) var(--space-800)' }}>
                     <div className="flex items-center justify-between">
@@ -710,7 +753,7 @@ export const DealWizardModal: React.FC<DealWizardModalProps> = ({
                 <div className="flex-1 flex overflow-hidden">
                     <div className="flex-1 flex flex-col min-w-0 bg-[#FBFCFC] relative">
                         {creationFinalized && activeStep !== 'step1' && (
-                            <div className="px-8 bg-white border-b border-gray-100 flex gap-8 shrink-0 overflow-x-auto scrollbar-hide z-10">
+                            <div className="px-8 bg-white border-b border-gray-100 hidden md:flex gap-8 shrink-0 overflow-x-auto scrollbar-hide z-10">
                                 {items.map((item, idx) => (
                                     <button 
                                         key={idx}

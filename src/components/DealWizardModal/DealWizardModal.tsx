@@ -578,7 +578,7 @@ export const DealWizardModal: React.FC<DealWizardModalProps> = ({
                     </button>
                     <div className="flex flex-col items-center">
                         <span className="text-[10px] font-extrabold uppercase tracking-widest text-[var(--text-placeholder)]">
-                            {creationFinalized ? 'Active Deal' : 'New Deal'}
+                            {creationFinalized ? `DEAL #${dealId}` : 'New Deal'}
                         </span>
                         <span className="text-sm font-bold text-[var(--text-primary)] truncate max-w-[180px]">
                             {creationFinalized ? `${customerData.firstName} ${customerData.lastName}` : 'New Deal Creation'}

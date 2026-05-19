@@ -566,6 +566,20 @@
   --code-font-weight-regular: var(--body-font-weight-regular);
 }
 
+/* --- Mobile Responsive Typography Scale --- */
+@media (max-width: 767px) {
+  :root {
+    --scale-01: 12px;
+    --scale-02: 14px;
+    --scale-03: 16px;
+    --scale-04: 18px;
+    --scale-05: 22px;
+    --scale-06: 26px;
+    --scale-07: 34px;
+    --scale-08: 42px;
+  }
+}
+
 /* --- Dark Theme --- */
 /* Usage: <html data-theme="dark"> or system preference */
 

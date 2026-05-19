@@ -316,7 +316,7 @@ export const DealWizardModal: React.FC<DealWizardModalProps> = ({
 
         if (fields.length === 0) {
             return (
-                <div className="h-full flex flex-col items-center justify-center text-center p-12 bg-white rounded-2xl border border-dashed border-gray-100 min-h-[400px]">
+                <div className="h-full flex flex-col items-center justify-center text-center p-6 md:p-12 bg-[var(--background-primary)] rounded-2xl border border-dashed border-[var(--border-subtlest)] min-h-[400px]">
                     <div className="w-16 h-16 bg-gray-50 rounded-full flex items-center justify-center mb-6">
                         <Package className="text-gray-200" size={24} />
                     </div>
@@ -329,7 +329,7 @@ export const DealWizardModal: React.FC<DealWizardModalProps> = ({
         }
 
         return (
-            <div className="bg-white rounded-2xl border border-gray-100 shadow-sm p-10">
+            <div className="bg-[var(--background-primary)] rounded-2xl border border-[var(--border-subtlest)] shadow-sm p-6 md:p-10">
                 <div className="flex items-center justify-between mb-8">
                     <h3 className="text-[10px] uppercase font-extrabold tracking-widest text-gray-400">
                         {steps.find(s => s.id === stepId)?.title} Details — {item?.title || 'Unknown Item'}
@@ -341,7 +341,7 @@ export const DealWizardModal: React.FC<DealWizardModalProps> = ({
                     )}
                 </div>
                 
-                <div className="grid grid-cols-2 gap-x-8 gap-y-10">
+                <div className="grid grid-cols-1 md:grid-cols-2 gap-x-8 gap-y-10">
                     {fields.map((field: any) => (
                         <div 
                             key={field.id} 
@@ -351,8 +351,8 @@ export const DealWizardModal: React.FC<DealWizardModalProps> = ({
                                 field.type === 'file' || 
                                 field.type === 'image' || 
                                 field.type === 'url' 
-                                    ? 'col-span-2' 
-                                    : ''
+                                    ? 'col-span-1 md:col-span-2' 
+                                    : 'col-span-1'
                              }
                         >
                             {field.type === 'checkbox' ? (

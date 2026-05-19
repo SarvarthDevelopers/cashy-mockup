@@ -1194,46 +1194,128 @@ export const DealWizardModal: React.FC<DealWizardModalProps> = ({
                         </div>
                         <div className="flex-1 overflow-y-auto p-5 space-y-6 slick-scrollbar bg-[var(--background-primary)]">
                             {/* Payout Summary */}
-                            <div className="bg-[var(--lilac-600)]/5 border border-[var(--lilac-600)]/10 rounded-2xl p-4 text-center">
+                            <div className="bg-[var(--lilac-600)]/5 border border-[var(--lilac-600)]/10 rounded-xl p-3 flex items-center justify-between">
                                 <span className="text-[10px] font-extrabold uppercase tracking-widest text-[var(--text-placeholder)]">
                                     {creationFinalized ? 'Total Payout' : 'Est. Payout'}
                                 </span>
-                                <div className="text-3xl font-extrabold text-[var(--lilac-600)] mt-1">
+                                <div className="text-xl font-extrabold text-[var(--lilac-600)]">
                                     € {formattedTotal}
                                 </div>
                             </div>
 
                             {/* Location & Customer Info */}
-                            <div className="space-y-4">
-                                <h4 className="text-xs font-bold uppercase tracking-widest text-[var(--text-placeholder)] m-0">Details</h4>
-                                <div className="bg-[var(--background-secondary)] rounded-2xl p-4 space-y-4 border border-[var(--border-subtlest)]">
-                                    <div className="flex justify-between items-center">
-                                        <span className="text-xs font-medium text-[var(--text-subtlest)]">Location</span>
-                                        <ShopLabel country={dealData?.countryCode || 'AT'} branch={dealData?.branch || 'Wien'} />
-                                    </div>
-                                    <div className="flex justify-between items-start">
-                                        <span className="text-xs font-medium text-[var(--text-subtlest)] mt-0.5">Customer</span>
-                                        <div className="text-right">
-                                            <span className="text-xs font-bold text-[var(--text-primary)] block">
-                                                {customerData.firstName ? `${customerData.firstName} ${customerData.lastName}` : 'Guest'}
-                                            </span>
-                                            <span className="text-[10px] font-medium text-[var(--text-placeholder)] block uppercase">Primary Customer</span>
-                                        </div>
-                                    </div>
-                                    <div className="flex justify-between items-center">
-                                        <span className="text-xs font-medium text-[var(--text-subtlest)]">Deal ID</span>
-                                        <span className="text-xs font-mono font-bold text-[var(--text-subtle)] bg-[var(--background-primary)] px-2 py-0.5 rounded border border-[var(--border-subtlest)]">{dealId}</span>
-                                    </div>
-                                    <div className="flex justify-between items-center">
-                                        <span className="text-xs font-medium text-[var(--text-subtlest)]">Duration</span>
-                                        <span className="text-xs font-bold text-[var(--text-subtle)]">{metadata.duration} Days</span>
-                                    </div>
-                                    <div className="flex justify-between items-center">
-                                        <span className="text-xs font-medium text-[var(--text-subtlest)]">Total Items</span>
-                                        <span className="text-xs font-bold text-[var(--text-subtle)]">{items.length}</span>
+                            <div className="bg-[var(--background-secondary)] rounded-2xl p-4 space-y-4 border border-[var(--border-subtlest)]">
+                                <div className="flex justify-between items-center">
+                                    <span className="text-xs font-medium text-[var(--text-subtlest)]">Location</span>
+                                    <ShopLabel country={dealData?.countryCode || 'AT'} branch={dealData?.branch || 'Wien'} />
+                                </div>
+                                <div className="flex justify-between items-start">
+                                    <span className="text-xs font-medium text-[var(--text-subtlest)] mt-0.5">Customer</span>
+                                    <div className="text-right">
+                                        <span className="text-xs font-bold text-[var(--text-primary)] block">
+                                            {customerData.firstName ? `${customerData.firstName} ${customerData.lastName}` : 'Guest'}
+                                        </span>
+                                        <span className="text-[10px] font-medium text-[var(--text-placeholder)] block uppercase">Primary Customer</span>
                                     </div>
                                 </div>
+                                <div className="flex justify-between items-center">
+                                    <span className="text-xs font-medium text-[var(--text-subtlest)]">Deal ID</span>
+                                    <span className="text-xs font-mono font-bold text-[var(--text-subtle)] bg-[var(--background-primary)] px-2 py-0.5 rounded border border-[var(--border-subtlest)]">{dealId}</span>
+                                </div>
+                                <div className="flex justify-between items-center">
+                                    <span className="text-xs font-medium text-[var(--text-subtlest)]">Duration</span>
+                                    <span className="text-xs font-bold text-[var(--text-subtle)]">{metadata.duration} Days</span>
+                                </div>
+                                <div className="flex justify-between items-center">
+                                    <span className="text-xs font-medium text-[var(--text-subtlest)]">Total Items</span>
+                                    <span className="text-xs font-bold text-[var(--text-subtle)]">{items.length}</span>
+                                </div>
                             </div>
+
+                            {/* Comments & Timeline Tabs */}
+                            {activeStep !== 'step1' && (
+                                <div className="border-t border-[var(--border-subtlest)] pt-6 space-y-4">
+                                    {/* Tabs */}
+                                    <div className="flex border-b border-[var(--border-subtlest)] bg-[var(--background-primary)] shrink-0">
+                                        <button 
+                                            className={`flex-1 py-3 text-[10px] uppercase tracking-widest font-extrabold flex items-center justify-center gap-2 border-b-2 transition-colors border-none bg-transparent cursor-pointer ${
+                                                sidebarTab === 'comments' 
+                                                    ? 'border-[#4649E5] text-[var(--text-primary)]' 
+                                                    : 'border-transparent text-[var(--text-placeholder)] hover:text-[var(--text-subtle)]'
+                                            }`} 
+                                            onClick={() => setSidebarTab('comments')}
+                                        >
+                                            <MessageSquare size={14} /> Comments
+                                        </button>
+                                        <button 
+                                            className={`flex-1 py-3 text-[10px] uppercase tracking-widest font-extrabold flex items-center justify-center gap-2 border-b-2 transition-colors border-none bg-transparent cursor-pointer ${
+                                                sidebarTab === 'timeline' 
+                                                    ? 'border-[#4649E5] text-[var(--text-primary)]' 
+                                                    : 'border-transparent text-[var(--text-placeholder)] hover:text-[var(--text-subtle)]'
+                                            }`} 
+                                            onClick={() => setSidebarTab('timeline')}
+                                        >
+                                            <History size={14} /> Timeline
+                                        </button>
+                                    </div>
+
+                                    {/* Tab Content */}
+                                    <div className="py-2">
+                                        {sidebarTab === 'comments' ? (
+                                            <div className="space-y-6">
+                                                <div className="space-y-6">
+                                                    <CommentItem initials="TW" name="Thomas Weber" time="09:15" text="Initial assessment complete. Waiting for documents." />
+                                                    <CommentItem initials="MS" name="Maria Schmidt" time="Yesterday" text="Customer requested cash payout." />
+                                                    <CommentItem initials="AK" name="Admin Kernel" time="2 days ago" text="New item added to the deal." />
+                                                </div>
+                                                <div className="pt-4 border-t border-[var(--border-subtlest)]">
+                                                    <textarea 
+                                                        placeholder="Add a comment..." 
+                                                        className="w-full h-20 p-3 border border-[var(--border-subtlest)] rounded-xl text-xs bg-[var(--background-secondary)] text-[var(--text-primary)] focus:outline-none focus:border-[#4649E5] focus:ring-1 focus:ring-[#4649E5] transition-all resize-none mb-3 shadow-sm" 
+                                                    />
+                                                    <Button 
+                                                        variant="secondary" 
+                                                        className="w-full justify-center font-bold h-9 text-xs bg-[var(--background-primary)] border-[var(--border-subtlest)] hover:border-[#4649E5] hover:text-[#4649E5]"
+                                                    >
+                                                        Post Comment
+                                                    </Button>
+                                                </div>
+                                            </div>
+                                        ) : (
+                                            <div className="space-y-6">
+                                                <TimelineItem 
+                                                    icon={<Package size={12} />} 
+                                                    title="Deal Created" 
+                                                    user="Thomas Weber" 
+                                                    time="10 May, 14:20" 
+                                                    color="blue"
+                                                />
+                                                <TimelineItem 
+                                                    icon={<History size={12} />} 
+                                                    title="Item Added: Rolex Datejust" 
+                                                    user="Maria Schmidt" 
+                                                    time="10 May, 14:45" 
+                                                    color="indigo"
+                                                />
+                                                <TimelineItem 
+                                                    icon={<AlertCircle size={12} />} 
+                                                    title="Condition Verified: Used" 
+                                                    user="Thomas Weber" 
+                                                    time="Today, 09:15" 
+                                                    color="green"
+                                                />
+                                                <TimelineItem 
+                                                    icon={<Plus size={12} />} 
+                                                    title="Payout Updated: € 1.200,00" 
+                                                    user="Admin Kernel" 
+                                                    time="Today, 10:30" 
+                                                    color="purple"
+                                                />
+                                            </div>
+                                        )}
+                                    </div>
+                                </div>
+                            )}
                         </div>
                     </div>
                 </div>

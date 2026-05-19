@@ -511,50 +511,50 @@ export const DealWizardModal: React.FC<DealWizardModalProps> = ({
 
     const renderDealSummary = () => (
         <div className="flex-1 flex flex-col overflow-hidden">
-            <div className="border-b border-gray-100 px-6 py-5 bg-[#FBFCFC]">
+            <div className="border-b border-[var(--border-subtlest)] px-6 py-5 bg-[var(--background-secondary)]">
                 <div className="flex items-center gap-2 m-0">
-                    <Package size={18} className="text-[#4649E5]" />
-                    <h3 className="text-sm font-bold text-[#131518] uppercase tracking-wider m-0">Deal Summary</h3>
+                    <Package size={18} className="text-[var(--lilac-600)]" />
+                    <h3 className="text-sm font-bold text-[var(--text-primary)] uppercase tracking-wider m-0">Deal Summary</h3>
                 </div>
             </div>
             <div className="flex-1 overflow-y-auto p-6 space-y-6 slick-scrollbar">
                 <div className="space-y-4">
-                    <div className="flex justify-between items-center text-[13px] font-bold text-gray-400 uppercase tracking-widest">
+                    <div className="flex justify-between items-center text-[13px] font-bold text-[var(--text-placeholder)] uppercase tracking-widest">
                         <span>Itemized Breakdown</span>
                     </div>
                     {items.map((item, idx) => (
-                        <div key={item.id} className="p-4 rounded-xl border border-gray-100 bg-gray-50/30 space-y-2">
+                        <div key={item.id} className="p-4 rounded-xl border border-[var(--border-subtlest)] bg-[var(--background-secondary)]/30 space-y-2">
                             <div className="flex justify-between items-start">
                                 <div>
-                                    <p className="text-[13px] font-bold text-[#131518] m-0">{item.title || `Item ${idx + 1}`}</p>
-                                    <p className="text-[11px] font-medium text-gray-400 m-0 uppercase tracking-tight">{item.category || 'Select Category'}</p>
+                                    <p className="text-[13px] font-bold text-[var(--text-primary)] m-0">{item.title || `Item ${idx + 1}`}</p>
+                                    <p className="text-[11px] font-medium text-[var(--text-placeholder)] m-0 uppercase tracking-tight">{item.category || 'Select Category'}</p>
                                 </div>
                                 <div className="text-right">
-                                    <p className="text-[13px] font-bold text-[#131518] m-0">€ {parseFloat(item.requestedPayout || '0').toLocaleString('de-DE', { minimumFractionDigits: 2 })}</p>
-                                    <p className="text-[10px] font-bold text-gray-400 m-0 uppercase">Requested</p>
+                                    <p className="text-[13px] font-bold text-[var(--text-primary)] m-0">€ {parseFloat(item.requestedPayout || '0').toLocaleString('de-DE', { minimumFractionDigits: 2 })}</p>
+                                    <p className="text-[10px] font-bold text-[var(--text-placeholder)] m-0 uppercase">Requested</p>
                                 </div>
                             </div>
                         </div>
                     ))}
                 </div>
 
-                <div className="pt-6 border-t border-gray-100 space-y-4">
+                <div className="pt-6 border-t border-[var(--border-subtlest)] space-y-4">
                     <div className="flex justify-between items-center">
-                        <span className="text-sm font-medium text-gray-500">Subtotal</span>
-                        <span className="text-sm font-bold text-[#131518]">€ {formattedTotal}</span>
+                        <span className="text-sm font-medium text-[var(--text-subtlest)]">Subtotal</span>
+                        <span className="text-sm font-bold text-[var(--text-primary)]">€ {formattedTotal}</span>
                     </div>
                     <div className="flex justify-between items-center">
-                        <span className="text-sm font-medium text-gray-500">Service Fees (est.)</span>
-                        <span className="text-sm font-bold text-gray-400">€ 0,00</span>
+                        <span className="text-sm font-medium text-[var(--text-subtlest)]">Service Fees (est.)</span>
+                        <span className="text-sm font-bold text-[var(--text-placeholder)]">€ 0,00</span>
                     </div>
-                    <div className="flex justify-between items-center pt-4 border-t border-dashed border-gray-100">
-                        <span className="text-base font-bold text-[#131518]">Total Payout</span>
-                        <span className="text-xl font-extrabold text-[#4649E5]">€ {formattedTotal}</span>
+                    <div className="flex justify-between items-center pt-4 border-t border-dashed border-[var(--border-subtlest)]">
+                        <span className="text-base font-bold text-[var(--text-primary)]">Total Payout</span>
+                        <span className="text-xl font-extrabold text-[var(--lilac-600)]">€ {formattedTotal}</span>
                     </div>
                 </div>
             </div>
-            <div className="p-6 border-t border-gray-50 bg-gray-50/30">
-                <p className="text-[11px] text-gray-400 font-medium leading-relaxed m-0 text-center">
+            <div className="p-6 border-t border-[var(--background-secondary-hover)] bg-[var(--background-secondary)]/30">
+                <p className="text-[11px] text-[var(--text-placeholder)] font-medium leading-relaxed m-0 text-center">
                     Calculations are based on the current item values and conditions. Final payout may vary after verification.
                 </p>
             </div>
@@ -569,24 +569,24 @@ export const DealWizardModal: React.FC<DealWizardModalProps> = ({
             >
                 
                 {/* --- MOBILE HEADER --- */}
-                <div className="md:hidden border-b border-gray-100 shrink-0 bg-white px-4 py-3 flex items-center justify-between z-40">
+                <div className="md:hidden border-b border-[var(--border-subtlest)] shrink-0 bg-[var(--background-primary)] px-4 py-3 flex items-center justify-between z-40">
                     <button 
                         onClick={() => setIsLeftSidebarOpen(true)}
-                        className="w-10 h-10 flex items-center justify-center rounded-lg hover:bg-gray-50 text-gray-500"
+                        className="w-10 h-10 flex items-center justify-center rounded-lg hover:bg-[var(--background-hover)] text-[var(--text-subtlest)]"
                     >
                         <Menu size={20} />
                     </button>
                     <div className="flex flex-col items-center">
-                        <span className="text-[10px] font-extrabold uppercase tracking-widest text-gray-400">
+                        <span className="text-[10px] font-extrabold uppercase tracking-widest text-[var(--text-placeholder)]">
                             {creationFinalized ? 'Active Deal' : 'New Deal'}
                         </span>
-                        <span className="text-sm font-bold text-[#131518] truncate max-w-[180px]">
+                        <span className="text-sm font-bold text-[var(--text-primary)] truncate max-w-[180px]">
                             {creationFinalized ? `${customerData.firstName} ${customerData.lastName}` : 'New Deal Creation'}
                         </span>
                     </div>
                     <button 
                         onClick={() => setIsRightSidebarOpen(true)}
-                        className="w-10 h-10 flex items-center justify-center rounded-lg hover:bg-gray-50 text-gray-500"
+                        className="w-10 h-10 flex items-center justify-center rounded-lg hover:bg-[var(--background-hover)] text-[var(--text-subtlest)]"
                     >
                         <Info size={20} />
                     </button>
@@ -1073,7 +1073,7 @@ export const DealWizardModal: React.FC<DealWizardModalProps> = ({
                         </div>
 
                         {/* Sticky Mobile Action Bar */}
-                        <div className="md:hidden fixed bottom-0 left-0 right-0 p-4 bg-white border-t border-gray-100 shadow-[0_-4px_24px_rgba(0,0,0,0.05)] z-50">
+                        <div className="md:hidden fixed bottom-0 left-0 right-0 p-4 bg-[var(--background-primary)] border-t border-[var(--border-subtlest)] shadow-[0_-4px_24px_rgba(0,0,0,0.05)] z-50">
                             {renderActionButtons('mobile')}
                         </div>
                     </div>
@@ -1148,14 +1148,14 @@ export const DealWizardModal: React.FC<DealWizardModalProps> = ({
                     {/* Backdrop */}
                     <div className="absolute inset-0 bg-black/40 backdrop-blur-sm" onClick={() => setIsLeftSidebarOpen(false)} />
                     {/* Content */}
-                    <div className={`absolute top-0 bottom-0 left-0 w-[280px] bg-white shadow-2xl transition-transform duration-300 flex flex-col ${isLeftSidebarOpen ? 'translate-x-0' : '-translate-x-full'}`}>
-                        <div className="p-4 border-b border-gray-100 flex items-center justify-between bg-white shrink-0">
-                            <h3 className="font-bold text-gray-800 text-base m-0">Navigation Steps</h3>
-                            <button onClick={() => setIsLeftSidebarOpen(false)} className="w-8 h-8 flex items-center justify-center hover:bg-gray-100 rounded-full text-gray-400">
+                    <div className={`absolute top-0 bottom-0 left-0 w-[280px] bg-[var(--background-primary)] shadow-2xl transition-transform duration-300 flex flex-col ${isLeftSidebarOpen ? 'translate-x-0' : '-translate-x-full'}`}>
+                        <div className="p-4 border-b border-[var(--border-subtlest)] flex items-center justify-between bg-[var(--background-primary)] shrink-0">
+                            <h3 className="font-bold text-[var(--text-subtle)] text-base m-0">Navigation Steps</h3>
+                            <button onClick={() => setIsLeftSidebarOpen(false)} className="w-8 h-8 flex items-center justify-center hover:bg-[var(--background-secondary-hover)] rounded-full text-[var(--text-placeholder)]">
                                 <X size={18} />
                             </button>
                         </div>
-                        <div className="flex-1 overflow-y-auto p-4 space-y-3 bg-white">
+                        <div className="flex-1 overflow-y-auto p-4 space-y-3 bg-[var(--background-primary)]">
                             {steps.map((s, idx) => {
                                 const isActive = activeStep === s.id;
                                 const isStepDisabled = s.id !== 'step1' && !isCreated;
@@ -1167,9 +1167,9 @@ export const DealWizardModal: React.FC<DealWizardModalProps> = ({
                                             scrollToSection(s.id);
                                             setIsLeftSidebarOpen(false);
                                         }}
-                                        className={`w-full flex items-center gap-3 p-3 rounded-xl transition-all text-left ${isActive ? 'bg-[#4649E5]/10 text-[#4649E5] font-bold' : 'hover:bg-gray-50 text-gray-600 disabled:opacity-40 disabled:hover:bg-transparent'}`}
+                                        className={`w-full flex items-center gap-3 p-3 rounded-xl transition-all text-left ${isActive ? 'bg-[var(--lilac-600)]/10 text-[var(--lilac-600)] font-bold' : 'hover:bg-[var(--background-hover)] text-[var(--text-subtle)] disabled:opacity-40 disabled:hover:bg-transparent'}`}
                                     >
-                                        <div className={`w-7 h-7 rounded-full flex items-center justify-center text-xs font-bold border transition-colors shrink-0 ${isActive ? 'border-[#4649E5] bg-[#4649E5] text-white' : 'border-gray-200 bg-gray-50 text-gray-500'}`}>
+                                        <div className={`w-7 h-7 rounded-full flex items-center justify-center text-xs font-bold border transition-colors shrink-0 ${isActive ? 'border-[var(--lilac-600)] bg-[var(--lilac-600)] text-[var(--text-white)]' : 'border-[var(--border-primary)] bg-[var(--background-secondary)] text-[var(--text-subtlest)]'}`}>
                                             {idx + 1}
                                         </div>
                                         <span className="text-sm font-semibold">{s.title}</span>
@@ -1185,52 +1185,52 @@ export const DealWizardModal: React.FC<DealWizardModalProps> = ({
                     {/* Backdrop */}
                     <div className="absolute inset-0 bg-black/40 backdrop-blur-sm" onClick={() => setIsRightSidebarOpen(false)} />
                     {/* Content */}
-                    <div className={`absolute top-0 bottom-0 right-0 w-[320px] bg-white shadow-2xl transition-transform duration-300 flex flex-col ${isRightSidebarOpen ? 'translate-x-0' : '-translate-x-full'}`}>
-                        <div className="p-4 border-b border-gray-100 flex items-center justify-between bg-white shrink-0">
-                            <h3 className="font-bold text-gray-800 text-base m-0">Deal Information</h3>
-                            <button onClick={() => setIsRightSidebarOpen(false)} className="w-8 h-8 flex items-center justify-center hover:bg-gray-100 rounded-full text-gray-400">
+                    <div className={`absolute top-0 bottom-0 right-0 w-[320px] bg-[var(--background-primary)] shadow-2xl transition-transform duration-300 flex flex-col ${isRightSidebarOpen ? 'translate-x-0' : '-translate-x-full'}`}>
+                        <div className="p-4 border-b border-[var(--border-subtlest)] flex items-center justify-between bg-[var(--background-primary)] shrink-0">
+                            <h3 className="font-bold text-[var(--text-subtle)] text-base m-0">Deal Information</h3>
+                            <button onClick={() => setIsRightSidebarOpen(false)} className="w-8 h-8 flex items-center justify-center hover:bg-[var(--background-secondary-hover)] rounded-full text-[var(--text-placeholder)]">
                                 <X size={18} />
                             </button>
                         </div>
-                        <div className="flex-1 overflow-y-auto p-5 space-y-6 slick-scrollbar bg-white">
+                        <div className="flex-1 overflow-y-auto p-5 space-y-6 slick-scrollbar bg-[var(--background-primary)]">
                             {/* Payout Summary */}
-                            <div className="bg-[#4649E5]/5 border border-[#4649E5]/10 rounded-2xl p-4 text-center">
-                                <span className="text-[10px] font-extrabold uppercase tracking-widest text-gray-400">
+                            <div className="bg-[var(--lilac-600)]/5 border border-[var(--lilac-600)]/10 rounded-2xl p-4 text-center">
+                                <span className="text-[10px] font-extrabold uppercase tracking-widest text-[var(--text-placeholder)]">
                                     {creationFinalized ? 'Total Payout' : 'Est. Payout'}
                                 </span>
-                                <div className="text-3xl font-extrabold text-[#4649E5] mt-1">
+                                <div className="text-3xl font-extrabold text-[var(--lilac-600)] mt-1">
                                     € {formattedTotal}
                                 </div>
                             </div>
 
                             {/* Location & Customer Info */}
                             <div className="space-y-4">
-                                <h4 className="text-xs font-bold uppercase tracking-widest text-gray-400 m-0">Details</h4>
-                                <div className="bg-gray-50 rounded-2xl p-4 space-y-4 border border-gray-100/50">
+                                <h4 className="text-xs font-bold uppercase tracking-widest text-[var(--text-placeholder)] m-0">Details</h4>
+                                <div className="bg-[var(--background-secondary)] rounded-2xl p-4 space-y-4 border border-[var(--border-subtlest)]">
                                     <div className="flex justify-between items-center">
-                                        <span className="text-xs font-medium text-gray-500">Location</span>
+                                        <span className="text-xs font-medium text-[var(--text-subtlest)]">Location</span>
                                         <ShopLabel country={dealData?.countryCode || 'AT'} branch={dealData?.branch || 'Wien'} />
                                     </div>
                                     <div className="flex justify-between items-start">
-                                        <span className="text-xs font-medium text-gray-500 mt-0.5">Customer</span>
+                                        <span className="text-xs font-medium text-[var(--text-subtlest)] mt-0.5">Customer</span>
                                         <div className="text-right">
-                                            <span className="text-xs font-bold text-[#131518] block">
+                                            <span className="text-xs font-bold text-[var(--text-primary)] block">
                                                 {customerData.firstName ? `${customerData.firstName} ${customerData.lastName}` : 'Guest'}
                                             </span>
-                                            <span className="text-[10px] font-medium text-gray-400 block uppercase">Primary Customer</span>
+                                            <span className="text-[10px] font-medium text-[var(--text-placeholder)] block uppercase">Primary Customer</span>
                                         </div>
                                     </div>
                                     <div className="flex justify-between items-center">
-                                        <span className="text-xs font-medium text-gray-500">Deal ID</span>
-                                        <span className="text-xs font-mono font-bold text-gray-700 bg-white px-2 py-0.5 rounded border border-gray-200/50">{dealId}</span>
+                                        <span className="text-xs font-medium text-[var(--text-subtlest)]">Deal ID</span>
+                                        <span className="text-xs font-mono font-bold text-[var(--text-subtle)] bg-[var(--background-primary)] px-2 py-0.5 rounded border border-[var(--border-subtlest)]">{dealId}</span>
                                     </div>
                                     <div className="flex justify-between items-center">
-                                        <span className="text-xs font-medium text-gray-500">Duration</span>
-                                        <span className="text-xs font-bold text-gray-800">{metadata.duration} Days</span>
+                                        <span className="text-xs font-medium text-[var(--text-subtlest)]">Duration</span>
+                                        <span className="text-xs font-bold text-[var(--text-subtle)]">{metadata.duration} Days</span>
                                     </div>
                                     <div className="flex justify-between items-center">
-                                        <span className="text-xs font-medium text-gray-500">Total Items</span>
-                                        <span className="text-xs font-bold text-gray-800">{items.length}</span>
+                                        <span className="text-xs font-medium text-[var(--text-subtlest)]">Total Items</span>
+                                        <span className="text-xs font-bold text-[var(--text-subtle)]">{items.length}</span>
                                     </div>
                                 </div>
                             </div>

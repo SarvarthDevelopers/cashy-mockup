@@ -41,17 +41,16 @@ interface ColumnDef {
 
 const DEFAULT_COLUMNS: ColumnDef[] = [
   { key: 'dealId', label: 'Deal ID', width: 100, minWidth: 80, visible: true, sortable: true },
-  { key: 'mode', label: 'Deal Type', width: 85, minWidth: 70, visible: true, sortable: true },
-  { key: 'status', label: 'Status', width: 125, minWidth: 90, visible: true, sortable: true },
-  { key: 'company', label: 'Company', width: 70, minWidth: 60, visible: true, sortable: true },
-  { key: 'branch', label: 'Branch / Shop', width: 140, minWidth: 120, visible: true, sortable: true },
-  { key: 'businessUnit', label: 'Business Unit', width: 110, minWidth: 90, visible: false, sortable: true },
-  { key: 'businessArea', label: 'Business Area', width: 100, minWidth: 80, visible: true, sortable: true },
   { key: 'customer', label: 'Customer', width: 140, minWidth: 110, visible: true, sortable: true },
   { key: 'primaryItem', label: 'Primary Item', width: 150, minWidth: 120, visible: true, sortable: true },
   { key: 'payout', label: 'Payout', width: 100, minWidth: 80, visible: true, sortable: true },
+  { key: 'businessArea', label: 'Business Area', width: 100, minWidth: 80, visible: true, sortable: true },
+  { key: 'businessUnit', label: 'Business Unit', width: 110, minWidth: 90, visible: false, sortable: true },
   { key: 'durationDays', label: 'Duration', width: 80, minWidth: 60, visible: true, sortable: true },
   { key: 'createdAt', label: 'Created', width: 100, minWidth: 80, visible: true, sortable: true },
+  { key: 'status', label: 'Status', width: 125, minWidth: 90, visible: false, sortable: true },
+  { key: 'company', label: 'Company', width: 70, minWidth: 60, visible: false, sortable: true },
+  { key: 'branch', label: 'Branch / Shop', width: 140, minWidth: 120, visible: true, sortable: true },
   { key: 'pickupType', label: 'Pickup', width: 100, minWidth: 80, visible: false, sortable: true },
 ];
 
@@ -362,7 +361,7 @@ export function DealsTable({
               ))}
               <button
                 onClick={() => onFiltersChange(INITIAL_FILTERS)}
-                className="text-[11px] text-[var(--text-brand)] font-black hover:text-[var(--text-brand-hover)] cursor-pointer focus:outline-none shrink-0 ml-1.5 transition-colors"
+                className="text-[11px] text-[var(--text-error)] font-black hover:text-[var(--text-error-on-subtle)] cursor-pointer focus:outline-none shrink-0 ml-1.5 transition-colors"
               >
                 Clear all
               </button>
@@ -421,7 +420,7 @@ export function DealsTable({
               minWidth: (visibleColumns.reduce((sum, c) => sum + c.width, 0) + 95) + 'px'
             }}
           >
-            <thead className="sticky top-0 z-10 shadow-[0_1px_0_0_var(--border-subtle)]">
+            <thead className="sticky top-0 z-30 shadow-[0_1px_0_0_var(--border-subtle)]">
               <tr className="bg-[var(--background-secondary)] border-b border-[var(--border-subtle)]">
                 {/* Select all checkbox */}
                 <th className="w-10 px-3 py-2.5 text-left sticky top-0 left-0 bg-[var(--background-secondary)] z-20">
@@ -461,7 +460,7 @@ export function DealsTable({
                 return (
                   <th
                     key={col.key}
-                    className="text-left relative group py-2.5"
+                    className="text-left relative group py-2.5 sticky top-0 bg-[var(--background-secondary)] z-10"
                     style={{ width: col.width + 'px', minWidth: col.minWidth + 'px' }}
                   >
                     <div
@@ -499,7 +498,7 @@ export function DealsTable({
                 );
               })}
               {/* Actions column */}
-              <th className="w-11 px-1.5" />
+              <th className="w-11 px-1.5 sticky top-0 bg-[var(--background-secondary)] z-10" />
             </tr>
           </thead>
           <tbody>

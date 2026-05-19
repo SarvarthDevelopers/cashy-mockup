@@ -1,18 +1,15 @@
 import { useState, useEffect } from 'react';
-import { Search, Plus, Download, LayoutGrid, LayoutList, Archive, UserPlus, X, HelpCircle, Loader2, RefreshCw } from 'lucide-react';
+import { Search, Download, Archive, UserPlus, X, HelpCircle, Loader2, RefreshCw } from 'lucide-react';
 import { DEALS_MICROCOPY } from '../../data/mockDeals';
 
 interface DealsToolbarProps {
   searchQuery: string;
   onSearchChange: (query: string) => void;
-  viewMode: 'table' | 'card';
-  onViewModeChange: (mode: 'table' | 'card') => void;
   totalResults: number;
   selectedCount: number;
   onBulkAssign: () => void;
   onBulkArchive: () => void;
   onBulkExport: () => void;
-  onNewDeal: () => void;
   onExportAll: () => void;
   onClearSelection: () => void;
   // Dynamic action status props
@@ -27,14 +24,11 @@ interface DealsToolbarProps {
 export function DealsToolbar({
   searchQuery,
   onSearchChange,
-  viewMode,
-  onViewModeChange,
   totalResults,
   selectedCount,
   onBulkAssign,
   onBulkArchive,
   onBulkExport,
-  onNewDeal,
   onExportAll,
   onClearSelection,
   bulkActionStatus = 'idle',
@@ -113,36 +107,8 @@ export function DealsToolbar({
           </div>
         </div>
 
-        {/* Right: View toggle + Actions */}
+        {/* Right: Actions */}
         <div className="flex items-center gap-2.5 shrink-0 self-end lg:self-auto flex-wrap sm:flex-nowrap">
-          {/* View toggle */}
-          <div className="flex bg-[var(--background-secondary)] p-1 rounded-lg border border-[var(--border-subtle)] shadow-sm">
-            <button
-              onClick={() => onViewModeChange('table')}
-              className={`p-1.5 rounded-md transition-all cursor-pointer focus:outline-none focus-visible:ring-2 focus-visible:ring-[var(--border-brand)] ${
-                viewMode === 'table' 
-                  ? 'bg-[var(--background-primary)] text-[var(--text-primary)] shadow-sm border border-[var(--border-subtle)] font-bold' 
-                  : 'text-[var(--text-subtle)] hover:text-[var(--text-primary)]'
-              }`}
-              aria-label="Toggle spreadsheet table view"
-              title="Table view"
-            >
-              <LayoutList size={16} />
-            </button>
-            <button
-              onClick={() => onViewModeChange('card')}
-              className={`p-1.5 rounded-md transition-all cursor-pointer focus:outline-none focus-visible:ring-2 focus-visible:ring-[var(--border-brand)] ${
-                viewMode === 'card' 
-                  ? 'bg-[var(--background-primary)] text-[var(--text-primary)] shadow-sm border border-[var(--border-subtle)] font-bold' 
-                  : 'text-[var(--text-subtle)] hover:text-[var(--text-primary)]'
-              }`}
-              aria-label="Toggle card grid view"
-              title="Card view"
-            >
-              <LayoutGrid size={16} />
-            </button>
-          </div>
-
           {/* Export Action */}
           <div className="relative group inline-block">
             <button
@@ -163,15 +129,6 @@ export function DealsToolbar({
               Downloads your actively filtered list containing all 28+ deal details in highly structured CSV spreadsheet format.
             </div>
           </div>
-
-          {/* New Deal CTA */}
-          <button
-            onClick={onNewDeal}
-            className="h-10 px-4 bg-[var(--background-brand-solid)] text-white font-extrabold rounded-lg text-sm hover:bg-[var(--background-brand-solid-hover)] transition-all shadow-lg shadow-[var(--lilac-100)] flex items-center gap-1.5 cursor-pointer focus:outline-none focus-visible:ring-2 focus-visible:ring-[var(--border-brand)]"
-          >
-            <Plus size={15} />
-            <span>New Deal</span>
-          </button>
         </div>
       </div>
 

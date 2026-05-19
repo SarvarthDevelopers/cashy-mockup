@@ -44,7 +44,7 @@ export const COLUMNS: { id: ColumnId; title: string }[] = [
 export const INITIAL_DEALS: Record<ColumnId, DealData[]> = {
   'car-inbox': [
     {
-      id: 'deal-1',
+      id: '000001',
       countryCode: 'AT',
       firstName: 'Franz',
       lastName: 'Kürsten',
@@ -69,7 +69,7 @@ export const INITIAL_DEALS: Record<ColumnId, DealData[]> = {
       }
     },
     {
-      id: 'deal-2',
+      id: '000002',
       countryCode: 'AT',
       firstName: 'Claudia',
       lastName: 'David',
@@ -94,7 +94,7 @@ export const INITIAL_DEALS: Record<ColumnId, DealData[]> = {
       }
     },
     {
-      id: 'deal-3',
+      id: '000003',
       countryCode: 'AT',
       firstName: 'Julia',
       lastName: 'Kern',
@@ -119,7 +119,7 @@ export const INITIAL_DEALS: Record<ColumnId, DealData[]> = {
       }
     },
     {
-      id: 'deal-4',
+      id: '000004',
       countryCode: 'AT',
       firstName: 'Markus',
       lastName: 'Leitner',
@@ -144,7 +144,7 @@ export const INITIAL_DEALS: Record<ColumnId, DealData[]> = {
       }
     },
     {
-      id: 'deal-5',
+      id: '000005',
       countryCode: 'DE',
       firstName: 'Hannah',
       lastName: 'Scholz',
@@ -169,7 +169,7 @@ export const INITIAL_DEALS: Record<ColumnId, DealData[]> = {
       }
     },
     {
-      id: 'deal-6',
+      id: '000006',
       countryCode: 'AT',
       firstName: 'Peter',
       lastName: 'Wallner',
@@ -196,7 +196,7 @@ export const INITIAL_DEALS: Record<ColumnId, DealData[]> = {
   ],
   'call-attempt': [
     {
-      id: 'deal-7',
+      id: '000007',
       countryCode: 'AT',
       firstName: 'Komsi',
       lastName: 'Ogli',
@@ -221,7 +221,7 @@ export const INITIAL_DEALS: Record<ColumnId, DealData[]> = {
       }
     },
     {
-      id: 'deal-8',
+      id: '000008',
       countryCode: 'AT',
       firstName: 'Musa',
       lastName: 'Hausbetreuung',
@@ -246,7 +246,7 @@ export const INITIAL_DEALS: Record<ColumnId, DealData[]> = {
       }
     },
     {
-      id: 'deal-9',
+      id: '000009',
       countryCode: 'AT',
       firstName: 'Nina',
       lastName: 'Aigner',
@@ -271,7 +271,7 @@ export const INITIAL_DEALS: Record<ColumnId, DealData[]> = {
       }
     },
     {
-      id: 'deal-10',
+      id: '000010',
       countryCode: 'DE',
       firstName: 'Tobias',
       lastName: 'Krüger',
@@ -296,7 +296,7 @@ export const INITIAL_DEALS: Record<ColumnId, DealData[]> = {
       }
     },
     {
-      id: 'deal-11',
+      id: '000011',
       countryCode: 'AT',
       firstName: 'Stefan',
       lastName: 'Holzer',
@@ -323,7 +323,7 @@ export const INITIAL_DEALS: Record<ColumnId, DealData[]> = {
   ],
   'send-documents': [
     {
-      id: 'deal-12',
+      id: '000012',
       countryCode: 'AT',
       firstName: 'Verena',
       lastName: 'Hofer',
@@ -348,7 +348,7 @@ export const INITIAL_DEALS: Record<ColumnId, DealData[]> = {
       }
     },
     {
-      id: 'deal-13',
+      id: '000013',
       countryCode: 'DE',
       firstName: 'Jonas',
       lastName: 'Weber',
@@ -371,7 +371,7 @@ export const INITIAL_DEALS: Record<ColumnId, DealData[]> = {
       }
     },
     {
-      id: 'deal-14',
+      id: '000014',
       countryCode: 'AT',
       firstName: 'Andreas',
       lastName: 'Gruber',
@@ -398,7 +398,7 @@ export const INITIAL_DEALS: Record<ColumnId, DealData[]> = {
   ],
   'data-received': [
     {
-      id: 'deal-15',
+      id: '000015',
       countryCode: 'AT',
       firstName: 'Laura',
       lastName: 'Bauer',
@@ -423,7 +423,7 @@ export const INITIAL_DEALS: Record<ColumnId, DealData[]> = {
       }
     },
     {
-      id: 'deal-16',
+      id: '000016',
       countryCode: 'DE',
       firstName: 'Felix',
       lastName: 'Hoffmann',
@@ -448,7 +448,7 @@ export const INITIAL_DEALS: Record<ColumnId, DealData[]> = {
       }
     },
     {
-      id: 'deal-17',
+      id: '000017',
       countryCode: 'AT',
       firstName: 'Sandra',
       lastName: 'Moser',
@@ -473,7 +473,7 @@ export const INITIAL_DEALS: Record<ColumnId, DealData[]> = {
       }
     },
     {
-      id: 'deal-18',
+      id: '000018',
       countryCode: 'AT',
       firstName: 'Michael',
       lastName: 'Steiner',
@@ -500,7 +500,7 @@ export const INITIAL_DEALS: Record<ColumnId, DealData[]> = {
   ],
   'price-research': [
     {
-      id: 'deal-19',
+      id: '000019',
       countryCode: 'DE',
       firstName: 'MTE',
       lastName: 'GmbH',
@@ -526,7 +526,7 @@ export const INITIAL_DEALS: Record<ColumnId, DealData[]> = {
       }
     },
     {
-      id: 'deal-20',
+      id: '000020',
       countryCode: 'AT',
       firstName: 'Sabine',
       lastName: 'Wagner',
@@ -552,7 +552,7 @@ export const INITIAL_DEALS: Record<ColumnId, DealData[]> = {
       }
     },
     {
-      id: 'deal-21',
+      id: '000021',
       countryCode: 'DE',
       firstName: 'Daniel',
       lastName: 'Koch',
@@ -577,7 +577,7 @@ export const INITIAL_DEALS: Record<ColumnId, DealData[]> = {
       }
     },
     {
-      id: 'deal-22',
+      id: '000022',
       countryCode: 'AT',
       firstName: 'Elisabeth',
       lastName: 'Frank',
@@ -604,7 +604,7 @@ export const INITIAL_DEALS: Record<ColumnId, DealData[]> = {
   ],
   'waiting-documents': [
     {
-      id: 'deal-23',
+      id: '000023',
       countryCode: 'AT',
       firstName: 'Karin',
       lastName: 'Huber',
@@ -630,7 +630,7 @@ export const INITIAL_DEALS: Record<ColumnId, DealData[]> = {
       }
     },
     {
-      id: 'deal-24',
+      id: '000024',
       countryCode: 'DE',
       firstName: 'Moritz',
       lastName: 'Zimmermann',
@@ -656,7 +656,7 @@ export const INITIAL_DEALS: Record<ColumnId, DealData[]> = {
       }
     },
     {
-      id: 'deal-25',
+      id: '000025',
       countryCode: 'AT',
       firstName: 'Katharina',
       lastName: 'Reiter',
@@ -682,7 +682,7 @@ export const INITIAL_DEALS: Record<ColumnId, DealData[]> = {
   ],
   'final-control': [
     {
-      id: 'deal-26',
+      id: '000026',
       countryCode: 'AT',
       firstName: 'Lukas',
       lastName: 'Berger',
@@ -708,7 +708,7 @@ export const INITIAL_DEALS: Record<ColumnId, DealData[]> = {
       }
     },
     {
-      id: 'deal-27',
+      id: '000027',
       countryCode: 'DE',
       firstName: 'Elisa',
       lastName: 'Schmitt',
@@ -733,7 +733,7 @@ export const INITIAL_DEALS: Record<ColumnId, DealData[]> = {
   ],
   'appointment': [
     {
-      id: 'deal-28',
+      id: '000028',
       countryCode: 'AT',
       firstName: 'Wissem',
       lastName: 'Al-Rashid',
@@ -756,7 +756,7 @@ export const INITIAL_DEALS: Record<ColumnId, DealData[]> = {
       }
     },
     {
-      id: 'deal-29',
+      id: '000029',
       countryCode: 'DE',
       firstName: 'Wolfgang',
       lastName: 'Becker',
@@ -778,7 +778,7 @@ export const INITIAL_DEALS: Record<ColumnId, DealData[]> = {
       }
     },
     {
-      id: 'deal-30',
+      id: '000030',
       countryCode: 'AT',
       firstName: 'Jana',
       lastName: 'Novak',
@@ -801,7 +801,7 @@ export const INITIAL_DEALS: Record<ColumnId, DealData[]> = {
       }
     },
     {
-      id: 'deal-31',
+      id: '000031',
       countryCode: 'DE',
       firstName: 'Martin',
       lastName: 'Schulz',
@@ -823,7 +823,7 @@ export const INITIAL_DEALS: Record<ColumnId, DealData[]> = {
       }
     },
     {
-      id: 'deal-32',
+      id: '000032',
       countryCode: 'AT',
       firstName: 'Oliver',
       lastName: 'Lang',
@@ -847,7 +847,7 @@ export const INITIAL_DEALS: Record<ColumnId, DealData[]> = {
   ],
   'payout-storage': [
     {
-      id: 'deal-33',
+      id: '000033',
       countryCode: 'AT',
       firstName: 'Logistics',
       lastName: 'Center Vienna',
@@ -872,7 +872,7 @@ export const INITIAL_DEALS: Record<ColumnId, DealData[]> = {
       }
     },
     {
-      id: 'deal-34',
+      id: '000034',
       countryCode: 'DE',
       firstName: 'Warehouse',
       lastName: 'Berlin',
@@ -897,7 +897,7 @@ export const INITIAL_DEALS: Record<ColumnId, DealData[]> = {
       }
     },
     {
-      id: 'deal-35',
+      id: '000035',
       countryCode: 'AT',
       firstName: 'Storage',
       lastName: 'Linz',
@@ -924,7 +924,7 @@ export const INITIAL_DEALS: Record<ColumnId, DealData[]> = {
   ],
   'archive': [
     {
-      id: 'deal-36',
+      id: '000036',
       countryCode: 'AT',
       firstName: 'Archived',
       lastName: 'Deal #1024',
@@ -948,7 +948,7 @@ export const INITIAL_DEALS: Record<ColumnId, DealData[]> = {
       }
     },
     {
-      id: 'deal-37',
+      id: '000037',
       countryCode: 'DE',
       firstName: 'Archived',
       lastName: 'Deal #1025',
@@ -972,7 +972,7 @@ export const INITIAL_DEALS: Record<ColumnId, DealData[]> = {
       }
     },
     {
-      id: 'deal-38',
+      id: '000038',
       countryCode: 'AT',
       firstName: 'Archived',
       lastName: 'Deal #1026',

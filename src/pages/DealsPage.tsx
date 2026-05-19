@@ -7,7 +7,6 @@ import type { FilterState } from '../components/Deals/DealsFilterRail';
 import { DealsTable } from '../components/Deals/DealsTable';
 import type { SortConfig } from '../components/Deals/DealsTable';
 import { DealsPreviewPanel } from '../components/Deals/DealsPreviewPanel';
-import { DealsCardView } from '../components/Deals/DealsCardView';
 import type { DealData } from '../data/mockData';
 
 // Apply filters to deals dataset
@@ -242,10 +241,9 @@ function mapDealToDealData(deal: Deal): DealData {
 
 interface DealsPageProps {
   onSelectDeal: (deal: DealData) => void;
-  onNewDealClick: () => void;
 }
 
-export function DealsPage({ onSelectDeal, onNewDealClick }: DealsPageProps) {
+export function DealsPage({ onSelectDeal }: DealsPageProps) {
   // Master state
   const [filters, setFilters] = useState<FilterState>(INITIAL_FILTERS);
   const [searchQuery, setSearchQuery] = useState('');
@@ -253,7 +251,6 @@ export function DealsPage({ onSelectDeal, onNewDealClick }: DealsPageProps) {
   const [selectedRows, setSelectedRows] = useState<Set<string>>(new Set());
   
   const [activeDeal, setActiveDeal] = useState<Deal | null>(null);
-  const [viewMode, setViewMode] = useState<'table' | 'card'>('table');
   const [filterCollapsed, setFilterCollapsed] = useState(false);
   const [pageSize, setPageSize] = useState(25);
   const [currentPage, setCurrentPage] = useState(1);
@@ -272,7 +269,6 @@ export function DealsPage({ onSelectDeal, onNewDealClick }: DealsPageProps) {
   useEffect(() => {
     const handleMobileResize = () => {
       if (window.innerWidth < 768) {
-        setViewMode('card');
         setFilterCollapsed(true);
       }
     };
@@ -433,19 +429,16 @@ export function DealsPage({ onSelectDeal, onNewDealClick }: DealsPageProps) {
   return (
     <div className="bg-[var(--background-secondary)] h-full w-full overflow-hidden flex flex-col font-['Inter',sans-serif]">
       {/* Page content */}
-      <div className="flex-1 min-h-0 flex flex-col px-6 py-4">
+      <div className="flex-1 min-h-0 flex flex-col px-3 py-3 md:px-6 md:py-4">
         {/* Toolbar redone */}
         <DealsToolbar
           searchQuery={searchQuery}
           onSearchChange={handleSearchChange}
-          viewMode={viewMode}
-          onViewModeChange={setViewMode}
           totalResults={filteredDeals.length}
           selectedCount={selectedRows.size}
           onBulkAssign={handleBulkAssign}
           onBulkArchive={handleBulkArchive}
           onBulkExport={handleBulkExport}
-          onNewDeal={onNewDealClick}
           onExportAll={handleExportAll}
           onClearSelection={() => setSelectedRows(new Set())}
           // Progress parameters
@@ -468,40 +461,26 @@ export function DealsPage({ onSelectDeal, onNewDealClick }: DealsPageProps) {
             onToggleCollapse={() => setFilterCollapsed(!filterCollapsed)}
           />
 
-          {/* Spreadsheet table or visual Card modes */}
+          {/* Spreadsheet table */}
           <div className="flex-1 min-w-0 h-full flex flex-col">
-            {viewMode === 'table' ? (
-              <DealsTable
-                deals={filteredDeals}
-                sortConfigs={sortConfigs}
-                onSortChange={setSortConfigs}
-                selectedRows={selectedRows}
-                onSelectionChange={setSelectedRows}
-                onRowClick={handleRowClick}
-                activeDealId={activeDeal?.dealId || null}
-                pageSize={pageSize}
-                currentPage={currentPage}
-                onPageChange={setCurrentPage}
-                onPageSizeChange={setPageSize}
-                onRowAction={handleRowAction}
-                searchActive={!!searchQuery.trim()}
-                filters={filters}
-                onFiltersChange={handleFiltersChange}
-                activePills={activePills}
-              />
-            ) : (
-              <DealsCardView
-                deals={filteredDeals}
-                selectedRows={selectedRows}
-                onSelectionChange={setSelectedRows}
-                onRowClick={handleRowClick}
-                activeDealId={activeDeal?.dealId || null}
-                pageSize={pageSize}
-                currentPage={currentPage}
-                onPageChange={setCurrentPage}
-                onPageSizeChange={setPageSize}
-              />
-            )}
+            <DealsTable
+              deals={filteredDeals}
+              sortConfigs={sortConfigs}
+              onSortChange={setSortConfigs}
+              selectedRows={selectedRows}
+              onSelectionChange={setSelectedRows}
+              onRowClick={handleRowClick}
+              activeDealId={activeDeal?.dealId || null}
+              pageSize={pageSize}
+              currentPage={currentPage}
+              onPageChange={setCurrentPage}
+              onPageSizeChange={setPageSize}
+              onRowAction={handleRowAction}
+              searchActive={!!searchQuery.trim()}
+              filters={filters}
+              onFiltersChange={handleFiltersChange}
+              activePills={activePills}
+            />
           </div>
 
           {/* Progressive slide-in timeline preview */}

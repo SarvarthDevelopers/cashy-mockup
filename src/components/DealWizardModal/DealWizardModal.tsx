@@ -142,7 +142,7 @@ export const DealWizardModal: React.FC<DealWizardModalProps> = ({
 
     // Derived data
     const currentDeal = isCreated ? dealData : null;
-    const dealId = currentDeal?.id.replace('deal-', '') || 'PENDING';
+    const dealId = currentDeal?.id || 'PENDING';
     const totalRequestedPayout = items.reduce((sum, item) => sum + (parseFloat(item.requestedPayout) || 0), 0);
     const formattedTotal = totalRequestedPayout.toLocaleString('de-DE', { minimumFractionDigits: 2 });
 
@@ -155,7 +155,7 @@ export const DealWizardModal: React.FC<DealWizardModalProps> = ({
         setTimeout(() => setCreationStep(3), 1600);
         setTimeout(() => {
             const newDeal: DealData = {
-                id: `deal-${Math.floor(Math.random() * 10000)}`,
+                id: Math.floor(100000 + Math.random() * 900000).toString(),
                 countryCode: 'AT',
                 branch: 'Vienna',
                 firstName: customerData.firstName,
@@ -629,7 +629,7 @@ export const DealWizardModal: React.FC<DealWizardModalProps> = ({
                         {!creationFinalized ? (
                             <div className="flex items-center gap-6">
                                 <div className="flex flex-col items-end">
-                                    <div className="text-[24px] font-bold tabular-nums" style={{ color: 'var(--brand-500)' }}>
+                                    <div className="text-[18px] font-bold tabular-nums" style={{ color: 'var(--brand-500)' }}>
                                         € {formattedTotal}
                                     </div>
                                     <span className="text-[10px] font-extrabold uppercase tracking-widest" style={{ color: 'var(--gray-400)' }}>
@@ -650,7 +650,7 @@ export const DealWizardModal: React.FC<DealWizardModalProps> = ({
                                         <div className="px-2 py-0.5 rounded bg-blue-50 text-[#4649E5] text-[10px] font-bold uppercase tracking-tight border border-blue-100">
                                             {dealMode}
                                         </div>
-                                        <div className="text-[32px] font-bold tabular-nums ml-2" style={{ color: 'var(--brand-500)' }}>
+                                        <div className="text-[22px] font-bold tabular-nums ml-2" style={{ color: 'var(--brand-500)' }}>
                                             € {formattedTotal}
                                         </div>
                                     </div>

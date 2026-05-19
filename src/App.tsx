@@ -64,7 +64,7 @@ function App() {
         <main className="flex-1 overflow-hidden relative">
           <Routes>
             <Route path="/" element={<LandingPage onSelectDeal={handleSelectDeal} dealsByColumn={dealsByColumn} />} />
-            <Route path="/deals" element={<DealsPage onSelectDeal={handleSelectDeal} onNewDealClick={handleCreateDeal} />} />
+            <Route path="/deals" element={<DealsPage onSelectDeal={handleSelectDeal} />} />
             <Route path="/wizard-builder" element={<WizardBuilderPage />} />
             <Route path="/wizard-builder/builder/:id" element={<WizardBuilderPage />} />
             <Route path="*" element={<LandingPage onSelectDeal={handleSelectDeal} dealsByColumn={dealsByColumn} />} />

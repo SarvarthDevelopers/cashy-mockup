@@ -13,7 +13,7 @@
   min-width: 264px;
   max-width: 264px;
   width: 264px;
-  padding: 12px 12px 16px 12px;
+  padding: 12px;
   position: relative;
   box-sizing: border-box;
   transition: border-color 0.2s ease-in-out;
@@ -161,10 +161,10 @@
   font-family: var(--family-sans);
   font-weight: var(--weight-regular);
   font-style: normal;
-  line-height: 14px;
+  line-height: 16px;
   position: relative;
   flex-shrink: 0;
-  font-size: 8px; /* No scale variable exists for 8px */
+  font-size: var(--body-size-medium);
   color: var(--text-subtlest);
   white-space: nowrap;
 }
@@ -172,12 +172,12 @@
 .deal-card-customer-name {
   font-family: var(--family-sans);
   font-weight: var(--weight-semi-bold);
-  line-height: 16px;
+  line-height: 18px;
   font-style: normal;
   position: relative;
   flex-shrink: 0;
   color: var(--text-subtle);
-  font-size: var(--scale-02);
+  font-size: var(--scale-03);
   white-space: nowrap;
   overflow: hidden;
   text-overflow: ellipsis;
@@ -186,24 +186,24 @@
 .deal-card-due-date {
   font-family: var(--family-sans);
   font-weight: var(--weight-regular);
-  line-height: 14px;
+  line-height: 16px;
   font-style: normal;
   position: relative;
   flex-shrink: 0;
   color: var(--text-subtle);
-  font-size: var(--body-size-small); /* 10px */
+  font-size: var(--body-size-medium);
   white-space: nowrap;
 }
 
 .deal-card-amount {
   font-family: var(--family-sans);
   font-weight: var(--weight-semi-bold);
-  line-height: 16px;
+  line-height: 18px;
   font-style: normal;
   position: relative;
   flex-shrink: 0;
   color: var(--text-subtle);
-  font-size: var(--scale-02);
+  font-size: var(--scale-03);
   text-align: right;
   white-space: nowrap;
 }
@@ -236,12 +236,11 @@
 .shop-label {
   transform: translateX(0); /* Removed -translate-x-1/2 as it breaks layout */
   align-content: stretch;
-  display: flex;
+  display: inline-flex;
   gap: var(--space-050);
-  height: 18px;
   align-items: center;
   justify-content: center;
-  padding: 4px; /* Not matching a specific --space variable perfectly, but matches Figma */
+  padding: var(--space-050) var(--space-100);
   position: relative;
   border-radius: 4px; /* matches radius-100 */
   box-sizing: border-box;
@@ -264,8 +263,8 @@
   font-weight: var(--weight-regular);
   position: relative;
   flex-shrink: 0;
-  font-size: 8px;
-  line-height: 10px;
+  font-size: var(--body-size-small);
+  line-height: 12px;
   color: var(--text-primary);
   white-space: nowrap;
 }
@@ -308,7 +307,7 @@
   position: relative;
   flex-shrink: 0;
   color: var(--text-subtlest);
-  font-size: var(--body-size-small); /* 10px */
+  font-size: var(--body-size-medium);
   white-space: nowrap;
 }
 
@@ -373,7 +372,7 @@
   position: relative;
   flex-shrink: 0;
   color: var(--text-subtlest);
-  font-size: var(--body-size-small); /* 10px */
+  font-size: var(--body-size-medium);
   white-space: nowrap;
 }
 .items-text p {
@@ -388,7 +387,7 @@
   font-style: normal;
   position: relative;
   flex-shrink: 0;
-  font-size: var(--body-size-small);
+  font-size: var(--body-size-medium);
   color: var(--text-subtlest);
   white-space: nowrap;
   margin: 0;

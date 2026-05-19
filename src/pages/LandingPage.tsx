@@ -104,7 +104,7 @@ export const LandingPage: React.FC<LandingPageProps> = ({ onSelectDeal, dealsByC
                                         return (
                                             <DealCardLarge
                                                 key={deal.id}
-                                                bookingNo={`#${deal.id.replace('deal-', '')}`}
+                                                bookingNo={`#${deal.id}`}
                                                 customerName={`${deal.firstName} ${deal.lastName}`}
                                                 amount={deal.amount || ''}
                                                 dueDate={deal.dueDate || deal.appointmentDate || 'No Date'}
@@ -113,7 +113,7 @@ export const LandingPage: React.FC<LandingPageProps> = ({ onSelectDeal, dealsByC
                                                 shopLabelCountry={deal.countryCode}
                                                 shopLabelBranch={deal.branch}
                                                 items={deal.items}
-                                                categories={[deal.businessArea || 'General', deal.dealType]}
+                                                categories={[deal.businessArea || 'General']}
                                                 onClick={() => onSelectDeal(deal)}
                                             />
                                         );

@@ -132,10 +132,18 @@ export const DealWizardModal: React.FC<DealWizardModalProps> = ({
                 // If it's not a new deal, we reset the synced ID so it re-syncs when opened
                 // Actually, if we use isNew we might need more logic
             }
-            setActiveStep(isNew ? 'step1' : initialStep);
+            const targetStep = isNew ? 'step1' : initialStep;
+            setActiveStep(targetStep);
             setIsCreated(!isNew);
             setCreationFinalized(!isNew);
-            if (isNew) setLastSyncedId(null);
+            if (isNew) {
+                setLastSyncedId(null);
+            } else {
+                // Defer scroll to ensure elements are mounted and layout has finished
+                setTimeout(() => {
+                    scrollToSection(targetStep);
+                }, 300);
+            }
         }
     }, [isOpen, isNew, initialStep]);
 

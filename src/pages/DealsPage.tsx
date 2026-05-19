@@ -260,7 +260,6 @@ export function DealsPage({ onSelectDeal }: DealsPageProps) {
   const [exportProgress, setExportProgress] = useState(0);
 
   const [bulkActionStatus, setBulkActionStatus] = useState<'idle' | 'processing' | 'success' | 'error'>('idle');
-  const [bulkProgress, setBulkProgress] = useState(0);
   const [bulkErrorMessage, setBulkErrorMessage] = useState('');
 
   const [isPreviewLoading, setIsPreviewLoading] = useState(false);
@@ -368,10 +367,7 @@ export function DealsPage({ onSelectDeal }: DealsPageProps) {
     }, 250);
   }, []);
 
-  const handleBulkExport = useCallback(() => {
-    const selected = allDeals.filter(d => selectedRows.has(d.dealId));
-    triggerSimulatedExport(selected, 'cashy-deals-selected.csv');
-  }, [allDeals, selectedRows, triggerSimulatedExport]);
+
 
   const handleExportAll = useCallback(() => {
     triggerSimulatedExport(filteredDeals, 'cashy-deals-all.csv');
@@ -380,13 +376,11 @@ export function DealsPage({ onSelectDeal }: DealsPageProps) {
   // Bulk simulated appraiser assignment with error triggers
   const executeBulkAction = useCallback((actionType: string) => {
     setBulkActionStatus('processing');
-    setBulkProgress(0);
     setBulkErrorMessage('');
 
     let progress = 0;
     const interval = setInterval(() => {
       progress += 25;
-      setBulkProgress(progress);
       if (progress >= 100) {
         clearInterval(interval);
 
@@ -408,7 +402,6 @@ export function DealsPage({ onSelectDeal }: DealsPageProps) {
     }, 200);
   }, [selectedRows, allDeals]);
 
-  const handleBulkAssign = useCallback(() => executeBulkAction('assign'), [executeBulkAction]);
   const handleBulkArchive = useCallback(() => executeBulkAction('archive'), [executeBulkAction]);
 
   const handleOpenWizard = useCallback((deal: Deal) => {
@@ -436,16 +429,13 @@ export function DealsPage({ onSelectDeal }: DealsPageProps) {
           onSearchChange={handleSearchChange}
           totalResults={filteredDeals.length}
           selectedCount={selectedRows.size}
-          onBulkAssign={handleBulkAssign}
           onBulkArchive={handleBulkArchive}
-          onBulkExport={handleBulkExport}
           onExportAll={handleExportAll}
           onClearSelection={() => setSelectedRows(new Set())}
           // Progress parameters
           bulkActionStatus={bulkActionStatus}
-          bulkProgress={bulkProgress}
           bulkErrorMessage={bulkErrorMessage}
-          onRetryBulk={() => executeBulkAction('assign')}
+          onRetryBulk={() => executeBulkAction('archive')}
           exportStatus={exportStatus}
           exportProgress={exportProgress}
         />

@@ -1127,12 +1127,18 @@ export const DealWizardModal: React.FC<DealWizardModalProps> = ({
                                             key={step.id} 
                                             id={`section-${step.id}`}
                                             ref={(el) => { if (el) sectionRefs.current.set(step.id, el); }}
-                                            className="space-y-10 scroll-mt-20 pt-16 border-t border-[var(--border-subtlest)]"
+                                            className="space-y-10 scroll-mt-20 pt-4"
                                         >
-                                            <div className="px-2">
-                                                <div className="inline-flex items-center gap-2 px-2.5 py-1 rounded-full bg-[var(--background-secondary)] border border-[var(--border-subtlest)] text-[10px] font-extrabold uppercase tracking-widest text-[var(--text-placeholder)] mb-3">
+                                            {/* Integrated Line & Pill Separator */}
+                                            <div className="flex items-center gap-3 px-2 select-none">
+                                                <div className="w-6 h-[1px] bg-[var(--border-subtlest)]" />
+                                                <span className="inline-flex items-center gap-2 px-2.5 py-1 rounded-full bg-[var(--background-secondary)] border border-[var(--border-subtlest)] text-[10px] font-extrabold uppercase tracking-widest text-[var(--text-placeholder)] shrink-0 shadow-sm">
                                                     Step {idx + 2} of {steps.length}
-                                                </div>
+                                                </span>
+                                                <div className="flex-1 h-[1px] bg-[var(--border-subtlest)]" />
+                                            </div>
+
+                                            <div className="px-2">
                                                 <h2 className="text-2xl font-bold text-[#131518]">{step.title}</h2>
                                                 <p className="text-sm text-gray-400">Complete the {step.title.toLowerCase()} process for all deal items.</p>
                                             </div>

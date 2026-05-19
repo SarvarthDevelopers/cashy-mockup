@@ -1,14 +1,21 @@
 import { useState, useRef, useCallback, useEffect } from 'react';
-import { MoreHorizontal, ArrowUpDown, ArrowUp, ArrowDown, Eye, EyeOff, AlertTriangle, X } from 'lucide-react';
+import { MoreHorizontal, ArrowUpDown, ArrowUp, ArrowDown, AlertTriangle, X, Search, HelpCircle, Loader2 } from 'lucide-react';
 import type { Deal } from '../../data/mockDeals';
-import { STATUS_STYLES } from '../../data/mockDeals';
+import { STATUS_STYLES, DEALS_MICROCOPY } from '../../data/mockDeals';
 import { ShopLabel } from '../Card/ShopLabel';
-import type { FilterState } from './DealsFilterRail';
-import { INITIAL_FILTERS } from './DealsFilterRail';
 
 export interface SortConfig {
   key: string;
   direction: 'asc' | 'desc';
+}
+
+export interface ColumnDef {
+  key: string;
+  label: string;
+  width: number;
+  minWidth: number;
+  visible: boolean;
+  sortable: boolean;
 }
 
 interface DealsTableProps {
@@ -25,21 +32,13 @@ interface DealsTableProps {
   onPageSizeChange: (size: number) => void;
   onRowAction?: (action: string, deal: Deal) => void;
   searchActive?: boolean;
-  filters: FilterState;
-  onFiltersChange: (filters: FilterState) => void;
-  activePills: Array<{ category: string; value: string; onClear: () => void }>;
+  searchQuery: string;
+  onSearchChange: (query: string) => void;
+  columns: ColumnDef[];
+  onColumnsChange: React.Dispatch<React.SetStateAction<ColumnDef[]>>;
 }
 
-interface ColumnDef {
-  key: string;
-  label: string;
-  width: number;
-  minWidth: number;
-  visible: boolean;
-  sortable: boolean;
-}
-
-const DEFAULT_COLUMNS: ColumnDef[] = [
+export const DEFAULT_COLUMNS: ColumnDef[] = [
   { key: 'dealId', label: 'Deal ID', width: 100, minWidth: 80, visible: true, sortable: true },
   { key: 'customer', label: 'Customer', width: 140, minWidth: 110, visible: true, sortable: true },
   { key: 'primaryItem', label: 'Primary Item', width: 150, minWidth: 120, visible: true, sortable: true },
@@ -127,22 +126,31 @@ export function DealsTable({
   onPageSizeChange,
   onRowAction,
   searchActive = false,
-  onFiltersChange,
-  activePills,
+  searchQuery,
+  onSearchChange,
+  columns,
+  onColumnsChange: setColumns,
 }: DealsTableProps) {
-  const [columns, setColumns] = useState<ColumnDef[]>(DEFAULT_COLUMNS);
-  const [showColumnPicker, setShowColumnPicker] = useState(false);
   const [resizingCol, setResizingCol] = useState<string | null>(null);
   const [resizeStart, setResizeStart] = useState<{ x: number; width: number } | null>(null);
-  const columnPickerRef = useRef<HTMLDivElement>(null);
+
+  // Local debounced search state for desktop search
+  const [localSearch, setLocalSearch] = useState(searchQuery);
+  const [isSearching, setIsSearching] = useState(false);
 
   useEffect(() => {
-    const handler = (e: MouseEvent) => {
-      if (columnPickerRef.current && !columnPickerRef.current.contains(e.target as Node)) setShowColumnPicker(false);
-    };
-    if (showColumnPicker) document.addEventListener('mousedown', handler);
-    return () => document.removeEventListener('mousedown', handler);
-  }, [showColumnPicker]);
+    setLocalSearch(searchQuery);
+  }, [searchQuery]);
+
+  useEffect(() => {
+    if (localSearch === searchQuery) return;
+    setIsSearching(true);
+    const delay = setTimeout(() => {
+      onSearchChange(localSearch);
+      setIsSearching(false);
+    }, 300);
+    return () => clearTimeout(delay);
+  }, [localSearch, onSearchChange, searchQuery]);
 
   const handleResizeStart = useCallback((e: React.MouseEvent, colKey: string) => {
     e.preventDefault();
@@ -335,80 +343,47 @@ export function DealsTable({
 
   return (
     <div className="flex flex-col flex-1 min-w-0 h-full" role="grid" aria-colcount={visibleColumns.length + 2}>
-      {/* Column picker toggle */}
-      <div className="flex items-center justify-between px-2 py-1.5 shrink-0 select-none">
-        <div className="flex-1 min-w-0 mr-4">
-          {activePills.length > 0 ? (
-            <div className="flex flex-wrap items-center gap-1.5">
-              {activePills.map((pill, idx) => (
-                <span 
-                  key={idx} 
-                  className="inline-flex items-center gap-1.5 pl-2.5 pr-1.5 py-0.5 rounded-full bg-[var(--background-secondary)] border border-[var(--border-subtle)] text-[10px] font-bold text-[var(--text-subtle)] shadow-sm animate-in fade-in duration-200"
-                >
-                  <span className="text-[9px] text-[var(--text-subtlest)] font-extrabold uppercase shrink-0">{pill.category}:</span>
-                  <span className="truncate max-w-[100px]">{pill.value}</span>
-                  <button 
-                    onClick={pill.onClear}
-                    className="hover:bg-[var(--background-secondary-hover)] rounded-full p-0.5 transition-colors cursor-pointer text-[var(--text-subtlest)] hover:text-[var(--text-primary)] focus:outline-none flex items-center justify-center shrink-0"
-                    aria-label={`Remove ${pill.category} filter ${pill.value}`}
-                  >
-                    <X size={10} strokeWidth={2.5} />
-                  </button>
-                </span>
-              ))}
-              <button
-                onClick={() => onFiltersChange(INITIAL_FILTERS)}
-                className="text-[11px] text-[var(--text-error)] font-black hover:text-[var(--text-error-on-subtle)] cursor-pointer focus:outline-none shrink-0 ml-1.5 transition-colors"
-              >
-                Clear all
-              </button>
-            </div>
-          ) : (
-            <span className="text-xs text-[var(--text-subtlest)] font-semibold italic pl-1">No active filters</span>
-          )}
-        </div>
-        <div className="relative" ref={columnPickerRef}>
-          <button
-            onClick={() => setShowColumnPicker(!showColumnPicker)}
-            className="flex items-center gap-1.5 px-2.5 py-1.5 text-xs font-extrabold text-[var(--text-subtle)] hover:text-[var(--text-primary)] hover:bg-[var(--background-secondary)] rounded-md transition-colors cursor-pointer border border-[var(--border-subtle)] shadow-sm bg-[var(--background-primary)] focus:outline-none focus-visible:ring-2 focus-visible:ring-[var(--border-brand)]"
-            aria-label="Manage column visibility"
-            aria-expanded={showColumnPicker}
-          >
-            {showColumnPicker ? <EyeOff size={14} /> : <Eye size={14} />}
-            <span>Columns</span>
-          </button>
-          {showColumnPicker && (
-            <div className="absolute right-0 top-8.5 z-50 bg-[var(--background-primary)] border border-[var(--border-subtle)] rounded-lg shadow-xl p-2.5 w-52 max-h-72 overflow-y-auto slick-scrollbar animate-in fade-in zoom-in-95 duration-150">
-              <p className="text-[10px] font-black text-[var(--text-subtlest)] uppercase tracking-wider px-1.5 pb-1.5 border-b border-[var(--border-subtle)] mb-1">Show/Hide Columns</p>
-              {columns.map(col => (
-                <label key={col.key} className="flex items-center gap-2.5 px-1.5 py-1.5 rounded-md hover:bg-[var(--background-secondary)] cursor-pointer transition-colors text-left focus-within:ring-2 focus-within:ring-[var(--border-brand)]/50">
-                  <div
-                    className={`w-4 h-4 rounded border flex items-center justify-center shrink-0 transition-all ${
-                      col.visible 
-                        ? 'bg-[var(--background-brand-solid)] border-[var(--border-brand)] text-white' 
-                        : 'border-[var(--border-subtle)] bg-[var(--background-primary)]'
-                    }`}
-                    onClick={(e) => {
-                      e.preventDefault();
-                      setColumns(cols => cols.map(c => c.key === col.key ? { ...c, visible: !c.visible } : c));
-                    }}
-                  >
-                    {col.visible && (
-                      <svg width="10" height="8" viewBox="0 0 10 8" fill="none">
-                        <path d="M1 4L3.5 6.5L9 1" stroke="white" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round" />
-                      </svg>
-                    )}
-                  </div>
-                  <span className="text-xs text-[var(--text-subtle)] font-bold">{col.label}</span>
-                </label>
-              ))}
-            </div>
-          )}
-        </div>
-      </div>
-
       {/* Table & Pagination Wrapper */}
       <div className="flex-1 flex flex-col min-h-0 bg-[var(--background-primary)] border border-[var(--border-subtle)] rounded-xl shadow-sm overflow-hidden">
+        
+        {/* Desktop Search bar (only visible on md and up) */}
+        <div className="hidden md:flex items-center justify-between px-4 py-3 shrink-0 select-none border-b border-[var(--border-subtle)] bg-[var(--background-secondary)]">
+          <div className="relative flex-1 max-w-[420px]">
+            <span className="absolute left-3.5 top-1/2 -translate-y-1/2 text-[var(--text-subtlest)] z-10">
+              {isSearching ? (
+                <Loader2 size={16} className="animate-spin text-[var(--text-brand)]" />
+              ) : (
+                <Search size={16} />
+              )}
+            </span>
+            <input
+              type="text"
+              value={localSearch}
+              onChange={(e) => setLocalSearch(e.target.value)}
+              placeholder={DEALS_MICROCOPY.search.placeholder}
+              className="w-full h-10 pl-10 pr-16 bg-[var(--background-primary)] border border-[var(--border-subtle)] rounded-lg text-sm focus:outline-none focus:border-[var(--border-brand)] focus:ring-2 focus:ring-[var(--border-brand)]/20 transition-all text-[var(--text-primary)] placeholder:text-[var(--text-subtlest)] font-medium shadow-sm"
+              aria-label="Search index fields"
+            />
+            {localSearch && (
+              <button
+                onClick={() => { setLocalSearch(''); onSearchChange(''); }}
+                className="absolute right-9 top-1/2 -translate-y-1/2 p-0.5 hover:bg-[var(--background-secondary)] rounded-md transition-colors cursor-pointer focus:outline-none focus-visible:ring-2 focus-visible:ring-[var(--border-brand)]"
+                aria-label="Clear search input"
+              >
+                <X size={14} className="text-[var(--text-subtlest)] hover:text-[var(--text-primary)]" />
+              </button>
+            )}
+
+            {/* Premium Hover Help Tooltip */}
+            <div className="absolute right-3.5 top-1/2 -translate-y-1/2 group z-25 flex items-center">
+              <HelpCircle size={14} className="text-[var(--text-subtlest)] cursor-help hover:text-[var(--text-subtle)]" />
+              <div className="absolute bottom-full right-0 mb-2 w-64 hidden group-hover:block bg-[#131518] text-white text-[10px] font-bold p-3 rounded-lg shadow-xl border border-[#4c5564] leading-relaxed animate-in fade-in duration-150">
+                <span className="block text-[9px] text-[var(--text-brand)] uppercase tracking-wider mb-1 font-black">Search Fields</span>
+                Searches across Deal ID, Customer name, email, phone, branch, shop, appraisers, item variant specifications, and internal timeline notes.
+              </div>
+            </div>
+          </div>
+        </div>
         {/* Scrollable Table Area */}
         <div className="flex-1 overflow-auto slick-scrollbar bg-[var(--background-primary)]">
           <table 

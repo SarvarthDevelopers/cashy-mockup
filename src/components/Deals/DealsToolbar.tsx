@@ -1,6 +1,7 @@
-import { useState, useEffect } from 'react';
-import { Search, Download, Archive, X, HelpCircle, Loader2, RefreshCw } from 'lucide-react';
+import { useState, useEffect, useRef } from 'react';
+import { Search, Download, Archive, X, HelpCircle, Loader2, RefreshCw, Eye, EyeOff } from 'lucide-react';
 import { DEALS_MICROCOPY } from '../../data/mockDeals';
+import type { ColumnDef } from './DealsTable';
 
 interface DealsToolbarProps {
   searchQuery: string;
@@ -19,6 +20,11 @@ interface DealsToolbarProps {
   // Mobile filter toggle props
   onToggleFilter?: () => void;
   activeFiltersCount?: number;
+  // Desktop layout integration props
+  columns?: ColumnDef[];
+  onColumnsChange?: (cols: ColumnDef[]) => void;
+  activePills?: Array<{ category: string; value: string; onClear: () => void }>;
+  onClearFilters?: () => void;
 }
 
 export function DealsToolbar({
@@ -36,10 +42,26 @@ export function DealsToolbar({
   exportProgress = 0,
   onToggleFilter,
   activeFiltersCount = 0,
+  columns = [],
+  onColumnsChange,
+  activePills = [],
+  onClearFilters,
 }: DealsToolbarProps) {
   // Local debounced state
   const [localSearch, setLocalSearch] = useState(searchQuery);
   const [isSearching, setIsSearching] = useState(false);
+  const [showColumnPicker, setShowColumnPicker] = useState(false);
+  const columnPickerRef = useRef<HTMLDivElement>(null);
+
+  useEffect(() => {
+    const handler = (e: MouseEvent) => {
+      if (columnPickerRef.current && !columnPickerRef.current.contains(e.target as Node)) {
+        setShowColumnPicker(false);
+      }
+    };
+    if (showColumnPicker) document.addEventListener('mousedown', handler);
+    return () => document.removeEventListener('mousedown', handler);
+  }, [showColumnPicker]);
 
   useEffect(() => {
     setLocalSearch(searchQuery);
@@ -205,41 +227,82 @@ export function DealsToolbar({
             </span>
           </div>
 
-          {/* Search Input Box */}
-          <div className="relative flex-1 max-w-[420px] min-w-[200px]">
-            <span className="absolute left-3.5 top-1/2 -translate-y-1/2 text-[var(--text-subtlest)] z-10">
-              {isSearching ? (
-                <Loader2 size={16} className="animate-spin text-[var(--text-brand)]" />
+          {/* Selected Filters (Active Pills) & Columns visibility */}
+          <div className="flex-1 flex items-center justify-between min-w-0 mr-4 select-none">
+            <div className="flex-1 min-w-0 mr-4">
+              {activePills.length > 0 ? (
+                <div className="flex flex-wrap items-center gap-1.5">
+                  {activePills.map((pill, idx) => (
+                    <span 
+                      key={idx} 
+                      className="inline-flex items-center gap-1.5 pl-2.5 pr-1.5 py-0.5 rounded-full bg-[var(--background-secondary)] border border-[var(--border-subtle)] text-[10px] font-bold text-[var(--text-subtle)] shadow-sm animate-in fade-in duration-200"
+                    >
+                      <span className="text-[9px] text-[var(--text-subtlest)] font-extrabold uppercase shrink-0">{pill.category}:</span>
+                      <span className="truncate max-w-[100px]">{pill.value}</span>
+                      <button 
+                        onClick={pill.onClear}
+                        className="hover:bg-[var(--background-secondary-hover)] rounded-full p-0.5 transition-colors cursor-pointer text-[var(--text-subtlest)] hover:text-[var(--text-primary)] focus:outline-none flex items-center justify-center shrink-0"
+                        aria-label={`Remove ${pill.category} filter ${pill.value}`}
+                      >
+                        <X size={10} strokeWidth={2.5} />
+                      </button>
+                    </span>
+                  ))}
+                  {onClearFilters && (
+                    <button
+                      onClick={onClearFilters}
+                      className="text-[11px] text-[var(--text-error)] font-black hover:text-[var(--text-error-on-subtle)] cursor-pointer focus:outline-none shrink-0 ml-1.5 transition-colors"
+                    >
+                      Clear all
+                    </button>
+                  )}
+                </div>
               ) : (
-                <Search size={16} />
+                <span className="text-xs text-[var(--text-subtlest)] font-semibold italic pl-1">No active filters</span>
               )}
-            </span>
-            <input
-              type="text"
-              value={localSearch}
-              onChange={(e) => setLocalSearch(e.target.value)}
-              placeholder={DEALS_MICROCOPY.search.placeholder}
-              className="w-full h-10 pl-10 pr-16 bg-[var(--background-primary)] border border-[var(--border-subtle)] rounded-lg text-sm focus:outline-none focus:border-[var(--border-brand)] focus:ring-2 focus:ring-[var(--border-brand)]/20 transition-all text-[var(--text-primary)] placeholder:text-[var(--text-subtlest)] font-medium shadow-sm"
-              aria-label="Search index fields"
-            />
-            {localSearch && (
-              <button
-                onClick={() => { setLocalSearch(''); onSearchChange(''); }}
-                className="absolute right-9 top-1/2 -translate-y-1/2 p-0.5 hover:bg-[var(--background-secondary)] rounded-md transition-colors cursor-pointer focus:outline-none focus-visible:ring-2 focus-visible:ring-[var(--border-brand)]"
-                aria-label="Clear search input"
-              >
-                <X size={14} className="text-[var(--text-subtlest)] hover:text-[var(--text-primary)]" />
-              </button>
-            )}
-
-            {/* Premium Hover Help Tooltip */}
-            <div className="absolute right-3.5 top-1/2 -translate-y-1/2 group z-25 flex items-center">
-              <HelpCircle size={14} className="text-[var(--text-subtlest)] cursor-help hover:text-[var(--text-subtle)]" />
-              <div className="absolute bottom-full right-0 mb-2 w-64 hidden group-hover:block bg-[#131518] text-white text-[10px] font-bold p-3 rounded-lg shadow-xl border border-[#4c5564] leading-relaxed animate-in fade-in duration-150">
-                <span className="block text-[9px] text-[var(--text-brand)] uppercase tracking-wider mb-1 font-black">Search Fields</span>
-                Searches across Deal ID, Customer name, email, phone, branch, shop, appraisers, item variant specifications, and internal timeline notes.
-              </div>
             </div>
+            
+            {/* Columns Toggle Button */}
+            {columns.length > 0 && onColumnsChange && (
+              <div className="relative" ref={columnPickerRef}>
+                <button
+                  onClick={() => setShowColumnPicker(!showColumnPicker)}
+                  className="flex items-center gap-1.5 px-2.5 py-1.5 text-xs font-extrabold text-[var(--text-subtle)] hover:text-[var(--text-primary)] hover:bg-[var(--background-secondary)] rounded-md transition-colors cursor-pointer border border-[var(--border-subtle)] shadow-sm bg-[var(--background-primary)] focus:outline-none focus-visible:ring-2 focus-visible:ring-[var(--border-brand)]"
+                  aria-label="Manage column visibility"
+                  aria-expanded={showColumnPicker}
+                >
+                  {showColumnPicker ? <EyeOff size={14} /> : <Eye size={14} />}
+                  <span>Columns</span>
+                </button>
+                {showColumnPicker && (
+                  <div className="absolute right-0 top-8.5 z-50 bg-[var(--background-primary)] border border-[var(--border-subtle)] rounded-lg shadow-xl p-2.5 w-52 max-h-72 overflow-y-auto slick-scrollbar animate-in fade-in zoom-in-95 duration-150">
+                    <p className="text-[10px] font-black text-[var(--text-subtlest)] uppercase tracking-wider px-1.5 pb-1.5 border-b border-[var(--border-subtle)] mb-1">Show/Hide Columns</p>
+                    {columns.map(col => (
+                      <label key={col.key} className="flex items-center gap-2.5 px-1.5 py-1.5 rounded-md hover:bg-[var(--background-secondary)] cursor-pointer transition-colors text-left focus-within:ring-2 focus-within:ring-[var(--border-brand)]/50">
+                        <div
+                          className={`w-4 h-4 rounded border flex items-center justify-center shrink-0 transition-all ${
+                            col.visible 
+                              ? 'bg-[var(--background-brand-solid)] border-[var(--border-brand)] text-white' 
+                              : 'border-[var(--border-subtle)] bg-[var(--background-primary)]'
+                          }`}
+                          onClick={(e) => {
+                            e.preventDefault();
+                            onColumnsChange(columns.map(c => c.key === col.key ? { ...c, visible: !c.visible } : c));
+                          }}
+                        >
+                          {col.visible && (
+                            <svg width="10" height="8" viewBox="0 0 10 8" fill="none">
+                              <path d="M1 4L3.5 6.5L9 1" stroke="white" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round" />
+                            </svg>
+                          )}
+                        </div>
+                        <span className="text-xs text-[var(--text-subtle)] font-bold">{col.label}</span>
+                      </label>
+                    ))}
+                  </div>
+                )}
+              </div>
+            )}
           </div>
 
           {/* Inline Bulk action bar — visible when rows selected */}
@@ -310,7 +373,10 @@ export function DealsToolbar({
             {/* Help Tooltip */}
             <div className="absolute bottom-full left-1/2 -translate-x-1/2 mb-2 w-52 hidden group-hover:block bg-[#131518] text-white text-[10px] font-bold p-3 rounded-lg shadow-xl border border-[#4c5564] leading-relaxed z-50 animate-in fade-in duration-150">
               <span className="block text-[9px] text-[var(--text-brand)] uppercase tracking-wider mb-1 font-black">Export Output</span>
-              Downloads your actively filtered list containing all 28+ deal details in highly structured CSV spreadsheet format.
+              {selectedCount > 0
+                ? `Downloads your selected ${selectedCount} deal${selectedCount > 1 ? 's' : ''} in highly structured CSV spreadsheet format.`
+                : 'Downloads your actively filtered list containing all 28+ deal details in highly structured CSV spreadsheet format.'
+              }
             </div>
           </div>
         </div>

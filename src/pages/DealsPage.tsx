@@ -4,8 +4,8 @@ import type { Deal } from '../data/mockDeals';
 import { DealsToolbar } from '../components/Deals/DealsToolbar';
 import { DealsFilterRail, INITIAL_FILTERS } from '../components/Deals/DealsFilterRail';
 import type { FilterState } from '../components/Deals/DealsFilterRail';
-import { DealsTable } from '../components/Deals/DealsTable';
-import type { SortConfig } from '../components/Deals/DealsTable';
+import { DealsTable, DEFAULT_COLUMNS } from '../components/Deals/DealsTable';
+import type { SortConfig, ColumnDef } from '../components/Deals/DealsTable';
 import { DealsPreviewPanel } from '../components/Deals/DealsPreviewPanel';
 import type { DealData } from '../data/mockData';
 
@@ -247,6 +247,7 @@ export function DealsPage({ onSelectDeal }: DealsPageProps) {
   const [searchQuery, setSearchQuery] = useState('');
   const [sortConfigs, setSortConfigs] = useState<SortConfig[]>([{ key: 'createdAt', direction: 'desc' }]);
   const [selectedRows, setSelectedRows] = useState<Set<string>>(new Set());
+  const [columns, setColumns] = useState<ColumnDef[]>(DEFAULT_COLUMNS);
   
   const [activeDeal, setActiveDeal] = useState<Deal | null>(null);
   const [filterCollapsed, setFilterCollapsed] = useState(false);
@@ -367,8 +368,13 @@ export function DealsPage({ onSelectDeal }: DealsPageProps) {
 
 
   const handleExportAll = useCallback(() => {
-    triggerSimulatedExport(filteredDeals, 'cashy-deals-all.csv');
-  }, [filteredDeals, triggerSimulatedExport]);
+    if (selectedRows.size > 0) {
+      const selectedDeals = allDeals.filter(d => selectedRows.has(d.dealId));
+      triggerSimulatedExport(selectedDeals, `cashy-deals-selected-${selectedRows.size}-items.csv`);
+    } else {
+      triggerSimulatedExport(filteredDeals, 'cashy-deals-filtered.csv');
+    }
+  }, [selectedRows, allDeals, filteredDeals, triggerSimulatedExport]);
 
   // Bulk simulated appraiser assignment with error triggers
   const executeBulkAction = useCallback((actionType: string) => {
@@ -437,6 +443,10 @@ export function DealsPage({ onSelectDeal }: DealsPageProps) {
           exportProgress={exportProgress}
           onToggleFilter={() => setFilterCollapsed(!filterCollapsed)}
           activeFiltersCount={activePills.length}
+          columns={columns}
+          onColumnsChange={setColumns}
+          activePills={activePills}
+          onClearFilters={() => handleFiltersChange(INITIAL_FILTERS)}
         />
 
         {/* Main Grid Viewport */}
@@ -466,9 +476,10 @@ export function DealsPage({ onSelectDeal }: DealsPageProps) {
               onPageSizeChange={setPageSize}
               onRowAction={handleRowAction}
               searchActive={!!searchQuery.trim()}
-              filters={filters}
-              onFiltersChange={handleFiltersChange}
-              activePills={activePills}
+              searchQuery={searchQuery}
+              onSearchChange={handleSearchChange}
+              columns={columns}
+              onColumnsChange={setColumns}
             />
           </div>
 

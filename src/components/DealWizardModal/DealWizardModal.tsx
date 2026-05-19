@@ -1102,7 +1102,7 @@ export const DealWizardModal: React.FC<DealWizardModalProps> = ({
                                             <CommentItem initials="AK" name="Admin Kernel" time="2 days ago" text="New item added to the deal." />
                                         </>
                                     ) : (
-                                        <div className="space-y-6">
+                                        <div className="space-y-0">
                                             <TimelineItem 
                                                 icon={<Package size={14} />} 
                                                 title="Deal Created" 
@@ -1282,7 +1282,7 @@ export const DealWizardModal: React.FC<DealWizardModalProps> = ({
                                                 </div>
                                             </div>
                                         ) : (
-                                            <div className="space-y-6">
+                                            <div className="space-y-0">
                                                 <TimelineItem 
                                                     icon={<Package size={12} />} 
                                                     title="Deal Created" 
@@ -1381,7 +1381,7 @@ const TimelineItem = ({ icon, title, user, time, color }: any) => {
     };
     
     return (
-        <div className="relative pl-8 pb-8 last:pb-0">
+        <div className="relative pl-8 pb-4 last:pb-0">
             <div className="absolute left-0 top-0 h-full w-[1px] bg-gray-100 last:hidden" style={{ left: '15px' }} />
             <div className={`absolute left-0 top-0 w-8 h-8 rounded-full border-4 border-white flex items-center justify-center text-white shadow-sm z-10 ${colorMap[color] || 'bg-gray-400'}`} style={{ 
                 left: '-1px'

@@ -422,3 +422,25 @@
 .priority--highest, .priority--high { color: var(--utility-red-red-500); }
 .priority--medium { color: var(--utility-yellow-yellow-500); } 
 .priority--low, .priority--lowest { color: var(--utility-blue-blue-500); }
+
+/* Drag and Drop states */
+.deal-card-wrapper--dragging {
+  z-index: 1;
+}
+
+.deal-card--dragging {
+  opacity: 0.4;
+  border-style: dashed;
+  background-color: var(--background-secondary, #F4F5F7);
+}
+
+.deal-card-wrapper--drag-overlay {
+  cursor: grabbing;
+  z-index: 9999;
+}
+
+.deal-card--drag-overlay {
+  box-shadow: 0px 12px 24px -6px rgba(0, 0, 0, 0.16), 0px 0px 0px 1px rgba(0, 0, 0, 0.04);
+  transform: scale(1.05);
+  cursor: grabbing;
+}

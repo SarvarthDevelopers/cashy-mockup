@@ -205,3 +205,10 @@
     scroll-snap-align: center;
   }
 }
+
+/* Drag and Drop states */
+.cashy-kanban-column-body--drop-target {
+  background-color: var(--background-secondary, #F4F5F7);
+  border-radius: var(--radius-200, 8px);
+  transition: background-color 0.2s ease;
+}

@@ -1,7 +1,9 @@
 import React, { useState } from 'react';
 import { KanBanBoard } from '../components/Board/KanBanBoard';
+import { KanBanDndProvider } from '../components/Board/KanBanDndProvider';
+import { KanBanColumn } from '../components/Board/KanBanColumn';
 import { ColumnHeader } from '../components/ColumnHeader/ColumnHeader';
-import { DealCardLarge } from '../components/Card/DealCardLarge';
+import { DraggableDealCard } from '../components/Card/DraggableDealCard';
 import { COLUMNS } from '../data/mockData';
 import type { ColumnId, DealData } from '../data/mockData';
 import { TaskCardLarge, type TaskPriority } from '../components/TaskCard/TaskCardLarge';
@@ -19,9 +21,11 @@ interface TaskData {
 interface LandingPageProps {
     onSelectDeal: (deal: DealData) => void;
     dealsByColumn: Record<ColumnId, DealData[]>;
+    onDealDragOver: (dealId: string, fromColumn: ColumnId, toColumn: ColumnId, toIndex: number) => void;
+    onDealDragEnd: (columnId: ColumnId, oldIndex: number, newIndex: number) => void;
 }
 
-export const LandingPage: React.FC<LandingPageProps> = ({ onSelectDeal, dealsByColumn }) => {
+export const LandingPage: React.FC<LandingPageProps> = ({ onSelectDeal, dealsByColumn, onDealDragOver, onDealDragEnd }) => {
     const [tasksByColumn, setTasksByColumn] = useState<Record<ColumnId, TaskData[]>>({} as any);
     const [addingToColumn, setAddingToColumn] = useState<ColumnId | null>(null);
 
@@ -58,6 +62,7 @@ export const LandingPage: React.FC<LandingPageProps> = ({ onSelectDeal, dealsByC
     return (
         <div className="flex flex-col h-full w-full bg-background text-foreground overflow-hidden relative">
             <div className="flex-1 overflow-hidden relative">
+                <KanBanDndProvider onDealDragOver={onDealDragOver} onDealDragEnd={onDealDragEnd} dealsByColumn={dealsByColumn}>
                 <KanBanBoard onAddColumn={onAddColumn}>
                     {COLUMNS.map((column) => {
                         const deals = dealsByColumn[column.id] || [];
@@ -78,7 +83,7 @@ export const LandingPage: React.FC<LandingPageProps> = ({ onSelectDeal, dealsByC
                                     />
                                 </div>
 
-                                <div className="cashy-kanban-column-body">
+                                <KanBanColumn id={column.id} dealIds={deals.map(d => d.id)}>
                                     {addingToColumn === column.id && (
                                         <TaskCreateCardLarge
                                             onAdd={(data) => handleAddTask(column.id, data)}
@@ -102,8 +107,9 @@ export const LandingPage: React.FC<LandingPageProps> = ({ onSelectDeal, dealsByC
                                         const isHighPriority = deal.flags?.includes('HIGH VALUE');
 
                                         return (
-                                            <DealCardLarge
+                                            <DraggableDealCard
                                                 key={deal.id}
+                                                dealId={deal.id}
                                                 bookingNo={`#${deal.id}`}
                                                 customerName={`${deal.firstName} ${deal.lastName}`}
                                                 amount={deal.amount || ''}
@@ -118,11 +124,12 @@ export const LandingPage: React.FC<LandingPageProps> = ({ onSelectDeal, dealsByC
                                             />
                                         );
                                     })}
-                                </div>
+                                </KanBanColumn>
                             </div>
                         );
                     })}
                 </KanBanBoard>
+                </KanBanDndProvider>
             </div>
         </div>
     );

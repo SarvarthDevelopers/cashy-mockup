@@ -1185,7 +1185,7 @@ export const DealWizardModal: React.FC<DealWizardModalProps> = ({
                     {/* Backdrop */}
                     <div className="absolute inset-0 bg-black/40 backdrop-blur-sm" onClick={() => setIsRightSidebarOpen(false)} />
                     {/* Content */}
-                    <div className={`absolute top-0 bottom-0 right-0 w-[320px] bg-[var(--background-primary)] shadow-2xl transition-transform duration-300 flex flex-col ${isRightSidebarOpen ? 'translate-x-0' : '-translate-x-full'}`}>
+                    <div className={`absolute top-0 bottom-0 right-0 w-[320px] bg-[var(--background-primary)] shadow-2xl transition-transform duration-300 flex flex-col ${isRightSidebarOpen ? 'translate-x-0' : 'translate-x-full'}`}>
                         <div className="p-4 border-b border-[var(--border-subtlest)] flex items-center justify-between bg-[var(--background-primary)] shrink-0">
                             <h3 className="font-bold text-[var(--text-subtle)] text-base m-0">Deal Information</h3>
                             <button onClick={() => setIsRightSidebarOpen(false)} className="w-8 h-8 flex items-center justify-center hover:bg-[var(--background-secondary-hover)] rounded-full text-[var(--text-placeholder)]">

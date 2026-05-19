@@ -569,7 +569,7 @@
 /* --- Dark Theme --- */
 /* Usage: <html data-theme="dark"> or system preference */
 
-@media (prefers-color-scheme: dark) {
+@media (prefers-color-scheme: disabled-dark) {
   :root {
     --background-primary: var(--gray-950);
     --background-hover: var(--gray-900);

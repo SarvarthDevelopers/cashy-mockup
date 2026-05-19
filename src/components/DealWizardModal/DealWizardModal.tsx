@@ -1,5 +1,5 @@
 import React, { useState, useEffect } from 'react';
-import { Package, MessageSquare, History, ChevronUp, ChevronDown, Plus, Trash2, AlertCircle, Loader2, X } from 'lucide-react';
+import { Package, MessageSquare, History, ChevronUp, ChevronDown, Plus, Trash2, AlertCircle, Loader2, X, Menu, Info } from 'lucide-react';
 import { 
     Button, 
     Tabs, 
@@ -52,6 +52,8 @@ export const DealWizardModal: React.FC<DealWizardModalProps> = ({
     const [creationStep, setCreationStep] = useState(0);
     const [sidebarTab, setSidebarTab] = useState('comments');
     const [activeItemIndex, setActiveItemIndex] = useState(0);
+    const [isLeftSidebarOpen, setIsLeftSidebarOpen] = useState(false);
+    const [isRightSidebarOpen, setIsRightSidebarOpen] = useState(false);
     
     // Continuous Scroll Refs
     const contentRef = React.useRef<HTMLDivElement>(null);
@@ -566,8 +568,32 @@ export const DealWizardModal: React.FC<DealWizardModalProps> = ({
                 onClick={(e: React.MouseEvent) => e.stopPropagation()}
             >
                 
-                {/* --- HEADER --- */}
-                <div className="border-b border-gray-100 shrink-0 bg-white" style={{ padding: 'var(--space-400) var(--space-800)' }}>
+                {/* --- MOBILE HEADER --- */}
+                <div className="md:hidden border-b border-gray-100 shrink-0 bg-white px-4 py-3 flex items-center justify-between z-40">
+                    <button 
+                        onClick={() => setIsLeftSidebarOpen(true)}
+                        className="w-10 h-10 flex items-center justify-center rounded-lg hover:bg-gray-50 text-gray-500"
+                    >
+                        <Menu size={20} />
+                    </button>
+                    <div className="flex flex-col items-center">
+                        <span className="text-[10px] font-extrabold uppercase tracking-widest text-gray-400">
+                            {creationFinalized ? 'Active Deal' : 'New Deal'}
+                        </span>
+                        <span className="text-sm font-bold text-[#131518] truncate max-w-[180px]">
+                            {creationFinalized ? `${customerData.firstName} ${customerData.lastName}` : 'New Deal Creation'}
+                        </span>
+                    </div>
+                    <button 
+                        onClick={() => setIsRightSidebarOpen(true)}
+                        className="w-10 h-10 flex items-center justify-center rounded-lg hover:bg-gray-50 text-gray-500"
+                    >
+                        <Info size={20} />
+                    </button>
+                </div>
+
+                {/* --- DESKTOP HEADER --- */}
+                <div className="hidden md:block border-b border-gray-100 shrink-0 bg-white" style={{ padding: 'var(--space-400) var(--space-800)' }}>
                     <div className="flex items-center justify-between">
                         {!creationFinalized ? (
                             <div className="flex items-center gap-4">
@@ -642,7 +668,7 @@ export const DealWizardModal: React.FC<DealWizardModalProps> = ({
                 </div>
 
                 {/* --- STEPPER & ACTIONS --- */}
-                <div className="border-b border-gray-100 shrink-0 bg-white flex items-center justify-between" style={{ padding: 'var(--space-300) var(--space-800)' }}>
+                <div className="hidden md:flex border-b border-gray-100 shrink-0 bg-white items-center justify-between" style={{ padding: 'var(--space-300) var(--space-800)' }}>
                     <div className="flex-1 relative overflow-hidden group">
                         <Tabs 
                             variant="stepper" 
@@ -1114,6 +1140,101 @@ export const DealWizardModal: React.FC<DealWizardModalProps> = ({
                                 </div>
                             </div>
                         )}
+                    </div>
+                </div>
+
+                {/* --- MOBILE LEFT SIDE SHEET (STEPPER) --- */}
+                <div className={`fixed inset-0 z-[250] md:hidden transition-opacity duration-300 ${isLeftSidebarOpen ? 'opacity-100 pointer-events-auto' : 'opacity-0 pointer-events-none'}`}>
+                    {/* Backdrop */}
+                    <div className="absolute inset-0 bg-black/40 backdrop-blur-sm" onClick={() => setIsLeftSidebarOpen(false)} />
+                    {/* Content */}
+                    <div className={`absolute top-0 bottom-0 left-0 w-[280px] bg-white shadow-2xl transition-transform duration-300 flex flex-col ${isLeftSidebarOpen ? 'translate-x-0' : '-translate-x-full'}`}>
+                        <div className="p-4 border-b border-gray-100 flex items-center justify-between bg-white shrink-0">
+                            <h3 className="font-bold text-gray-800 text-base m-0">Navigation Steps</h3>
+                            <button onClick={() => setIsLeftSidebarOpen(false)} className="w-8 h-8 flex items-center justify-center hover:bg-gray-100 rounded-full text-gray-400">
+                                <X size={18} />
+                            </button>
+                        </div>
+                        <div className="flex-1 overflow-y-auto p-4 space-y-3 bg-white">
+                            {steps.map((s, idx) => {
+                                const isActive = activeStep === s.id;
+                                const isStepDisabled = s.id !== 'step1' && !isCreated;
+                                return (
+                                    <button
+                                        key={s.id}
+                                        disabled={isStepDisabled}
+                                        onClick={() => {
+                                            scrollToSection(s.id);
+                                            setIsLeftSidebarOpen(false);
+                                        }}
+                                        className={`w-full flex items-center gap-3 p-3 rounded-xl transition-all text-left ${isActive ? 'bg-[#4649E5]/10 text-[#4649E5] font-bold' : 'hover:bg-gray-50 text-gray-600 disabled:opacity-40 disabled:hover:bg-transparent'}`}
+                                    >
+                                        <div className={`w-7 h-7 rounded-full flex items-center justify-center text-xs font-bold border transition-colors shrink-0 ${isActive ? 'border-[#4649E5] bg-[#4649E5] text-white' : 'border-gray-200 bg-gray-50 text-gray-500'}`}>
+                                            {idx + 1}
+                                        </div>
+                                        <span className="text-sm font-semibold">{s.title}</span>
+                                    </button>
+                                );
+                            })}
+                        </div>
+                    </div>
+                </div>
+
+                {/* --- MOBILE RIGHT SIDE SHEET (DEAL INFO & METADATA) --- */}
+                <div className={`fixed inset-0 z-[250] md:hidden transition-opacity duration-300 ${isRightSidebarOpen ? 'opacity-100 pointer-events-auto' : 'opacity-0 pointer-events-none'}`}>
+                    {/* Backdrop */}
+                    <div className="absolute inset-0 bg-black/40 backdrop-blur-sm" onClick={() => setIsRightSidebarOpen(false)} />
+                    {/* Content */}
+                    <div className={`absolute top-0 bottom-0 right-0 w-[320px] bg-white shadow-2xl transition-transform duration-300 flex flex-col ${isRightSidebarOpen ? 'translate-x-0' : '-translate-x-full'}`}>
+                        <div className="p-4 border-b border-gray-100 flex items-center justify-between bg-white shrink-0">
+                            <h3 className="font-bold text-gray-800 text-base m-0">Deal Information</h3>
+                            <button onClick={() => setIsRightSidebarOpen(false)} className="w-8 h-8 flex items-center justify-center hover:bg-gray-100 rounded-full text-gray-400">
+                                <X size={18} />
+                            </button>
+                        </div>
+                        <div className="flex-1 overflow-y-auto p-5 space-y-6 slick-scrollbar bg-white">
+                            {/* Payout Summary */}
+                            <div className="bg-[#4649E5]/5 border border-[#4649E5]/10 rounded-2xl p-4 text-center">
+                                <span className="text-[10px] font-extrabold uppercase tracking-widest text-gray-400">
+                                    {creationFinalized ? 'Total Payout' : 'Est. Payout'}
+                                </span>
+                                <div className="text-3xl font-extrabold text-[#4649E5] mt-1">
+                                    € {formattedTotal}
+                                </div>
+                            </div>
+
+                            {/* Location & Customer Info */}
+                            <div className="space-y-4">
+                                <h4 className="text-xs font-bold uppercase tracking-widest text-gray-400 m-0">Details</h4>
+                                <div className="bg-gray-50 rounded-2xl p-4 space-y-4 border border-gray-100/50">
+                                    <div className="flex justify-between items-center">
+                                        <span className="text-xs font-medium text-gray-500">Location</span>
+                                        <ShopLabel country={dealData?.countryCode || 'AT'} branch={dealData?.branch || 'Wien'} />
+                                    </div>
+                                    <div className="flex justify-between items-start">
+                                        <span className="text-xs font-medium text-gray-500 mt-0.5">Customer</span>
+                                        <div className="text-right">
+                                            <span className="text-xs font-bold text-[#131518] block">
+                                                {customerData.firstName ? `${customerData.firstName} ${customerData.lastName}` : 'Guest'}
+                                            </span>
+                                            <span className="text-[10px] font-medium text-gray-400 block uppercase">Primary Customer</span>
+                                        </div>
+                                    </div>
+                                    <div className="flex justify-between items-center">
+                                        <span className="text-xs font-medium text-gray-500">Deal ID</span>
+                                        <span className="text-xs font-mono font-bold text-gray-700 bg-white px-2 py-0.5 rounded border border-gray-200/50">{dealId}</span>
+                                    </div>
+                                    <div className="flex justify-between items-center">
+                                        <span className="text-xs font-medium text-gray-500">Duration</span>
+                                        <span className="text-xs font-bold text-gray-800">{metadata.duration} Days</span>
+                                    </div>
+                                    <div className="flex justify-between items-center">
+                                        <span className="text-xs font-medium text-gray-500">Total Items</span>
+                                        <span className="text-xs font-bold text-gray-800">{items.length}</span>
+                                    </div>
+                                </div>
+                            </div>
+                        </div>
                     </div>
                 </div>
             </div>

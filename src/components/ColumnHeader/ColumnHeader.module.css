@@ -64,7 +64,7 @@
     color: var(--text-primary); /* Ensuring clear UI in dark mode */
 }
 
-@media (prefers-color-scheme: dark) {
+@media (prefers-color-scheme: disabled-dark) {
     .badge {
         color: var(--text-primary);
     }
@@ -102,7 +102,7 @@
     box-shadow: 0 0 0 2px var(--background-primary), 0 0 0 4px var(--purple-800);
 }
 
-@media (prefers-color-scheme: dark) {
+@media (prefers-color-scheme: disabled-dark) {
     .iconButton:focus-visible {
         box-shadow: 0 0 0 2px var(--background-primary), 0 0 0 4px var(--purple-800);
     }

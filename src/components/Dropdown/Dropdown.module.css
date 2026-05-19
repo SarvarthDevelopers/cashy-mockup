@@ -48,7 +48,7 @@
     box-shadow: 0 0 0 2px var(--background-primary), 0 0 0 4px var(--purple-800);
 }
 
-@media (prefers-color-scheme: dark) {
+@media (prefers-color-scheme: disabled-dark) {
     .trigger.isOpen:not(.error),
     .trigger:focus-visible:not(.error) {
         box-shadow: 0 0 0 2px var(--background-primary), 0 0 0 4px var(--purple-800);

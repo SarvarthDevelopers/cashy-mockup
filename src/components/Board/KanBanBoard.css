@@ -197,4 +197,11 @@
   .cashy-kanban-add-btn {
     display: none !important;
   }
+  .cashy-kanban-board {
+    scroll-snap-type: x mandatory;
+    scroll-behavior: smooth;
+  }
+  .cashy-kanban-column {
+    scroll-snap-align: center;
+  }
 }

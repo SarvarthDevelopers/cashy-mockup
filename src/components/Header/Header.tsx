@@ -159,9 +159,9 @@ export function Header({ onCreateDealClick, currentPage }: HeaderProps) {
             </button>
             <button
               onClick={() => setIsMobileMenuOpen(true)}
-              className="w-10 h-10 flex items-center justify-center rounded-lg hover:bg-white/10 text-white transition-colors border-none bg-transparent"
+              className="w-10 h-10 flex items-center justify-center rounded-[8px] bg-[#131518]/60 border border-[#4c5564]/40 hover:bg-[#131518]/95 hover:border-[#4c5564]/80 text-white transition-all cursor-pointer"
             >
-              <Menu size={24} />
+              <Menu size={20} />
             </button>
           </div>
         </div>

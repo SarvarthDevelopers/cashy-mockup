@@ -463,18 +463,37 @@ export const DealWizardModal: React.FC<DealWizardModalProps> = ({
         return (
             <div className={containerClasses}>
                 {!isCreated && (
-                    <div className={`${isMobile ? 'flex flex-1' : 'flex'} items-center gap-3 mr-2`}>
-                        {!isMobile && <span className="text-[11px] font-bold uppercase tracking-wider text-gray-400">Deal Type</span>}
-                        <Tabs 
-                            variant="segment" 
-                            value={dealMode} 
-                            onValueChange={(val) => setDealMode(val as 'Pawn' | 'Purchase')}
-                            className="h-10 w-full"
-                        >
-                            <Tab value="Pawn">Pawn</Tab>
-                            <Tab value="Purchase">Purchase</Tab>
-                        </Tabs>
-                    </div>
+                    isMobile ? (
+                        <div className="relative shrink-0 select-none">
+                            <select
+                                value={dealMode}
+                                onChange={(e) => setDealMode(e.target.value as 'Pawn' | 'Purchase')}
+                                className="h-10 px-3 pr-8 rounded-lg bg-[var(--background-secondary)] border border-[var(--border-subtlest)] text-xs font-bold text-[var(--text-primary)] outline-none appearance-none cursor-pointer"
+                                style={{
+                                    backgroundImage: `url("data:image/svg+xml;charset=utf-8,%3Csvg xmlns='http://www.w3.org/2000/svg' fill='none' viewBox='0 0 20 20'%3E%3Cpath stroke='%236B7280' stroke-linecap='round' stroke-linejoin='round' stroke-width='1.5' d='m6 8 4 4 4-4'/%3E%3C/svg%3E")`,
+                                    backgroundPosition: 'right 0.5rem center',
+                                    backgroundSize: '1.25rem',
+                                    backgroundRepeat: 'no-repeat'
+                                }}
+                            >
+                                <option value="Pawn">Pawn</option>
+                                <option value="Purchase">Purchase</option>
+                            </select>
+                        </div>
+                    ) : (
+                        <div className="flex items-center gap-3 mr-2">
+                            <span className="text-[11px] font-bold uppercase tracking-wider text-gray-400">Deal Type</span>
+                            <Tabs 
+                                variant="segment" 
+                                value={dealMode} 
+                                onValueChange={(val) => setDealMode(val as 'Pawn' | 'Purchase')}
+                                className="h-10 w-full"
+                            >
+                                <Tab value="Pawn">Pawn</Tab>
+                                <Tab value="Purchase">Purchase</Tab>
+                            </Tabs>
+                        </div>
+                    )
                 )}
 
                 {creationFinalized ? (
@@ -499,7 +518,7 @@ export const DealWizardModal: React.FC<DealWizardModalProps> = ({
                                     className={`${isMobile ? 'flex-[2]' : ''} font-bold`} 
                                     onClick={() => setActiveStep('step2')}
                                 >
-                                    Create {dealMode} Deal
+                                    {isMobile ? `Create ${dealMode}` : `Create ${dealMode} Deal`}
                                 </Button>
                             </>
                         )}
@@ -516,7 +535,7 @@ export const DealWizardModal: React.FC<DealWizardModalProps> = ({
                             style={{ backgroundColor: 'var(--lilac-600)' }}
                             onClick={handleCreateDeal}
                         >
-                            {isCreating ? 'Creating...' : `Create ${dealMode} Deal`}
+                            {isCreating ? 'Creating...' : isMobile ? `Create ${dealMode}` : `Create ${dealMode} Deal`}
                         </Button>
                     </>
                 )}
@@ -782,7 +801,7 @@ export const DealWizardModal: React.FC<DealWizardModalProps> = ({
                         >
                             {isCreating ? (
                                 <div className="h-full flex flex-col items-center justify-center">
-                                    <div className="w-[500px] space-y-8 animate-in fade-in zoom-in duration-500">
+                                    <div className="w-full max-w-[500px] px-6 space-y-8 animate-in fade-in zoom-in duration-500">
                                         <div className="flex flex-col items-center gap-6">
                                             <div className="relative">
                                                 <div className="w-16 h-16 border-4 border-blue-50 rounded-full border-t-[#4649E5] animate-spin" />

@@ -263,7 +263,7 @@ export function DealsTable({
   const renderCell = (deal: Deal, col: ColumnDef) => {
     switch (col.key) {
       case 'dealId':
-        return <span className="font-extrabold text-[var(--text-primary)] text-xs">{deal.dealId}</span>;
+        return <span className="font-extrabold text-[var(--text-primary)] text-[13px]">{deal.dealId}</span>;
       case 'mode':
         return (
           <span className={`inline-flex items-center px-2 py-0.5 rounded text-[10px] font-extrabold uppercase tracking-wider ${
@@ -286,7 +286,7 @@ export function DealsTable({
         );
       }
       case 'company':
-        return <span className="text-xs text-[var(--text-subtle)] font-normal">{deal.company.replace('CASHY_', '')}</span>;
+        return <span className="text-[13px] text-[var(--text-subtle)] font-normal">{deal.company.replace('CASHY_', '')}</span>;
       case 'branch':
         return (
           <div className="flex items-center">
@@ -294,15 +294,15 @@ export function DealsTable({
           </div>
         );
       case 'businessArea':
-        return <span className="text-xs text-[var(--text-subtle)] font-normal">{deal.businessArea}</span>;
+        return <span className="text-[13px] text-[var(--text-subtle)] font-normal">{deal.businessArea}</span>;
       case 'customer':
-        return <span className="text-xs text-[var(--text-primary)] font-bold">{deal.primaryCustomer.firstName} {deal.primaryCustomer.lastName}</span>;
+        return <span className="text-[13px] text-[var(--text-primary)] font-bold">{deal.primaryCustomer.firstName} {deal.primaryCustomer.lastName}</span>;
       case 'primaryItem':
         return (
           <div className="flex flex-col gap-0.5">
-            <span className="text-xs text-[var(--text-primary)] font-medium truncate max-w-[150px]">{deal.items[0]?.title || '—'}</span>
+            <span className="text-[13px] text-[var(--text-primary)] font-medium truncate max-w-[150px]">{deal.items[0]?.title || '—'}</span>
             {deal.items.length > 1 && (
-              <span className="text-[9px] text-[var(--text-brand)] font-extrabold">+{deal.items.length - 1} more items</span>
+              <span className="text-[10px] text-[var(--text-brand)] font-extrabold">+{deal.items.length - 1} more items</span>
             )}
           </div>
         );
@@ -322,20 +322,20 @@ export function DealsTable({
           'PICKED_UP'
         ].includes(deal.status);
         return (
-          <span className={`text-xs tabular-nums ${isVerified ? 'text-[var(--text-success)] font-black' : 'text-[var(--text-primary)] font-semibold'}`}>
+          <span className={`text-[13px] tabular-nums ${isVerified ? 'text-[var(--text-success)] font-black' : 'text-[var(--text-primary)] font-semibold'}`}>
             {formatEur(deal.suggestedPayout)}
           </span>
         );
       case 'durationDays':
-        return <span className="text-xs text-[var(--text-subtle)] font-normal">{deal.durationDays} days</span>;
+        return <span className="text-[13px] text-[var(--text-subtle)] font-normal">{deal.durationDays} days</span>;
       case 'dueDate':
-        return <span className="text-xs text-[var(--text-subtle)] font-normal">{deal.dueDate}</span>;
+        return <span className="text-[13px] text-[var(--text-subtle)] font-normal">{deal.dueDate}</span>;
       case 'createdAt':
-        return <span className="text-xs text-[var(--text-subtlest)] font-normal">{relativeDate(deal.createdAt)}</span>;
+        return <span className="text-[13px] text-[var(--text-subtlest)] font-normal">{relativeDate(deal.createdAt)}</span>;
       case 'pickupType':
-        return <span className="text-xs text-[var(--text-subtle)] font-normal">{deal.pickupType.replace('_', ' ')}</span>;
+        return <span className="text-[13px] text-[var(--text-subtle)] font-normal">{deal.pickupType.replace('_', ' ')}</span>;
       case 'column':
-        return <span className="text-xs text-[var(--text-subtle)] font-semibold">{deal.column}</span>;
+        return <span className="text-[13px] text-[var(--text-subtle)] font-semibold">{deal.column}</span>;
       default:
         return null;
     }
@@ -395,7 +395,7 @@ export function DealsTable({
             <thead className="sticky top-0 z-30 shadow-[0_1px_0_0_var(--border-subtle)]">
               <tr className="bg-[var(--background-secondary)] border-b border-[var(--border-subtle)]">
                 {/* Select all checkbox */}
-                <th className="w-10 px-3 py-2.5 text-left sticky top-0 left-0 bg-[var(--background-secondary)] z-20">
+                <th className="w-10 px-3 py-3.5 text-left sticky top-0 left-0 bg-[var(--background-secondary)] z-20">
                 <div
                   className={`w-4 h-4 rounded border flex items-center justify-center cursor-pointer transition-colors ${
                     allPageSelected 
@@ -432,7 +432,7 @@ export function DealsTable({
                 return (
                   <th
                     key={col.key}
-                    className="text-left relative group py-2.5 sticky top-0 bg-[var(--background-secondary)] z-10"
+                    className="text-left relative group py-3.5 sticky top-0 bg-[var(--background-secondary)] z-10"
                     style={{ width: col.width + 'px', minWidth: col.minWidth + 'px' }}
                   >
                     <div
@@ -494,7 +494,7 @@ export function DealsTable({
                   aria-selected={isActive}
                 >
                   {/* Checkbox */}
-                  <td className="px-3 py-2 sticky left-0 z-10 transition-colors" style={{ backgroundColor: isActive ? 'var(--background-brand-primary)' : isSelected ? 'rgba(70, 73, 229, 0.05)' : 'var(--background-primary)' }}>
+                  <td className="px-3 py-4 sticky left-0 z-10 transition-colors" style={{ backgroundColor: isActive ? 'var(--background-brand-primary)' : isSelected ? 'rgba(70, 73, 229, 0.05)' : 'var(--background-primary)' }}>
                     <div
                       className={`w-4 h-4 rounded border flex items-center justify-center cursor-pointer transition-colors ${
                         isSelected 
@@ -514,12 +514,12 @@ export function DealsTable({
                   </td>
                   {/* Data cells */}
                   {visibleColumns.map(col => (
-                    <td key={col.key} className="px-2 py-2.5 truncate max-w-[200px] text-xs">
+                    <td key={col.key} className="px-2 py-4 truncate max-w-[200px] text-[13px]">
                       {renderCell(deal, col)}
                     </td>
                   ))}
                   {/* Row actions */}
-                  <td className="px-1.5 py-2.5" onClick={(e) => e.stopPropagation()}>
+                  <td className="px-1.5 py-4" onClick={(e) => e.stopPropagation()}>
                     <RowActionMenu deal={deal} onAction={handleRowAction} />
                   </td>
                 </tr>

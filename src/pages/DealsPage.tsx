@@ -435,6 +435,8 @@ export function DealsPage({ onSelectDeal }: DealsPageProps) {
           onRetryBulk={() => executeBulkAction('archive')}
           exportStatus={exportStatus}
           exportProgress={exportProgress}
+          onToggleFilter={() => setFilterCollapsed(!filterCollapsed)}
+          activeFiltersCount={activePills.length}
         />
 
         {/* Main Grid Viewport */}

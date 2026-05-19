@@ -403,14 +403,21 @@ export const DealWizardModal: React.FC<DealWizardModalProps> = ({
 
     const scrollToSection = (stepId: string, itemIdx?: number) => {
         setIsAutoScrolling(true);
-        const key = itemIdx !== undefined ? `${stepId}-${itemIdx}` : stepId;
-        const el = sectionRefs.current.get(key);
-        if (el) {
-            el.scrollIntoView({ behavior: 'smooth', block: 'start' });
-            setActiveStep(stepId);
-            if (itemIdx !== undefined) setActiveItemIndex(itemIdx);
-        }
-        setTimeout(() => setIsAutoScrolling(false), 800);
+        setActiveStep(stepId);
+        if (itemIdx !== undefined) setActiveItemIndex(itemIdx);
+
+        // Defer scroll to allow DOM/layout updates (like mounting the item tabs bar) to settle first
+        setTimeout(() => {
+            const key = itemIdx !== undefined ? `${stepId}-${itemIdx}` : stepId;
+            const el = sectionRefs.current.get(key);
+            if (el) {
+                el.scrollIntoView({ behavior: 'smooth', block: 'start' });
+            }
+            // Keep isAutoScrolling true until smooth scroll completes
+            setTimeout(() => {
+                setIsAutoScrolling(false);
+            }, 800);
+        }, 100);
     };
 
     const handleScroll = () => {

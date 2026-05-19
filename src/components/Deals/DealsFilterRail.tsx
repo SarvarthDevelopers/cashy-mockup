@@ -204,9 +204,9 @@ export function DealsFilterRail({ filters, onFiltersChange, deals, collapsed, on
 
   // Sidebar CSS classes for mobile drawer transitions
   const sidebarClasses = `
-    fixed inset-y-0 left-0 z-50 w-72 bg-[var(--background-primary)] shadow-2xl flex flex-col h-full overflow-hidden transition-transform duration-300 transform 
-    md:static md:w-64 md:h-auto md:shadow-none md:border md:border-[var(--border-subtle)] md:rounded-[8px] md:flex md:translate-x-0
-    ${collapsed ? '-translate-x-full md:hidden' : 'translate-x-0'}
+    fixed inset-0 z-50 w-full bg-[var(--background-primary)] flex flex-col h-full overflow-hidden transition-transform duration-300 transform 
+    md:static md:w-64 md:h-auto md:shadow-none md:border md:border-[var(--border-subtle)] md:rounded-[8px] md:flex md:translate-x-0 md:translate-y-0
+    ${collapsed ? 'translate-y-full md:hidden md:-translate-x-full' : 'translate-y-0 md:translate-x-0'}
   `;
 
   return (
@@ -279,8 +279,6 @@ export function DealsFilterRail({ filters, onFiltersChange, deals, collapsed, on
               />
             )}
           </FilterSection>
-
-
 
           {/* Business Area */}
           <FilterSection title="Business Area" defaultOpen={false}>
@@ -394,6 +392,24 @@ export function DealsFilterRail({ filters, onFiltersChange, deals, collapsed, on
               </div>
             </div>
           </FilterSection>
+        </div>
+
+        {/* Mobile Sticky Footer */}
+        <div className="p-4 border-t border-[var(--border-subtle)] bg-[var(--background-secondary)] md:hidden shrink-0 flex items-center justify-between gap-3 shadow-lg">
+          <button
+            onClick={() => {
+              onFiltersChange(INITIAL_FILTERS);
+            }}
+            className="flex-1 h-11 text-xs font-bold text-[var(--text-subtle)] bg-[var(--background-primary)] border border-[var(--border-subtle)] rounded-lg hover:bg-[var(--background-secondary-hover)] transition-all cursor-pointer focus:outline-none"
+          >
+            Reset All
+          </button>
+          <button
+            onClick={onToggleCollapse}
+            className="flex-1 h-11 text-xs font-black text-white bg-[var(--background-brand-solid)] hover:bg-[var(--background-brand-solid-hover)] rounded-lg transition-all shadow-sm cursor-pointer focus:outline-none"
+          >
+            Apply Filters
+          </button>
         </div>
       </div>
     </>

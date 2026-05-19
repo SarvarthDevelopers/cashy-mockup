@@ -15,7 +15,6 @@ function applyFilters(deals: Deal[], filters: FilterState): Deal[] {
     if (filters.company.length > 0 && !filters.company.includes(deal.company)) return false;
     if (filters.branch.length > 0 && !filters.branch.includes(deal.branch)) return false;
     if (filters.shop.length > 0 && !filters.shop.includes(deal.shop)) return false;
-    if (filters.businessUnit.length > 0 && !filters.businessUnit.includes(deal.businessUnit)) return false;
     if (filters.businessArea.length > 0 && !filters.businessArea.includes(deal.businessArea)) return false;
     if (filters.mode.length > 0 && !filters.mode.includes(deal.mode)) return false;
     if (filters.status.length > 0 && !filters.status.includes(deal.status)) return false;
@@ -72,7 +71,6 @@ function applySearch(deals: Deal[], query: string): Deal[] {
       deal.company,
       deal.status,
       deal.businessArea,
-      deal.businessUnit,
       ...deal.labels,
       deal.notes || '',
     ];
@@ -160,7 +158,7 @@ function applySort(deals: Deal[], sortConfigs: SortConfig[]): Deal[] {
 function exportToCSV(deals: Deal[], filename = 'cashy-deals-export.csv') {
   const headers = [
     'Deal ID', 'Mode', 'Status', 'Company', 'Branch', 'Shop',
-    'Business Unit', 'Business Area', 'Customer First Name', 'Customer Last Name',
+    'Business Area', 'Customer First Name', 'Customer Last Name',
     'Customer Email', 'Customer Phone', 'Primary Item', 'Items Count',
     'Total Market Value', 'Total Requested Payout', 'Suggested Payout',
     'Duration (days)', 'Due Date', 'Created At', 'Labels', 'Priority',
@@ -170,7 +168,7 @@ function exportToCSV(deals: Deal[], filename = 'cashy-deals-export.csv') {
 
   const rows = deals.map(d => [
     d.dealId, d.mode, d.status, d.company, d.branch, d.shop,
-    d.businessUnit, d.businessArea, d.primaryCustomer.firstName, d.primaryCustomer.lastName,
+    d.businessArea, d.primaryCustomer.firstName, d.primaryCustomer.lastName,
     d.primaryCustomer.email, d.primaryCustomer.phone, d.items[0]?.title || '', d.items.length,
     d.totalMarketValue, d.totalRequestedPayout, d.suggestedPayout,
     d.durationDays, d.dueDate, d.createdAt, d.labels.join(';'), d.priority,
@@ -296,7 +294,6 @@ export function DealsPage({ onSelectDeal }: DealsPageProps) {
       setCurrentPage(1);
     }}));
     filters.shop.forEach(v => pills.push({ category: 'Shop', value: v, onClear: () => updateFilter('shop', filters.shop.filter(x => x !== v)) }));
-    filters.businessUnit.forEach(v => pills.push({ category: 'Unit', value: v, onClear: () => updateFilter('businessUnit', filters.businessUnit.filter(x => x !== v)) }));
     filters.businessArea.forEach(v => pills.push({ category: 'Area', value: v, onClear: () => updateFilter('businessArea', filters.businessArea.filter(x => x !== v)) }));
     filters.mode.forEach(v => pills.push({ category: 'Type', value: v === 'custom_deal' ? 'Purchase' : 'Pawn', onClear: () => updateFilter('mode', filters.mode.filter(x => x !== v)) }));
     filters.status.forEach(v => pills.push({ category: 'Status', value: v.replace('_', ' '), onClear: () => updateFilter('status', filters.status.filter(x => x !== v)) }));

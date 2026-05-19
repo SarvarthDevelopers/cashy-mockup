@@ -39,7 +39,6 @@ export interface Deal {
   company: 'CASHY_AUT' | 'CASHY_DE';
   branch: string;
   shop: string;
-  businessUnit: 'AUTOMOTIVE' | 'GENERAL' | 'LUXURY' | 'ELECTRONICS';
   businessArea: 'Automotive' | 'Electronics' | 'Luxury' | 'Mixed';
   primaryCustomer: DealCustomer;
   items: DealItem[];
@@ -191,16 +190,14 @@ function generateCustomer(company: 'CASHY_AUT' | 'CASHY_DE', index: number): Dea
   return { firstName, lastName, phone, email };
 }
 
-function getItemsForCategory(businessArea: Deal['businessArea']): { items: DealItem[]; businessUnit: Deal['businessUnit'] } {
+function getItemsForCategory(businessArea: Deal['businessArea']): DealItem[] {
   let selectedItems: typeof CAR_ITEMS = [];
-  let businessUnit: Deal['businessUnit'] = 'GENERAL';
 
   switch (businessArea) {
     case 'Automotive': {
       const carItem = randomChoice(CAR_ITEMS);
       const marketValue = randomInt(8000, 120000);
       selectedItems = [{ ...carItem, marketValue, requestedPayout: 0 } as any];
-      businessUnit = 'AUTOMOTIVE';
       break;
     }
     case 'Electronics': {
@@ -210,14 +207,12 @@ function getItemsForCategory(businessArea: Deal['businessArea']): { items: DealI
         const marketValue = randomInt(50, 3000);
         selectedItems.push({ ...item, marketValue, requestedPayout: 0 } as any);
       }
-      businessUnit = randomChoice(['GENERAL', 'ELECTRONICS']);
       break;
     }
     case 'Luxury': {
       const item = randomChoice(LUXURY_ITEMS);
       const marketValue = randomInt(2000, 80000);
       selectedItems.push({ ...item, marketValue, requestedPayout: 0 } as any);
-      businessUnit = 'LUXURY';
       break;
     }
     case 'Mixed': {
@@ -228,9 +223,8 @@ function getItemsForCategory(businessArea: Deal['businessArea']): { items: DealI
         const pool = randomChoice(pools);
         const item = randomChoice(pool);
         const marketValue = pool === LUXURY_ITEMS ? randomInt(2000, 15000) : randomInt(200, 2000);
-        selectedItems.push({ ...item, marketValue, requestedPayout: 0 } as any);
+      selectedItems.push({ ...item, marketValue, requestedPayout: 0 } as any);
       }
-      businessUnit = 'GENERAL';
       break;
     }
   }
@@ -251,7 +245,7 @@ function getItemsForCategory(businessArea: Deal['businessArea']): { items: DealI
     };
   });
 
-  return { items, businessUnit };
+  return items;
 }
 
 // ---- Three sample rows (verbatim from reference) ----
@@ -264,7 +258,6 @@ const SAMPLE_ROWS: Deal[] = [
     company: 'CASHY_AUT',
     branch: 'Vienna',
     shop: 'Wien-1',
-    businessUnit: 'AUTOMOTIVE',
     businessArea: 'Automotive',
     primaryCustomer: { firstName: 'Franz', lastName: 'Kürsten', phone: '+43 660 123456', email: 'franz@example.at' },
     items: [{ itemId: 'I-1001', title: 'Peugeot 208', category: 'car', variant: 'Peugeot 208 2020', marketValue: 45200, requestedPayout: 30000 }],
@@ -291,7 +284,6 @@ const SAMPLE_ROWS: Deal[] = [
     company: 'CASHY_DE',
     branch: 'Berlin',
     shop: 'Berlin-Mitte',
-    businessUnit: 'GENERAL',
     businessArea: 'Electronics',
     primaryCustomer: { firstName: 'Anna', lastName: 'Müller', phone: '+49 30 555555', email: 'anna@example.de' },
     items: [{ itemId: 'I-2001', title: 'iPhone 16 Pro', category: 'electronics.smartphone', variant: 'iPhone 16 Pro 256GB', marketValue: 1200, requestedPayout: 800 }],
@@ -318,7 +310,6 @@ const SAMPLE_ROWS: Deal[] = [
     company: 'CASHY_DE',
     branch: 'Munich',
     shop: 'Munich-2',
-    businessUnit: 'GENERAL',
     businessArea: 'Mixed',
     primaryCustomer: { firstName: 'Lukas', lastName: 'Weber', phone: '+49 89 111222', email: 'lukas@example.de' },
     items: [
@@ -409,7 +400,7 @@ export function generateMockDeals(count = 100): Deal[] {
       businessArea = randomChoice(['Automotive', 'Electronics', 'Luxury'] as Deal['businessArea'][]);
     }
 
-    const { items, businessUnit } = getItemsForCategory(businessArea);
+    const items = getItemsForCategory(businessArea);
 
     // High-value car override
     if (businessArea === 'Automotive' && highValueCarCount < 3) {
@@ -470,7 +461,6 @@ export function generateMockDeals(count = 100): Deal[] {
       company,
       branch,
       shop,
-      businessUnit,
       businessArea,
       primaryCustomer: customer,
       items,

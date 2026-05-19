@@ -45,7 +45,6 @@ const DEFAULT_COLUMNS: ColumnDef[] = [
   { key: 'primaryItem', label: 'Primary Item', width: 150, minWidth: 120, visible: true, sortable: true },
   { key: 'payout', label: 'Payout', width: 100, minWidth: 80, visible: true, sortable: true },
   { key: 'businessArea', label: 'Business Area', width: 100, minWidth: 80, visible: true, sortable: true },
-  { key: 'businessUnit', label: 'Business Unit', width: 110, minWidth: 90, visible: false, sortable: true },
   { key: 'durationDays', label: 'Duration', width: 80, minWidth: 60, visible: true, sortable: true },
   { key: 'createdAt', label: 'Created', width: 100, minWidth: 80, visible: true, sortable: true },
   { key: 'status', label: 'Status', width: 125, minWidth: 90, visible: false, sortable: true },
@@ -286,8 +285,6 @@ export function DealsTable({
             <ShopLabel country={deal.branch} branch={deal.shop} />
           </div>
         );
-      case 'businessUnit':
-        return <span className="text-xs text-[var(--text-subtlest)] font-normal">{deal.businessUnit}</span>;
       case 'businessArea':
         return <span className="text-xs text-[var(--text-subtle)] font-normal">{deal.businessArea}</span>;
       case 'customer':

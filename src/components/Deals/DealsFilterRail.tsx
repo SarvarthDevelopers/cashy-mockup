@@ -7,7 +7,6 @@ export interface FilterState {
   company: string[];
   branch: string[];
   shop: string[];
-  businessUnit: string[];
   businessArea: string[];
   mode: string[];
   status: string[];
@@ -28,7 +27,6 @@ export const INITIAL_FILTERS: FilterState = {
   company: [],
   branch: [],
   shop: [],
-  businessUnit: [],
   businessArea: [],
   mode: [],
   status: [],
@@ -282,16 +280,7 @@ export function DealsFilterRail({ filters, onFiltersChange, deals, collapsed, on
             )}
           </FilterSection>
 
-          {/* Business Unit */}
-          <FilterSection title="Business Unit" defaultOpen={false}>
-            <MultiCheckboxFilter
-              options={['AUTOMOTIVE', 'GENERAL', 'LUXURY', 'ELECTRONICS']}
-              selected={filters.businessUnit}
-              onChange={(val) => updateFilter('businessUnit', val)}
-              deals={deals}
-              filterKey="businessUnit"
-            />
-          </FilterSection>
+
 
           {/* Business Area */}
           <FilterSection title="Business Area" defaultOpen={false}>
@@ -315,8 +304,8 @@ export function DealsFilterRail({ filters, onFiltersChange, deals, collapsed, on
             />
           </FilterSection>
 
-          {/* Suggested Payout */}
-          <FilterSection title="Suggested Payout" defaultOpen={false}>
+          {/* Payout */}
+          <FilterSection title="Payout" defaultOpen={false}>
             <div className="flex gap-2 w-full items-stretch">
               <div className="flex flex-col gap-1 flex-1">
                 <input

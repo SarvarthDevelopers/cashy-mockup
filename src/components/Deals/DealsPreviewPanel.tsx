@@ -177,9 +177,6 @@ export function DealsPreviewPanel({ deal, isLoading = false, onClose, onOpenWiza
               }`}>
                 {deal.mode === 'custom_deal' ? 'Purchase' : 'Pawn'}
               </span>
-              <span className="inline-flex items-center px-2 py-0.5 rounded text-[10px] font-black bg-[var(--background-secondary)] text-[var(--text-subtle)] border border-[var(--border-subtle)]">
-                {deal.businessUnit}
-              </span>
               <span className="inline-flex items-center gap-1 px-2 py-0.5 rounded text-[10px] font-black text-white shadow-sm" style={{ backgroundColor: areaColor }}>
                 {deal.businessArea}
               </span>

@@ -812,6 +812,9 @@ export const DealWizardModal: React.FC<DealWizardModalProps> = ({
                                         className="space-y-8 scroll-mt-20"
                                     >
                                         <div className="px-2">
+                                            <div className="inline-flex items-center gap-2 px-2.5 py-1 rounded-full bg-[var(--background-secondary)] border border-[var(--border-subtlest)] text-[10px] font-extrabold uppercase tracking-widest text-[var(--text-placeholder)] mb-3">
+                                                Step 1 of {steps.length}
+                                            </div>
                                             <h2 className="text-2xl font-bold text-[#131518]">Basic Information</h2>
                                             <p className="text-sm text-gray-400">Initialize the core deal and customer details.</p>
                                         </div>
@@ -1100,14 +1103,17 @@ export const DealWizardModal: React.FC<DealWizardModalProps> = ({
                                     )}
 
                                     {/* --- Dynamic Phases Sections --- */}
-                                    {creationFinalized && steps.slice(1).map((step) => (
+                                    {creationFinalized && steps.slice(1).map((step, idx) => (
                                         <div 
                                             key={step.id} 
                                             id={`section-${step.id}`}
                                             ref={(el) => { if (el) sectionRefs.current.set(step.id, el); }}
-                                            className="space-y-10 scroll-mt-20"
+                                            className="space-y-10 scroll-mt-20 pt-16 border-t border-[var(--border-subtlest)]"
                                         >
                                             <div className="px-2">
+                                                <div className="inline-flex items-center gap-2 px-2.5 py-1 rounded-full bg-[var(--background-secondary)] border border-[var(--border-subtlest)] text-[10px] font-extrabold uppercase tracking-widest text-[var(--text-placeholder)] mb-3">
+                                                    Step {idx + 2} of {steps.length}
+                                                </div>
                                                 <h2 className="text-2xl font-bold text-[#131518]">{step.title}</h2>
                                                 <p className="text-sm text-gray-400">Complete the {step.title.toLowerCase()} process for all deal items.</p>
                                             </div>

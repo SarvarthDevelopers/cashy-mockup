@@ -1,4 +1,4 @@
-import React from 'react';
+import React, { useState, useRef, useEffect } from 'react';
 import "./Card.css";
 import { ShopLabel } from "./ShopLabel";
 import { CategoriesDealCard } from "./CategoriesDealCard";
@@ -25,6 +25,7 @@ export type DealCardLargeProps = {
   categories?: string[];
   
   onClick?: () => void;
+  onArchive?: () => void;
 };
 
 export const DealCardLarge = React.forwardRef<HTMLDivElement, DealCardLargeProps>(({
@@ -42,8 +43,23 @@ export const DealCardLarge = React.forwardRef<HTMLDivElement, DealCardLargeProps
   items = ["Item 1", "Item 2", "Item 3", "Item 4", "Item 5"],
   categories = ["General Electronics", "Car", "Jewelry", "Home"],
   onClick,
+  onArchive,
 }, ref) => {
   const stateClass = state !== "Default" ? `deal-card--${state.toLowerCase()}` : "";
+  const [isMenuOpen, setIsMenuOpen] = useState(false);
+  const menuRef = useRef<HTMLDivElement>(null);
+
+  useEffect(() => {
+    const handler = (e: MouseEvent) => {
+      if (menuRef.current && !menuRef.current.contains(e.target as Node)) {
+        setIsMenuOpen(false);
+      }
+    };
+    if (isMenuOpen) {
+      document.addEventListener('mousedown', handler);
+    }
+    return () => document.removeEventListener('mousedown', handler);
+  }, [isMenuOpen]);
 
   let displayDate = dueDate;
   if (!isNaN(Number(dueDate)) && dueDate.length > 8) {
@@ -67,7 +83,16 @@ export const DealCardLarge = React.forwardRef<HTMLDivElement, DealCardLargeProps
         </div>
         <div className="deal-card-right">
           <div className="deal-card-header-right-container">
-            <div className="deal-card-more-button">
+            <div 
+              className="deal-card-more-button"
+              onClick={(e) => {
+                e.stopPropagation();
+                setIsMenuOpen(!isMenuOpen);
+              }}
+              role="button"
+              aria-label="More options"
+              aria-expanded={isMenuOpen}
+            >
               <svg
                 viewBox="0 0 16 16"
                 fill="none"
@@ -79,6 +104,25 @@ export const DealCardLarge = React.forwardRef<HTMLDivElement, DealCardLargeProps
                 />
               </svg>
             </div>
+            {isMenuOpen && (
+              <div 
+                ref={menuRef}
+                className="deal-card-context-menu"
+                onClick={(e) => e.stopPropagation()}
+              >
+                <button
+                  type="button"
+                  className="deal-card-context-menu-item"
+                  onClick={(e) => {
+                    e.stopPropagation();
+                    onArchive?.();
+                    setIsMenuOpen(false);
+                  }}
+                >
+                  Archive Deal
+                </button>
+              </div>
+            )}
           </div>
         </div>
       </div>

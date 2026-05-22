@@ -8,6 +8,7 @@ import { COLUMNS } from '../data/mockData';
 import type { ColumnId, DealData } from '../data/mockData';
 import { TaskCardLarge, type TaskPriority } from '../components/TaskCard/TaskCardLarge';
 import { TaskCreateCardLarge } from '../components/TaskCard/TaskCreateCardLarge';
+import { useToast } from '../components/Toast/ToastContext';
 
 interface TaskData {
     id: string;
@@ -23,14 +24,21 @@ interface LandingPageProps {
     dealsByColumn: Record<ColumnId, DealData[]>;
     onDealDragOver: (dealId: string, fromColumn: ColumnId, toColumn: ColumnId, toIndex: number) => void;
     onDealDragEnd: (columnId: ColumnId, oldIndex: number, newIndex: number) => void;
+    onArchiveDeal?: (dealId: string) => void;
 }
 
-export const LandingPage: React.FC<LandingPageProps> = ({ onSelectDeal, dealsByColumn, onDealDragOver, onDealDragEnd }) => {
+export const LandingPage: React.FC<LandingPageProps> = ({ onSelectDeal, dealsByColumn, onDealDragOver, onDealDragEnd, onArchiveDeal }) => {
     const [tasksByColumn, setTasksByColumn] = useState<Record<ColumnId, TaskData[]>>({} as any);
     const [addingToColumn, setAddingToColumn] = useState<ColumnId | null>(null);
+    const { showToast } = useToast();
 
     const onAddColumn = (index: number) => {
         console.log('Add column at index:', index);
+    };
+
+    const handleArchive = (dealId: string) => {
+        onArchiveDeal?.(dealId);
+        showToast(`Deal #${dealId} archived successfully.`, 'success');
     };
 
     const handleAddTask = (columnId: ColumnId, data: { title: string; description: string; dueDate: Date }) => {
@@ -121,6 +129,7 @@ export const LandingPage: React.FC<LandingPageProps> = ({ onSelectDeal, dealsByC
                                                 items={deal.items}
                                                 categories={[deal.businessArea || 'General']}
                                                 onClick={() => onSelectDeal(deal)}
+                                                onArchive={() => handleArchive(deal.id)}
                                             />
                                         );
                                     })}

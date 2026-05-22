@@ -91,6 +91,26 @@ function App() {
     setIsNewDeal(false);
   };
 
+  const handleArchiveDeal = (dealId: string) => {
+    setDealsByColumn(prev => {
+      const newDeals = { ...prev };
+      let dealToArchive: DealData | null = null;
+      for (const colId in newDeals) {
+        const col = colId as ColumnId;
+        const index = newDeals[col].findIndex(d => d.id === dealId);
+        if (index !== -1) {
+          dealToArchive = newDeals[col][index];
+          newDeals[col] = newDeals[col].filter(d => d.id !== dealId);
+          break;
+        }
+      }
+      if (dealToArchive) {
+        newDeals['archive'] = [dealToArchive, ...(newDeals['archive'] || [])];
+      }
+      return newDeals;
+    });
+  };
+
   return (
     <ToastProvider>
       <div className="flex flex-col h-screen w-full overflow-hidden">
@@ -99,11 +119,11 @@ function App() {
         />
         <main className="flex-1 overflow-hidden relative">
           <Routes>
-            <Route path="/" element={<LandingPage onSelectDeal={handleSelectDeal} dealsByColumn={dealsByColumn} onDealDragOver={handleDealDragOver} onDealDragEnd={handleDealDragEnd} />} />
+            <Route path="/" element={<LandingPage onSelectDeal={handleSelectDeal} dealsByColumn={dealsByColumn} onDealDragOver={handleDealDragOver} onDealDragEnd={handleDealDragEnd} onArchiveDeal={handleArchiveDeal} />} />
             <Route path="/deals" element={<DealsPage onSelectDeal={handleSelectDeal} />} />
             <Route path="/wizard-builder" element={<WizardBuilderPage />} />
             <Route path="/wizard-builder/builder/:id" element={<WizardBuilderPage />} />
-            <Route path="*" element={<LandingPage onSelectDeal={handleSelectDeal} dealsByColumn={dealsByColumn} onDealDragOver={handleDealDragOver} onDealDragEnd={handleDealDragEnd} />} />
+            <Route path="*" element={<LandingPage onSelectDeal={handleSelectDeal} dealsByColumn={dealsByColumn} onDealDragOver={handleDealDragOver} onDealDragEnd={handleDealDragEnd} onArchiveDeal={handleArchiveDeal} />} />
           </Routes>
         </main>
 

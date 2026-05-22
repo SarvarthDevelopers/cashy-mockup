@@ -27,10 +27,18 @@
 }
 
 .deal-card:focus,
-.deal-card:active,
-.deal-card--selected {
+.deal-card:active {
   border-color: var(--border-brand-hover);
   outline: none; /* Optional: rely purely on the design system's border explicitly for focus */
+}
+
+.deal-card.deal-card--selected,
+.deal-card.deal-card--selected:hover,
+.deal-card.deal-card--selected:focus,
+.deal-card.deal-card--selected:active {
+  border: 2px solid #4649e5;
+  padding: 11px;
+  outline: none;
 }
 
 /* Common Container rows */
@@ -451,10 +459,10 @@
   right: 0;
   top: 22px;
   z-index: 100;
-  background-color: var(--element-white);
-  border: 1px solid var(--border-subtle);
+  background-color: var(--brand-500, #17142b);
+  border: 1px solid rgba(255, 255, 255, 0.1);
   border-radius: 8px;
-  box-shadow: 0px 8px 16px -4px rgba(0, 0, 0, 0.08), 0px 0px 0px 1px rgba(0, 0, 0, 0.04);
+  box-shadow: 0px 10px 20px rgba(0, 0, 0, 0.3), 0px 0px 0px 1px rgba(255, 255, 255, 0.05);
   padding: 4px;
   min-width: 120px;
   display: flex;
@@ -470,14 +478,14 @@
   font-family: var(--family-sans);
   font-size: 12px;
   font-weight: 600;
-  color: var(--text-subtle);
+  color: rgba(255, 255, 255, 0.85);
   cursor: pointer;
   border-radius: 4px;
   transition: background-color 0.15s ease, color 0.15s ease;
 }
 
 .deal-card-context-menu-item:hover {
-  background-color: var(--background-secondary-hover);
-  color: var(--text-primary);
+  background-color: #4649e5;
+  color: #ffffff;
 }
 

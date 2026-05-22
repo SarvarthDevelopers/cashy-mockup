@@ -21,13 +21,15 @@ interface TaskData {
 
 interface LandingPageProps {
     onSelectDeal: (deal: DealData) => void;
+    selectedDealId?: string | null;
     dealsByColumn: Record<ColumnId, DealData[]>;
     onDealDragOver: (dealId: string, fromColumn: ColumnId, toColumn: ColumnId, toIndex: number) => void;
     onDealDragEnd: (columnId: ColumnId, oldIndex: number, newIndex: number) => void;
     onArchiveDeal?: (dealId: string) => void;
+    onDragEndComplete?: (dealId: string) => void;
 }
 
-export const LandingPage: React.FC<LandingPageProps> = ({ onSelectDeal, dealsByColumn, onDealDragOver, onDealDragEnd, onArchiveDeal }) => {
+export const LandingPage: React.FC<LandingPageProps> = ({ onSelectDeal, selectedDealId, dealsByColumn, onDealDragOver, onDealDragEnd, onArchiveDeal, onDragEndComplete }) => {
     const [tasksByColumn, setTasksByColumn] = useState<Record<ColumnId, TaskData[]>>({} as any);
     const [addingToColumn, setAddingToColumn] = useState<ColumnId | null>(null);
     const { showToast } = useToast();
@@ -70,7 +72,7 @@ export const LandingPage: React.FC<LandingPageProps> = ({ onSelectDeal, dealsByC
     return (
         <div className="flex flex-col h-full w-full bg-background text-foreground overflow-hidden relative">
             <div className="flex-1 overflow-hidden relative">
-                <KanBanDndProvider onDealDragOver={onDealDragOver} onDealDragEnd={onDealDragEnd} dealsByColumn={dealsByColumn}>
+                <KanBanDndProvider onDealDragOver={onDealDragOver} onDealDragEnd={onDealDragEnd} dealsByColumn={dealsByColumn} onDragEndComplete={onDragEndComplete}>
                 <KanBanBoard onAddColumn={onAddColumn}>
                     {COLUMNS.map((column) => {
                         const deals = dealsByColumn[column.id] || [];
@@ -128,6 +130,7 @@ export const LandingPage: React.FC<LandingPageProps> = ({ onSelectDeal, dealsByC
                                                 shopLabelBranch={deal.branch}
                                                 items={deal.items}
                                                 categories={[deal.businessArea || 'General']}
+                                                state={deal.id === selectedDealId ? "Selected" : "Default"}
                                                 onClick={() => onSelectDeal(deal)}
                                                 onArchive={() => handleArchive(deal.id)}
                                             />

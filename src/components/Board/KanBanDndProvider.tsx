@@ -19,9 +19,10 @@ interface KanBanDndProviderProps {
   onDealDragOver: (dealId: string, fromColumn: ColumnId, toColumn: ColumnId, toIndex: number) => void;
   onDealDragEnd: (columnId: ColumnId, oldIndex: number, newIndex: number) => void;
   dealsByColumn: Record<ColumnId, DealData[]>;
+  onDragEndComplete?: (dealId: string) => void;
 }
 
-export const KanBanDndProvider: React.FC<KanBanDndProviderProps> = ({ children, onDealDragOver, onDealDragEnd, dealsByColumn }) => {
+export const KanBanDndProvider: React.FC<KanBanDndProviderProps> = ({ children, onDealDragOver, onDealDragEnd, dealsByColumn, onDragEndComplete }) => {
   const [activeDeal, setActiveDeal] = useState<DealData | null>(null);
 
   const findColumn = (id: string): ColumnId | null => {
@@ -102,10 +103,14 @@ export const KanBanDndProvider: React.FC<KanBanDndProviderProps> = ({ children, 
   const handleDragEnd = (event: DragEndEvent) => {
     setActiveDeal(null);
     const { active, over } = event;
+    const activeId = active.id as string;
+
+    if (activeId) {
+      onDragEndComplete?.(activeId);
+    }
 
     if (!over) return;
 
-    const activeId = active.id as string;
     const overId = over.id as string;
     
     const activeColumn = findColumn(activeId);

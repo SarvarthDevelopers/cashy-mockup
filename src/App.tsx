@@ -1,4 +1,4 @@
-import { useState } from 'react';
+import { useState, useEffect, useRef } from 'react';
 import { Routes, Route } from 'react-router';
 import { arrayMove } from '@dnd-kit/sortable';
 import { LandingPage } from './pages/LandingPage';
@@ -15,6 +15,45 @@ function App() {
   const [selectedDeal, setSelectedDeal] = useState<DealData | null>(null);
   const [isNewDeal, setIsNewDeal] = useState(false);
   const [dealsByColumn, setDealsByColumn] = useState<Record<ColumnId, DealData[]>>(INITIAL_DEALS);
+  const justDraggedRef = useRef(false);
+
+  useEffect(() => {
+    const handleDocumentClick = (e: MouseEvent) => {
+      if (isModalOpen) return;
+      if (justDraggedRef.current) return;
+
+      const target = e.target as HTMLElement;
+      if (target.closest('.deal-card')) {
+        return;
+      }
+
+      setSelectedDeal(null);
+    };
+
+    document.addEventListener('click', handleDocumentClick);
+    return () => {
+      document.removeEventListener('click', handleDocumentClick);
+    };
+  }, [isModalOpen]);
+
+  const handleDragEndComplete = (dealId: string) => {
+    justDraggedRef.current = true;
+    setTimeout(() => {
+      justDraggedRef.current = false;
+    }, 100);
+
+    let foundDeal: DealData | null = null;
+    for (const colId in dealsByColumn) {
+      const deal = dealsByColumn[colId as ColumnId].find(d => d.id === dealId);
+      if (deal) {
+        foundDeal = deal;
+        break;
+      }
+    }
+    if (foundDeal) {
+      setSelectedDeal(foundDeal);
+    }
+  };
 
   const handleCreateDeal = () => {
     setIsNewDeal(true);
@@ -119,11 +158,11 @@ function App() {
         />
         <main className="flex-1 overflow-hidden relative">
           <Routes>
-            <Route path="/" element={<LandingPage onSelectDeal={handleSelectDeal} dealsByColumn={dealsByColumn} onDealDragOver={handleDealDragOver} onDealDragEnd={handleDealDragEnd} onArchiveDeal={handleArchiveDeal} />} />
+            <Route path="/" element={<LandingPage onSelectDeal={handleSelectDeal} selectedDealId={selectedDeal?.id} dealsByColumn={dealsByColumn} onDealDragOver={handleDealDragOver} onDealDragEnd={handleDealDragEnd} onArchiveDeal={handleArchiveDeal} onDragEndComplete={handleDragEndComplete} />} />
             <Route path="/deals" element={<DealsPage onSelectDeal={handleSelectDeal} />} />
             <Route path="/wizard-builder" element={<WizardBuilderPage />} />
             <Route path="/wizard-builder/builder/:id" element={<WizardBuilderPage />} />
-            <Route path="*" element={<LandingPage onSelectDeal={handleSelectDeal} dealsByColumn={dealsByColumn} onDealDragOver={handleDealDragOver} onDealDragEnd={handleDealDragEnd} onArchiveDeal={handleArchiveDeal} />} />
+            <Route path="*" element={<LandingPage onSelectDeal={handleSelectDeal} selectedDealId={selectedDeal?.id} dealsByColumn={dealsByColumn} onDealDragOver={handleDealDragOver} onDealDragEnd={handleDealDragEnd} onArchiveDeal={handleArchiveDeal} onDragEndComplete={handleDragEndComplete} />} />
           </Routes>
         </main>
 

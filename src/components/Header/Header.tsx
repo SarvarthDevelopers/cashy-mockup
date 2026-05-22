@@ -1,6 +1,6 @@
-import { useState } from 'react';
+import { useState, useRef, useEffect } from 'react';
 import { useNavigate, useLocation } from 'react-router';
-import { Menu, X } from 'lucide-react';
+import { Menu, X, Settings } from 'lucide-react';
 import svgPaths from "../../imports/svg-4o201vrq4p";
 
 interface HeaderProps {
@@ -14,6 +14,19 @@ export function Header({ onCreateDealClick, currentPage }: HeaderProps) {
   const navigate = useNavigate();
   const location = useLocation();
   const [isMobileMenuOpen, setIsMobileMenuOpen] = useState(false);
+  const [isSettingsOpen, setIsSettingsOpen] = useState(false);
+  const settingsRef = useRef<HTMLDivElement>(null);
+
+  useEffect(() => {
+    if (!isSettingsOpen) return;
+    const handleOutsideClick = (e: MouseEvent) => {
+      if (settingsRef.current && !settingsRef.current.contains(e.target as Node)) {
+        setIsSettingsOpen(false);
+      }
+    };
+    document.addEventListener('mousedown', handleOutsideClick);
+    return () => document.removeEventListener('mousedown', handleOutsideClick);
+  }, [isSettingsOpen]);
 
   // Determine active nav item from route
   const getActivePage = () => {
@@ -47,7 +60,6 @@ export function Header({ onCreateDealClick, currentPage }: HeaderProps) {
     { key: 'deals', label: 'Deals', path: '/' },
     { key: 'items', label: 'Items', path: null },
     { key: 'customers', label: 'Customers', path: null },
-    { key: 'wizard-builder', label: 'Wizard Builder', path: null },
     { key: 'cashbook', label: 'Cashbook', path: null },
   ];
 
@@ -119,15 +131,48 @@ export function Header({ onCreateDealClick, currentPage }: HeaderProps) {
                   </div>
                 </div>
               </div>
-              <div className="bg-[#131518] flex items-center justify-center p-[12px] relative rounded-[8px] shrink-0 size-[40px] border border-[#4c5564]">
-                <div className="overflow-clip relative shrink-0 size-[20px]">
-                  <svg className="absolute block size-full" fill="none" preserveAspectRatio="none" viewBox="0 0 24 24">
-                    <g>
-                      <path clipRule="evenodd" d={svgPaths.p30a1d300} fill="#FBFCFC" fillRule="evenodd" />
-                      <path clipRule="evenodd" d={svgPaths.p3b47d500} fill="#FBFCFC" fillRule="evenodd" />
-                    </g>
-                  </svg>
-                </div>
+              <div ref={settingsRef} className="relative shrink-0">
+                <button
+                  onClick={() => setIsSettingsOpen(!isSettingsOpen)}
+                  className={`flex items-center justify-center p-[12px] rounded-[8px] size-[40px] border transition-all cursor-pointer focus:outline-none ${
+                    isSettingsOpen
+                      ? 'bg-[#1f2227] border-[#4c5564]/80 text-white'
+                      : 'bg-[#131518] border-[#4c5564] text-[#FBFCFC] hover:bg-[#1f2227] hover:border-[#4c5564]/80'
+                  }`}
+                  aria-label="Settings"
+                  aria-expanded={isSettingsOpen}
+                >
+                  <div className="overflow-clip relative shrink-0 size-[20px]">
+                    <svg className="absolute block size-full" fill="none" preserveAspectRatio="none" viewBox="0 0 24 24">
+                      <g>
+                        <path clipRule="evenodd" d={svgPaths.p30a1d300} fill="#FBFCFC" fillRule="evenodd" />
+                        <path clipRule="evenodd" d={svgPaths.p3b47d500} fill="#FBFCFC" fillRule="evenodd" />
+                      </g>
+                    </svg>
+                  </div>
+                </button>
+
+                {isSettingsOpen && (
+                  <div className="absolute right-0 top-[50px] bg-white border border-gray-200 rounded-[8px] shadow-xl py-2 w-[200px] z-50 animate-in fade-in slide-in-from-top-2 duration-150">
+                    <div className="px-3 py-1 text-[10px] font-sans font-bold tracking-widest text-gray-400 uppercase select-none">
+                      Settings
+                    </div>
+                    <button
+                      onClick={() => {
+                        handleNavClick('wizard-builder');
+                        setIsSettingsOpen(false);
+                      }}
+                      className={`w-full text-left px-3 py-2 text-sm font-sans flex items-center gap-2 hover:bg-gray-50 hover:text-gray-900 transition-colors border-none bg-transparent cursor-pointer ${
+                        activePage === 'wizard-builder'
+                          ? 'text-[#4649e5] font-semibold'
+                          : 'text-gray-700'
+                      }`}
+                    >
+                      <Settings className="size-4" />
+                      <span>Wizard Builder</span>
+                    </button>
+                  </div>
+                )}
               </div>
               <div className="bg-[#131518] flex items-center justify-center p-[12px] relative rounded-[8px] shrink-0 size-[40px] border border-[#4c5564]">
                 <div className="overflow-clip relative shrink-0 size-[20px]">
@@ -218,6 +263,26 @@ export function Header({ onCreateDealClick, currentPage }: HeaderProps) {
                 </button>
               );
             })}
+
+            {/* Settings Section */}
+            <div className="h-px bg-[#252135] my-4" />
+            <div className="px-3 py-1.5 text-[10px] font-sans font-bold tracking-widest text-[#fbfcfc]/40 uppercase select-none">
+              Settings
+            </div>
+            <button
+              onClick={() => {
+                handleNavClick('wizard-builder');
+                setIsMobileMenuOpen(false);
+              }}
+              className={`w-full flex items-center gap-3 p-3 rounded-xl transition-all text-left border-none bg-transparent cursor-pointer ${
+                activePage === 'wizard-builder'
+                  ? 'bg-[#4649e5]/25 text-white font-bold'
+                  : 'hover:bg-white/5 text-[#fbfcfc]/70 hover:text-[#fbfcfc]'
+              }`}
+            >
+              <Settings className="size-4" />
+              <span className="text-sm font-semibold">Wizard Builder</span>
+            </button>
           </div>
         </div>
       </div>

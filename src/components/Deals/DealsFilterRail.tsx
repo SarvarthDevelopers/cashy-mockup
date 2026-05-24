@@ -116,7 +116,7 @@ interface DealsFilterRailProps {
 function FilterSection({ title, children, defaultOpen = true }: { title: string; children: React.ReactNode; defaultOpen?: boolean }) {
   const [open, setOpen] = useState(defaultOpen);
   return (
-    <div className="content-stretch flex flex-col gap-0 items-start relative shrink-0 w-full border-b border-[var(--border-subtle)] last:border-b-0" data-name="Section">
+    <div className="content-stretch flex flex-col gap-0 items-start relative shrink-0 w-full border-b border-[var(--border-subtle)] last:border-b-0 mr-[-8px]" data-name="Section">
       <button
         onClick={() => setOpen(!open)}
         className="bg-[var(--background-primary)] relative shrink-0 w-full cursor-pointer hover:bg-[var(--background-secondary)] transition-colors focus:outline-none focus-visible:ring-2 focus-visible:ring-[var(--border-brand)] text-left"
@@ -124,7 +124,7 @@ function FilterSection({ title, children, defaultOpen = true }: { title: string;
         aria-expanded={open}
       >
         <div className="flex flex-row items-center size-full">
-          <div className="content-stretch flex gap-[8px] items-center p-[16px] relative w-full">
+          <div className="content-stretch flex gap-[8px] items-center py-[16px] pl-[16px] pr-[24px] relative w-full">
             <div className="content-stretch flex gap-[12px] items-center relative shrink-0" data-name="Title">
               <div className="relative shrink-0 size-[24px] flex items-center justify-center text-[var(--text-primary)]">
                 {open ? (
@@ -145,7 +145,7 @@ function FilterSection({ title, children, defaultOpen = true }: { title: string;
         </div>
       </button>
       {open && children && (
-        <div className="relative shrink-0 w-full pb-[16px] px-[16px]">
+        <div className="relative shrink-0 w-full pb-[16px] pl-[16px] pr-[24px]">
           <div className="content-stretch flex flex-col gap-[6px] items-stretch relative w-full">
             {children}
           </div>
@@ -350,7 +350,7 @@ export function DealsFilterRail({ filters, onFiltersChange, deals, collapsed, on
         </div>
 
         {/* Scrollable filter sections */}
-        <div className="flex-1 overflow-y-auto slick-scrollbar">
+        <div className="flex-1 overflow-y-auto slick-scrollbar slick-scrollbar--overlay">
           {/* Company Division */}
           <FilterSection title="Company Division" defaultOpen={true}>
             <MultiCheckboxFilter

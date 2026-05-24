@@ -20,10 +20,10 @@ interface ItemsFilterRailProps {
 function FilterSection({ title, children, defaultOpen = true }: { title: string; children: React.ReactNode; defaultOpen?: boolean }) {
   const [open, setOpen] = useState(defaultOpen);
   return (
-    <div className="flex flex-col w-full border-b border-[var(--border-subtle)] last:border-b-0">
+    <div className="flex flex-col w-full border-b border-[var(--border-subtle)] last:border-b-0 mr-[-8px]">
       <button
         onClick={() => setOpen(!open)}
-        className="bg-[var(--background-primary)] w-full py-4 px-4 hover:bg-[var(--background-secondary)] transition-colors focus:outline-none text-left flex items-center justify-between cursor-pointer"
+        className="bg-[var(--background-primary)] w-full py-4 pl-4 pr-6 hover:bg-[var(--background-secondary)] transition-colors focus:outline-none text-left flex items-center justify-between cursor-pointer"
         aria-expanded={open}
       >
         <span className="font-bold text-[14px] text-[var(--text-primary)]">{title}</span>
@@ -40,7 +40,7 @@ function FilterSection({ title, children, defaultOpen = true }: { title: string;
         </div>
       </button>
       {open && (
-        <div className="pb-4 px-4 flex flex-col gap-2 w-full animate-in fade-in duration-200">
+        <div className="pb-4 pl-4 pr-6 flex flex-col gap-2 w-full animate-in fade-in duration-200">
           {children}
         </div>
       )}
@@ -492,7 +492,7 @@ export function ItemsFilterRail({ filters, onFiltersChange, items, collapsed, on
         </div>
 
         {/* Scrollable sections */}
-        <div className="flex-1 overflow-y-auto slick-scrollbar">
+        <div className="flex-1 overflow-y-auto slick-scrollbar slick-scrollbar--overlay">
           {/* Item ID filter */}
           <FilterSection title="Item ID" defaultOpen={true}>
             <input

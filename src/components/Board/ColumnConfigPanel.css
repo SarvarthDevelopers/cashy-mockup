@@ -10,11 +10,21 @@
 .cashy-column-config__body {
   flex: 1;
   overflow-y: auto;
+  overflow-y: overlay;
   padding: var(--space-400, 16px) 18px;
   display: flex;
   flex-direction: column;
   gap: var(--space-500, 20px);
   box-sizing: border-box;
+}
+
+.cashy-column-config__body > * {
+  margin-right: -6px;
+}
+
+.cashy-column-config__title,
+.cashy-column-config__section {
+  padding-right: 6px;
 }
 
 /* Custom scrollbar for config panel scrollable body */

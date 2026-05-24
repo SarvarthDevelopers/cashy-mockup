@@ -16,7 +16,7 @@ const meta: Meta<typeof TaskCardLarge> = {
         priority: {
             control: 'radio',
             options: ['high', 'medium', 'low'],
-            description: 'Priority level determines background color: high (red/today), medium (blue/tomorrow), low (white/other date)',
+            description: 'Priority level determines priority arrow: high (red up arrow), medium (yellow horizontal lines), low (blue down arrow)',
         },
         taskId: {
             control: 'text',

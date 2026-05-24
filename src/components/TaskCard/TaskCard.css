@@ -40,20 +40,7 @@
   border-color: var(--border-primary-hover);
 }
 
-/* Priority background variants */
-.task-card--priority-high {
-  background-color: var(--utility-red-red-50);
-}
-
-/* No priority / medium — blue tint */
-.task-card--priority-medium {
-  background-color: var(--utility-blue-blue-50);
-}
-
-/* Low priority — clean white */
-.task-card--priority-low {
-  background-color: var(--element-white);
-}
+/* Priority background variants removed - all cards now have a clean white background, priority is shown via arrows */
 
 /* --- Row layout (shared pattern from DealCard) --- */
 .task-card__row {
@@ -71,7 +58,8 @@
 }
 
 .task-card__row--title {
-  gap: 0;
+  gap: var(--space-100);
+  align-items: flex-start;
   min-height: 18px;
 }
 

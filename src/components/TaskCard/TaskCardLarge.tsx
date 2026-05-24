@@ -1,7 +1,14 @@
 import React, { useCallback } from 'react';
 import './TaskCard.css';
+import { Priority } from '../Card/Priority';
 
 export type TaskPriority = 'high' | 'medium' | 'low';
+
+const PRIORITY_MAP: Record<TaskPriority, 'Highest' | 'Medium' | 'Lowest'> = {
+    high: 'Highest',
+    medium: 'Medium',
+    low: 'Lowest',
+};
 
 export interface TaskCardLargeProps extends React.HTMLAttributes<HTMLDivElement> {
     /** Unique task ID — displayed as #ID in the meta row. */
@@ -73,7 +80,6 @@ export const TaskCardLarge = React.forwardRef<HTMLDivElement, TaskCardLargeProps
 
     const rootClassName = [
         'task-card',
-        `task-card--priority-${priority}`,
         className,
     ].filter(Boolean).join(' ');
 
@@ -111,6 +117,9 @@ export const TaskCardLarge = React.forwardRef<HTMLDivElement, TaskCardLargeProps
             {/* Title */}
             <div className="task-card__row task-card__row--title">
                 <p className="task-card__title">{title}</p>
+                {priority && (
+                    <Priority type={PRIORITY_MAP[priority]} className="task-card__priority" />
+                )}
             </div>
 
             {/* Description (optional) */}

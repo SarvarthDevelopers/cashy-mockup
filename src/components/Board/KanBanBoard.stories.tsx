@@ -370,9 +370,9 @@ This story demonstrates the **full task creation flow** within the KanBan board:
 2. The button **turns into a ✕ close button** while the creation form is active
 3. **Fill in the task title** (required) and optional description
 4. **Select priority** via the date pills:
-   - **Today** → High priority (🔴 red background)
-   - **Tomorrow** → No priority (🔵 blue background)
-   - **📅 Calendar** → Low priority (⬜ white background)
+   - **Today** → High priority (double up red arrows / Highest)
+   - **Tomorrow** → Medium priority (yellow horizontal lines / Medium)
+   - **📅 Calendar** → Low priority (blue down arrows / Lowest)
 5. Click **Add** — the task is **inserted in priority order** in the column
 6. A **toast notification** appears at the bottom: *"✓ Task added in [Column Name]"*
 7. The new card gets a **brand-colored highlight border** — click anywhere to clear it

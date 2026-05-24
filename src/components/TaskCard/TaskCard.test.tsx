@@ -20,19 +20,25 @@ describe('TaskCardLarge', () => {
         expect(screen.getByText('Test description text.')).toBeInTheDocument();
     });
 
-    it('applies high priority class', () => {
+    it('renders high (Highest) priority double up arrow', () => {
         const { container } = render(<TaskCardLarge {...baseProps} priority="high" />);
-        expect(container.firstChild).toHaveClass('task-card--priority-high');
+        const priorityElement = container.querySelector('.priority');
+        expect(priorityElement).toBeInTheDocument();
+        expect(priorityElement).toHaveClass('priority--highest');
     });
 
-    it('applies medium priority class by default', () => {
+    it('renders medium priority arrow by default', () => {
         const { container } = render(<TaskCardLarge {...baseProps} />);
-        expect(container.firstChild).toHaveClass('task-card--priority-medium');
+        const priorityElement = container.querySelector('.priority');
+        expect(priorityElement).toBeInTheDocument();
+        expect(priorityElement).toHaveClass('priority--medium');
     });
 
-    it('applies low priority class', () => {
+    it('renders low (Lowest) priority double down arrow', () => {
         const { container } = render(<TaskCardLarge {...baseProps} priority="low" />);
-        expect(container.firstChild).toHaveClass('task-card--priority-low');
+        const priorityElement = container.querySelector('.priority');
+        expect(priorityElement).toBeInTheDocument();
+        expect(priorityElement).toHaveClass('priority--lowest');
     });
 
     it('calls onMoreClick when more button is clicked', async () => {

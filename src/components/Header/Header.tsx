@@ -34,6 +34,7 @@ export function Header({ onCreateDealClick, currentPage }: HeaderProps) {
     if (location.pathname === '/wizard-builder') return 'wizard-builder';
     if (location.pathname === '/deals') return 'deals';
     if (location.pathname === '/items') return 'items';
+    if (location.pathname === '/customers') return 'customers';
     if (location.pathname === '/settings/business-areas') return 'business-areas';
     return '';
   };
@@ -54,7 +55,7 @@ export function Header({ onCreateDealClick, currentPage }: HeaderProps) {
         navigate('/settings/business-areas');
         break;
       case 'customers':
-        // navigate('/customers');
+        navigate('/customers');
         break;
       default:
         break;
@@ -64,7 +65,7 @@ export function Header({ onCreateDealClick, currentPage }: HeaderProps) {
   const navItems = [
     { key: 'deals', label: 'Deals', path: '/' },
     { key: 'items', label: 'Items', path: '/items' },
-    { key: 'customers', label: 'Customers', path: null },
+    { key: 'customers', label: 'Customers', path: '/customers' },
     { key: 'cashbook', label: 'Cashbook', path: null },
   ];
 

@@ -1,3 +1,6 @@
+import { MOCK_DEALS } from './mockDeals';
+import type { Deal } from './mockDeals';
+
 export interface Customer {
   customerId: string;
   firstName: string;
@@ -6,24 +9,67 @@ export interface Customer {
   phone: string;
   city: string;
   country: string;
-  status: string;
+  status: 'ACTIVE' | 'INACTIVE' | 'BLACKLISTED';
   totalDeals: number;
   totalVolume: number;
   createdAt: string;
 }
 
-export const MOCK_CUSTOMERS: Customer[] = [
-  {
-    customerId: 'CUST-001',
-    firstName: 'Franz',
-    lastName: 'Kürsten',
-    email: 'franz.k@example.com',
-    phone: '+43 123 456789',
-    city: 'Vienna',
-    country: 'Austria',
-    status: 'ACTIVE',
-    totalDeals: 5,
-    totalVolume: 25000,
-    createdAt: '2026-01-14T10:00:00Z'
-  }
-];
+// Dynamically generate MOCK_CUSTOMERS from MOCK_DEALS to ensure consistency
+const generateMockCustomers = (): Customer[] => {
+  const customerMap = new Map<string, Deal[]>();
+
+  MOCK_DEALS.forEach((deal) => {
+    const email = deal.primaryCustomer.email.toLowerCase().trim();
+    if (!customerMap.has(email)) {
+      customerMap.set(email, []);
+    }
+    customerMap.get(email)!.push(deal);
+  });
+
+  const customers: Customer[] = [];
+  let counter = 1;
+
+  customerMap.forEach((deals) => {
+    const firstDeal = deals[0];
+    const customerId = `CUST-${String(counter).padStart(3, '0')}`;
+    
+    // Sort deals by createdAt to find the earliest
+    const sortedDeals = [...deals].sort((a, b) => 
+      new Date(a.createdAt).getTime() - new Date(b.createdAt).getTime()
+    );
+    const earliestDate = sortedDeals[0].createdAt;
+    
+    const totalVolume = deals.reduce((sum, d) => sum + (d.suggestedPayout || 0), 0);
+    
+    // Deterministic status: index-based
+    let status: Customer['status'] = 'ACTIVE';
+    if (counter % 12 === 0) {
+      status = 'BLACKLISTED';
+    } else if (counter % 5 === 0) {
+      status = 'INACTIVE';
+    }
+
+    const country = firstDeal.company === 'CASHY_DE' ? 'Germany' : 'Austria';
+
+    customers.push({
+      customerId,
+      firstName: firstDeal.primaryCustomer.firstName,
+      lastName: firstDeal.primaryCustomer.lastName,
+      email: firstDeal.primaryCustomer.email,
+      phone: firstDeal.primaryCustomer.phone,
+      city: firstDeal.branch,
+      country,
+      status,
+      totalDeals: deals.length,
+      totalVolume,
+      createdAt: earliestDate
+    });
+
+    counter++;
+  });
+
+  return customers;
+};
+
+export const MOCK_CUSTOMERS = generateMockCustomers();

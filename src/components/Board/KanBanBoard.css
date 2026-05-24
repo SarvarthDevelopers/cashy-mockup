@@ -113,6 +113,7 @@
   flex: 1;
   min-height: 0;
   overflow-y: auto;
+  overflow-y: overlay;
   overflow-x: hidden;
   
   display: flex;
@@ -127,7 +128,7 @@
 }
 
 .cashy-kanban-column-body::-webkit-scrollbar {
-  width: 6px;
+  width: 8px;
 }
 
 .cashy-kanban-column-body::-webkit-scrollbar-track {
@@ -135,12 +136,14 @@
 }
 
 .cashy-kanban-column-body::-webkit-scrollbar-thumb {
-  background-color: rgba(0, 0, 0, 0.1);
-  border-radius: var(--radius-200, 8px);
+  background-color: rgba(0, 0, 0, 0.15);
+  border-radius: 9999px;
+  border: 2px solid transparent;
+  background-clip: content-box;
 }
 
 .cashy-kanban-column-body::-webkit-scrollbar-thumb:hover {
-  background-color: rgba(0, 0, 0, 0.18);
+  background-color: rgba(0, 0, 0, 0.28);
 }
 
 /* This zone creates the 16px gap between columns AND acts as the hover flex layer */

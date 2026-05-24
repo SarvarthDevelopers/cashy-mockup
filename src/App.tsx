@@ -4,6 +4,8 @@ import { arrayMove } from '@dnd-kit/sortable';
 import { LandingPage } from './pages/LandingPage';
 import { WizardBuilderPage } from './pages/AdminBuilderPage';
 import { DealsPage } from './pages/DealsPage';
+import { ItemsPage } from './pages/ItemsPage';
+import { BusinessAreasPage } from './pages/BusinessAreasPage';
 import { Header } from './components/Header/Header';
 import { DealWizardModal } from './components/DealWizardModal/DealWizardModal';
 import { ToastProvider } from './components/Toast/ToastContext';
@@ -160,6 +162,8 @@ function App() {
           <Routes>
             <Route path="/" element={<LandingPage onSelectDeal={handleSelectDeal} selectedDealId={selectedDeal?.id} dealsByColumn={dealsByColumn} onDealDragOver={handleDealDragOver} onDealDragEnd={handleDealDragEnd} onArchiveDeal={handleArchiveDeal} onDragEndComplete={handleDragEndComplete} />} />
             <Route path="/deals" element={<DealsPage onSelectDeal={handleSelectDeal} />} />
+            <Route path="/items" element={<ItemsPage onSelectDeal={handleSelectDeal} />} />
+            <Route path="/settings/business-areas" element={<BusinessAreasPage />} />
             <Route path="/wizard-builder" element={<WizardBuilderPage />} />
             <Route path="/wizard-builder/builder/:id" element={<WizardBuilderPage />} />
             <Route path="*" element={<LandingPage onSelectDeal={handleSelectDeal} selectedDealId={selectedDeal?.id} dealsByColumn={dealsByColumn} onDealDragOver={handleDealDragOver} onDealDragEnd={handleDealDragEnd} onArchiveDeal={handleArchiveDeal} onDragEndComplete={handleDragEndComplete} />} />

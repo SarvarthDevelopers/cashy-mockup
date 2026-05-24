@@ -1,0 +1,581 @@
+import { useState, useMemo, useEffect } from 'react';
+import { X } from 'lucide-react';
+import type { FlatItem } from './ItemsTable';
+
+export interface FilterState {
+  itemId: string;
+  categoryPaths: string[];
+  businessAreas: string[];
+  dealId: string;
+  dealStatuses: string[];
+  hasImages: 'all' | 'yes' | 'no';
+  hasDocuments: 'all' | 'yes' | 'no';
+}
+
+export const INITIAL_FILTERS: FilterState = {
+  itemId: '',
+  categoryPaths: [],
+  businessAreas: [],
+  dealId: '',
+  dealStatuses: [],
+  hasImages: 'all',
+  hasDocuments: 'all',
+};
+
+interface ItemsFilterRailProps {
+  filters: FilterState;
+  onFiltersChange: (filters: FilterState) => void;
+  items: FlatItem[];
+  collapsed: boolean;
+  onToggleCollapse: () => void;
+}
+
+interface CategoryNode {
+  name: string;
+  fullPath: string;
+  children: Record<string, CategoryNode>;
+}
+
+function buildCategoryTree(categories: string[]): CategoryNode {
+  const root: CategoryNode = { name: 'Root', fullPath: '', children: {} };
+  categories.forEach(cat => {
+    if (!cat) return;
+    const parts = cat.split('.');
+    let current = root;
+    let pathAcc = '';
+    parts.forEach(part => {
+      pathAcc = pathAcc ? `${pathAcc}.${part}` : part;
+      if (!current.children[part]) {
+        current.children[part] = {
+          name: part,
+          fullPath: pathAcc,
+          children: {}
+        };
+      }
+      current = current.children[part];
+    });
+  });
+  return root;
+}
+
+function getDescendants(node: CategoryNode): string[] {
+  const paths: string[] = [];
+  const recurse = (n: CategoryNode) => {
+    if (n.fullPath) paths.push(n.fullPath);
+    Object.values(n.children).forEach(recurse);
+  };
+  recurse(node);
+  return paths;
+}
+
+// Collapsible Section Wrapper
+function FilterSection({ title, children, defaultOpen = true }: { title: string; children: React.ReactNode; defaultOpen?: boolean }) {
+  const [open, setOpen] = useState(defaultOpen);
+  return (
+    <div className="flex flex-col w-full border-b border-[var(--border-subtle)] last:border-b-0">
+      <button
+        onClick={() => setOpen(!open)}
+        className="bg-[var(--background-primary)] w-full py-4 px-4 hover:bg-[var(--background-secondary)] transition-colors focus:outline-none text-left flex items-center justify-between cursor-pointer"
+        aria-expanded={open}
+      >
+        <span className="font-bold text-[14px] text-[var(--text-primary)]">{title}</span>
+        <div className="text-[var(--text-subtlest)]">
+          {open ? (
+            <svg width="10" height="6" viewBox="0 0 10 6" fill="none">
+              <path d="M1 1L5 5L9 1" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round"/>
+            </svg>
+          ) : (
+            <svg width="6" height="10" viewBox="0 0 6 10" fill="none">
+              <path d="M1 1L5 5L1 9" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round"/>
+            </svg>
+          )}
+        </div>
+      </button>
+      {open && (
+        <div className="pb-4 px-4 flex flex-col gap-2 w-full animate-in fade-in duration-200">
+          {children}
+        </div>
+      )}
+    </div>
+  );
+}
+
+// Hierarchical Category Tree Node component
+interface CategoryTreeNodeProps {
+  node: CategoryNode;
+  selectedPaths: string[];
+  expandedPaths: Record<string, boolean>;
+  onToggleExpand: (path: string) => void;
+  onCheckboxChange: (path: string, checked: boolean) => void;
+  countMap: Record<string, number>;
+  level: number;
+}
+
+const CategoryTreeNode: React.FC<CategoryTreeNodeProps> = ({
+  node,
+  selectedPaths,
+  expandedPaths,
+  onToggleExpand,
+  onCheckboxChange,
+  countMap,
+  level = 0
+}) => {
+  const children = Object.values(node.children);
+  const isLeaf = children.length === 0;
+  const isExpanded = !!expandedPaths[node.fullPath];
+  
+  const descendants = useMemo(() => {
+    return getDescendants(node);
+  }, [node]);
+
+  const checkedDescendantsCount = descendants.filter(d => selectedPaths.includes(d)).length;
+  const isChecked = descendants.length > 0 && checkedDescendantsCount === descendants.length;
+  const isIndeterminate = descendants.length > 0 && checkedDescendantsCount > 0 && checkedDescendantsCount < descendants.length;
+
+  const handleCheckboxClick = (e: React.MouseEvent) => {
+    e.stopPropagation();
+    onCheckboxChange(node.fullPath, !isChecked);
+  };
+
+  const handleRowClick = () => {
+    if (!isLeaf) {
+      onToggleExpand(node.fullPath);
+    } else {
+      onCheckboxChange(node.fullPath, !isChecked);
+    }
+  };
+
+  const displayName = node.name.charAt(0).toUpperCase() + node.name.slice(1);
+  const count = countMap[node.fullPath] || 0;
+
+  return (
+    <div className="flex flex-col w-full">
+      {node.fullPath && (
+        <div 
+          onClick={handleRowClick}
+          className="flex items-center justify-between py-1 px-1.5 hover:bg-[var(--background-secondary)] rounded-md transition-colors cursor-pointer text-left w-full h-8"
+          style={{ paddingLeft: `${level * 12 + 6}px` }}
+        >
+          <div className="flex items-center gap-2 min-w-0">
+            {/* Expand indicator */}
+            <div className="w-3.5 h-3.5 flex items-center justify-center shrink-0 text-[var(--text-subtlest)]">
+              {!isLeaf && (
+                isExpanded ? (
+                  <svg width="8" height="5" viewBox="0 0 10 6" fill="none">
+                    <path d="M1 1L5 5L9 1" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round"/>
+                  </svg>
+                ) : (
+                  <svg width="5" height="8" viewBox="0 0 6 10" fill="none">
+                    <path d="M1 1L5 5L1 9" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round"/>
+                  </svg>
+                )
+              )}
+            </div>
+
+            {/* Checkbox */}
+            <div 
+              onClick={handleCheckboxClick}
+              className={`w-3.5 h-3.5 rounded border flex items-center justify-center shrink-0 transition-colors cursor-pointer ${
+                isChecked 
+                  ? 'bg-[var(--background-brand-solid)] border-[var(--border-brand)] text-white shadow-sm' 
+                  : isIndeterminate
+                    ? 'bg-[var(--background-brand-primary)] border-[var(--border-brand)] text-[var(--text-brand)]'
+                    : 'border-[var(--border-subtle)] bg-[var(--background-primary)]'
+              }`}
+            >
+              {isChecked && (
+                <svg width="8" height="6" viewBox="0 0 10 8" fill="none">
+                  <path d="M1 4L3.5 6.5L9 1" stroke="white" strokeWidth="2.5" strokeLinecap="round" strokeLinejoin="round" />
+                </svg>
+              )}
+              {isIndeterminate && (
+                <div className="w-1.5 h-0.5 bg-[var(--text-brand)] rounded" />
+              )}
+            </div>
+
+            <span className={`text-xs truncate ${isChecked ? 'text-[var(--text-brand)] font-bold' : 'text-[var(--text-primary)] font-medium'}`}>
+              {displayName}
+            </span>
+          </div>
+
+          <span className={`text-[9px] font-bold tabular-nums px-1 py-0.2 rounded border ${
+            isChecked 
+              ? 'bg-[var(--background-primary)] border-[var(--border-brand-subtle)] text-[var(--text-brand)]' 
+              : 'bg-[var(--background-primary)] border-[var(--border-subtle)] text-[var(--text-subtlest)]'
+          }`}>
+            {count}
+          </span>
+        </div>
+      )}
+
+      {!isLeaf && (node.fullPath === '' || isExpanded) && (
+        <div className="flex flex-col w-full">
+          {children.map(child => (
+            <CategoryTreeNode
+              key={child.fullPath}
+              node={child}
+              selectedPaths={selectedPaths}
+              expandedPaths={expandedPaths}
+              onToggleExpand={onToggleExpand}
+              onCheckboxChange={onCheckboxChange}
+              countMap={countMap}
+              level={node.fullPath ? level + 1 : level}
+            />
+          ))}
+        </div>
+      )}
+    </div>
+  );
+};
+
+// Segmented Toggle for Boolean/Tri-state Filters
+function SegmentedToggle({
+  value,
+  onChange,
+  label
+}: {
+  value: 'all' | 'yes' | 'no';
+  onChange: (val: 'all' | 'yes' | 'no') => void;
+  label: string;
+}) {
+  return (
+    <div className="flex flex-col gap-1.5 w-full">
+      <span className="text-[11px] font-black text-[var(--text-subtlest)] uppercase tracking-wider">{label}</span>
+      <div className="flex bg-[var(--background-secondary)] p-1 rounded-lg border border-[var(--border-subtle)] w-full">
+        {(['all', 'yes', 'no'] as const).map(opt => {
+          const isActive = value === opt;
+          return (
+            <button
+              key={opt}
+              onClick={() => onChange(opt)}
+              className={`flex-1 text-center py-1 text-xs font-bold rounded-md transition-all cursor-pointer focus:outline-none capitalize ${
+                isActive
+                  ? 'bg-[var(--background-primary)] text-[var(--text-brand)] shadow-sm border border-[var(--border-subtle)] font-extrabold'
+                  : 'text-[var(--text-subtlest)] hover:text-[var(--text-primary)]'
+              }`}
+            >
+              {opt}
+            </button>
+          );
+        })}
+      </div>
+    </div>
+  );
+}
+
+// Multi-checkbox helper for exact visual parity
+function MultiCheckboxFilter({
+  options,
+  selected,
+  onChange,
+  items,
+  filterKey,
+}: {
+  options: string[];
+  selected: string[];
+  onChange: (val: string[]) => void;
+  items: FlatItem[];
+  filterKey: 'businessArea' | 'dealStatus';
+}) {
+  const getCounts = (opt: string) => {
+    return items.filter(i => {
+      if (filterKey === 'businessArea') return i.businessArea === opt;
+      if (filterKey === 'dealStatus') return i.dealStatus === opt;
+      return false;
+    }).length;
+  };
+
+  return (
+    <div className="flex flex-col gap-[6px] w-full" role="group">
+      {options.map(opt => {
+        const checked = selected.includes(opt);
+        const count = getCounts(opt);
+        const handleKeyDown = (e: React.KeyboardEvent) => {
+          if (e.key === ' ' || e.key === 'Enter') {
+            e.preventDefault();
+            if (checked) onChange(selected.filter(s => s !== opt));
+            else onChange([...selected, opt]);
+          }
+        };
+
+        return (
+          <button
+            key={opt}
+            onClick={() => {
+              if (checked) {
+                onChange(selected.filter(s => s !== opt));
+              } else {
+                onChange([...selected, opt]);
+              }
+            }}
+            onKeyDown={handleKeyDown}
+            className={`w-full h-[40px] relative rounded-[6px] shrink-0 border transition-all cursor-pointer flex flex-row items-center justify-between px-[12px] py-[8px] focus:outline-none focus-visible:ring-2 focus-visible:ring-[var(--border-brand)] ${
+              checked
+                ? 'bg-[var(--background-brand-subtle)] border-[var(--border-brand)] hover:bg-[var(--background-brand-subtle-hover)]'
+                : 'bg-[var(--background-secondary)] border-[var(--border-subtle)] hover:bg-[var(--background-secondary-hover)] hover:border-[var(--border-brand-hover)]'
+            }`}
+          >
+            <div className="flex items-center gap-[10px]">
+              <div className={`w-4 h-4 rounded-[4px] border flex items-center justify-center shrink-0 transition-all ${
+                checked 
+                  ? 'bg-[var(--background-brand-solid)] border-[var(--border-brand)] text-white shadow-sm' 
+                  : 'border-[var(--border-subtle)] bg-[var(--background-primary)]'
+              }`}>
+                {checked && (
+                  <svg width="10" height="8" viewBox="0 0 10 8" fill="none">
+                    <path d="M1 4L3.5 6.5L9 1" stroke="white" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round" />
+                  </svg>
+                )}
+              </div>
+              <span className={`text-[13px] font-medium transition-colors ${
+                checked ? 'text-[var(--text-brand)] font-semibold' : 'text-[var(--text-primary)]'
+              }`}>{opt.replace(/_/g, ' ')}</span>
+            </div>
+            
+            <span className={`text-[10px] font-bold tabular-nums px-1.5 py-0.5 rounded-md border transition-all ${
+              checked 
+                ? 'bg-[var(--background-primary)] border-[var(--border-brand-subtle)] text-[var(--text-brand)]' 
+                : 'bg-[var(--background-primary)] border-[var(--border-subtle)] text-[var(--text-subtlest)]'
+            }`}>{count}</span>
+          </button>
+        );
+      })}
+    </div>
+  );
+}
+
+export function ItemsFilterRail({ filters, onFiltersChange, items, collapsed, onToggleCollapse }: ItemsFilterRailProps) {
+  const [expandedPaths, setExpandedPaths] = useState<Record<string, boolean>>({});
+
+  const updateFilter = <K extends keyof FilterState>(key: K, value: FilterState[K]) => {
+    onFiltersChange({ ...filters, [key]: value });
+  };
+
+  // Build the hierarchical Category Tree
+  const categoryTree = useMemo(() => {
+    const categories = Array.from(new Set(items.map(i => i.category)));
+    return buildCategoryTree(categories);
+  }, [items]);
+
+  // Expand categories by default when they load
+  useEffect(() => {
+    const initialExpanded: Record<string, boolean> = {};
+    const recurse = (node: CategoryNode) => {
+      if (node.fullPath) {
+        initialExpanded[node.fullPath] = true;
+      }
+      Object.values(node.children).forEach(recurse);
+    };
+    recurse(categoryTree);
+    setExpandedPaths(initialExpanded);
+  }, [categoryTree]);
+
+  // Compute total category mapping counts
+  const categoryCountMap = useMemo(() => {
+    const counts: Record<string, number> = {};
+    items.forEach(i => {
+      if (!i.category) return;
+      const parts = i.category.split('.');
+      let currentPath = '';
+      parts.forEach(part => {
+        currentPath = currentPath ? `${currentPath}.${part}` : part;
+        counts[currentPath] = (counts[currentPath] || 0) + 1;
+      });
+    });
+    return counts;
+  }, [items]);
+
+  const handleToggleExpand = (path: string) => {
+    setExpandedPaths(prev => ({
+      ...prev,
+      [path]: !prev[path]
+    }));
+  };
+
+  const handleCategoryCheckboxChange = (path: string, checked: boolean) => {
+    // Helper to find node in tree recursively
+    const findNode = (node: CategoryNode, targetPath: string): CategoryNode | null => {
+      if (node.fullPath === targetPath) return node;
+      for (const child of Object.values(node.children)) {
+        const found = findNode(child, targetPath);
+        if (found) return found;
+      }
+      return null;
+    };
+
+    const targetNode = findNode(categoryTree, path);
+    if (!targetNode) return;
+
+    const descendants = getDescendants(targetNode);
+    let newPaths = [...filters.categoryPaths];
+
+    if (checked) {
+      // Add all descendants to active list
+      descendants.forEach(d => {
+        if (!newPaths.includes(d)) newPaths.push(d);
+      });
+    } else {
+      // Remove all descendants from active list
+      newPaths = newPaths.filter(p => !descendants.includes(p));
+    }
+    updateFilter('categoryPaths', newPaths);
+  };
+
+  const sidebarClasses = `
+    fixed inset-0 z-50 w-full bg-[var(--background-primary)] flex flex-col h-full overflow-hidden transition-transform duration-300 transform 
+    md:static md:w-64 md:h-auto md:shadow-none md:border md:border-[var(--border-subtle)] md:rounded-[8px] md:flex md:translate-x-0 md:translate-y-0
+    ${collapsed ? 'translate-y-full md:hidden md:-translate-x-full' : 'translate-y-0 md:translate-x-0'}
+  `;
+
+  return (
+    <>
+      {!collapsed && (
+        <div 
+          className="fixed inset-0 bg-black/40 z-45 transition-opacity md:hidden animate-in fade-in duration-200" 
+          onClick={onToggleCollapse}
+          aria-hidden="true"
+        />
+      )}
+
+      <div className={sidebarClasses} role="search" aria-label="Items filters">
+        {/* Header */}
+        <div className="flex items-center justify-between px-4 py-3.5 border-b border-[var(--border-subtle)] bg-[var(--background-secondary)] md:bg-transparent shrink-0">
+          <div className="flex items-center gap-2.5">
+            <svg width="16" height="16" viewBox="0 0 16 16" fill="none">
+              <path d="M2 4h12M4 8h8M6 12h4" stroke="var(--text-primary)" strokeWidth="1.8" strokeLinecap="round" />
+            </svg>
+            <span className="text-sm font-extrabold text-[var(--text-primary)]">Filters</span>
+          </div>
+          <div className="md:hidden">
+            <button
+              onClick={onToggleCollapse}
+              className="p-1 hover:bg-[var(--background-secondary)] rounded-md transition-colors cursor-pointer focus:outline-none"
+              aria-label="Collapse filters sidebar"
+            >
+              <X size={15} className="text-[var(--text-subtlest)] hover:text-[var(--text-primary)]" />
+            </button>
+          </div>
+        </div>
+
+        {/* Scrollable sections */}
+        <div className="flex-1 overflow-y-auto slick-scrollbar">
+          {/* Item ID filter */}
+          <FilterSection title="Item ID" defaultOpen={true}>
+            <input
+              type="text"
+              placeholder="e.g. ITEM-001"
+              value={filters.itemId}
+              onChange={(e) => updateFilter('itemId', e.target.value)}
+              className="w-full h-10 px-3 text-xs bg-[var(--background-secondary)] border border-[var(--border-subtle)] rounded-md focus:outline-none focus:border-[var(--border-brand)] hover:bg-[var(--background-secondary-hover)] focus:bg-[var(--background-primary)] text-[var(--text-primary)] placeholder:text-[var(--text-subtlest)] transition-all font-semibold"
+            />
+          </FilterSection>
+
+          {/* Deal ID filter */}
+          <FilterSection title="Deal ID" defaultOpen={true}>
+            <input
+              type="text"
+              placeholder="e.g. 000001"
+              value={filters.dealId}
+              onChange={(e) => updateFilter('dealId', e.target.value)}
+              className="w-full h-10 px-3 text-xs bg-[var(--background-secondary)] border border-[var(--border-subtle)] rounded-md focus:outline-none focus:border-[var(--border-brand)] hover:bg-[var(--background-secondary-hover)] focus:bg-[var(--background-primary)] text-[var(--text-primary)] placeholder:text-[var(--text-subtlest)] transition-all font-semibold"
+            />
+          </FilterSection>
+
+          {/* Hierarchical Categories Tree filter */}
+          <FilterSection title="Item Category" defaultOpen={true}>
+            <div className="flex flex-col gap-0.5 max-h-60 overflow-y-auto slick-scrollbar border border-[var(--border-subtle)] rounded-lg p-1.5 bg-[var(--background-primary)]">
+              {Object.keys(categoryTree.children).length === 0 ? (
+                <span className="text-[11px] text-[var(--text-subtlest)] font-semibold italic p-2">No categories available</span>
+              ) : (
+                <CategoryTreeNode
+                  node={categoryTree}
+                  selectedPaths={filters.categoryPaths}
+                  expandedPaths={expandedPaths}
+                  onToggleExpand={handleToggleExpand}
+                  onCheckboxChange={handleCategoryCheckboxChange}
+                  countMap={categoryCountMap}
+                  level={0}
+                />
+              )}
+            </div>
+          </FilterSection>
+
+          {/* Business Area filter */}
+          <FilterSection title="Business Area" defaultOpen={true}>
+            <MultiCheckboxFilter
+              options={['Automotive', 'Electronics', 'Luxury', 'Mixed']}
+              selected={filters.businessAreas}
+              onChange={(val) => updateFilter('businessAreas', val)}
+              items={items}
+              filterKey="businessArea"
+            />
+          </FilterSection>
+
+          {/* Parent Deal Status filter */}
+          <FilterSection title="Deal Status" defaultOpen={false}>
+            <MultiCheckboxFilter
+              options={[
+                'BOOKED',
+                'REVIEWING',
+                'VERIFIED',
+                'CANCELED',
+                'DECLINED',
+                'ITEM_RECEIVED_ID_MISSING',
+                'PAYED_AND_STORED',
+                'LOAN_DUE_NOTIFIED',
+                'LOAN_DUE',
+                'EXTENSION_CONFIRMED',
+                'PAYBACK_CONFIRMED',
+                'PAYED_SHIPMENT_PENDING',
+                'CLOSED',
+                'ON_SELL',
+                'SOLD_INTERN',
+                'SOLD_EXTERN',
+                'PICKED_UP',
+                'PICKUP_UNSUCCESSFUL'
+              ]}
+              selected={filters.dealStatuses}
+              onChange={(val) => updateFilter('dealStatuses', val)}
+              items={items}
+              filterKey="dealStatus"
+            />
+          </FilterSection>
+
+          {/* Has Images / Has Documents Toggles */}
+          <FilterSection title="Media & Attachments" defaultOpen={false}>
+            <div className="flex flex-col gap-4 w-full">
+              <SegmentedToggle
+                value={filters.hasImages}
+                onChange={(val) => updateFilter('hasImages', val)}
+                label="Has Images"
+              />
+              <SegmentedToggle
+                value={filters.hasDocuments}
+                onChange={(val) => updateFilter('hasDocuments', val)}
+                label="Has Documents"
+              />
+            </div>
+          </FilterSection>
+        </div>
+
+        {/* Mobile footer */}
+        <div className="p-4 border-t border-[var(--border-subtle)] bg-[var(--background-secondary)] md:hidden shrink-0 flex items-center justify-between gap-3 shadow-lg">
+          <button
+            onClick={() => {
+              onFiltersChange(INITIAL_FILTERS);
+            }}
+            className="flex-1 h-11 text-xs font-bold text-[var(--text-subtle)] bg-[var(--background-primary)] border border-[var(--border-subtle)] rounded-lg hover:bg-[var(--background-secondary-hover)] transition-all cursor-pointer focus:outline-none"
+          >
+            Reset All
+          </button>
+          <button
+            onClick={onToggleCollapse}
+            className="flex-1 h-11 text-xs font-black text-white bg-[var(--background-brand-solid)] hover:bg-[var(--background-brand-solid-hover)] rounded-lg transition-all shadow-sm cursor-pointer focus:outline-none"
+          >
+            Apply Filters
+          </button>
+        </div>
+      </div>
+    </>
+  );
+}

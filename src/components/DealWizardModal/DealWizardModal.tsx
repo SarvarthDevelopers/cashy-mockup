@@ -337,9 +337,9 @@ export const DealWizardModal: React.FC<DealWizardModalProps> = ({
         }
 
         return (
-            <div className="bg-[var(--background-primary)] rounded-2xl border border-[var(--border-subtlest)] shadow-sm p-6 md:p-10">
-                <div className="flex items-center justify-between mb-8">
-                    <h3 className="text-[10px] uppercase font-extrabold tracking-widest text-gray-400">
+            <div className="bg-[var(--background-primary)] rounded-2xl border border-[var(--border-subtlest)] shadow-sm overflow-hidden transition-all duration-300 hover:shadow-md">
+                <div className="px-6 md:px-8 py-4 md:py-5 border-b border-[var(--border-subtlest)] bg-[var(--background-secondary)]/40 flex items-center justify-between">
+                    <h3 className="text-[11px] font-bold text-[var(--text-subtle)] uppercase tracking-wider m-0">
                         {steps.find(s => s.id === stepId)?.title} Details — {item?.title || 'Unknown Item'}
                     </h3>
                     {items.length > 1 && (
@@ -349,61 +349,63 @@ export const DealWizardModal: React.FC<DealWizardModalProps> = ({
                     )}
                 </div>
                 
-                <div className="grid grid-cols-1 md:grid-cols-2 gap-x-8 gap-y-10">
-                    {fields.map((field: any) => (
-                        <div 
-                            key={field.id} 
-                            className={
-                                field.type === 'checkbox' || 
-                                field.type === 'textarea' || 
-                                field.type === 'file' || 
-                                field.type === 'image' || 
-                                field.type === 'url' 
-                                    ? 'col-span-1 md:col-span-2' 
-                                    : 'col-span-1'
-                             }
-                        >
-                            {field.type === 'checkbox' ? (
-                                <Checkbox 
-                                    label={field.label} 
-                                />
-                            ) : field.type === 'select' || field.type === 'dropdown' ? (
-                                <Dropdown 
-                                    label={field.label} 
-                                    options={(field.options || []).map((opt: string) => ({ label: opt, value: opt }))} 
-                                />
-                            ) : field.type === 'textarea' ? (
-                                <TextArea 
-                                    label={field.label} 
-                                    placeholder={field.placeholder || `Enter ${field.label}...`}
-                                    rows={4}
-                                />
-                            ) : (field.type === 'file' || field.type === 'fileUpload') ? (
-                                (field.label.toLowerCase().includes('image') || 
-                                 field.label.toLowerCase().includes('photo') || 
-                                 field.label.toLowerCase().includes('picture')) ? (
+                <div className="p-6 md:p-8">
+                    <div className="grid grid-cols-1 md:grid-cols-2 gap-x-8 gap-y-10">
+                        {fields.map((field: any) => (
+                            <div 
+                                key={field.id} 
+                                className={
+                                    field.type === 'checkbox' || 
+                                    field.type === 'textarea' || 
+                                    field.type === 'file' || 
+                                    field.type === 'image' || 
+                                    field.type === 'url' 
+                                        ? 'col-span-1 md:col-span-2' 
+                                        : 'col-span-1'
+                                 }
+                            >
+                                {field.type === 'checkbox' ? (
+                                    <Checkbox 
+                                        label={field.label} 
+                                    />
+                                ) : field.type === 'select' || field.type === 'dropdown' ? (
+                                    <Dropdown 
+                                        label={field.label} 
+                                        options={(field.options || []).map((opt: string) => ({ label: opt, value: opt }))} 
+                                    />
+                                ) : field.type === 'textarea' ? (
+                                    <TextArea 
+                                        label={field.label} 
+                                        placeholder={field.placeholder || `Enter ${field.label}...`}
+                                        rows={4}
+                                    />
+                                ) : (field.type === 'file' || field.type === 'fileUpload') ? (
+                                    (field.label.toLowerCase().includes('image') || 
+                                     field.label.toLowerCase().includes('photo') || 
+                                     field.label.toLowerCase().includes('picture')) ? (
+                                        <ImageUpload 
+                                            label={field.label}
+                                        />
+                                    ) : (
+                                        <FileUpload 
+                                            label={field.label}
+                                            description={field.placeholder}
+                                        />
+                                    )
+                                ) : field.type === 'image' || field.type === 'imageUpload' ? (
                                     <ImageUpload 
                                         label={field.label}
                                     />
                                 ) : (
-                                    <FileUpload 
-                                        label={field.label}
-                                        description={field.placeholder}
+                                    <Input 
+                                        label={field.label} 
+                                        placeholder={field.placeholder || `Enter ${field.label}...`}
+                                        type={field.type === 'url' ? 'text' : field.type} 
                                     />
-                                )
-                            ) : field.type === 'image' || field.type === 'imageUpload' ? (
-                                <ImageUpload 
-                                    label={field.label}
-                                />
-                            ) : (
-                                <Input 
-                                    label={field.label} 
-                                    placeholder={field.placeholder || `Enter ${field.label}...`}
-                                    type={field.type === 'url' ? 'text' : field.type} 
-                                />
-                            )}
-                        </div>
-                    ))}
+                                )}
+                            </div>
+                        ))}
+                    </div>
                 </div>
             </div>
         );
@@ -823,7 +825,7 @@ export const DealWizardModal: React.FC<DealWizardModalProps> = ({
                                     </div>
                                 </div>
                             ) : (
-                                <div className="max-w-[800px] mx-auto space-y-12 py-8 md:py-20 px-4 md:px-8 pb-32 md:pb-20">
+                                <div className="w-full max-w-full 2xl:max-w-[800px] mx-auto space-y-12 pt-4 md:pt-8 pb-32 md:pb-20 px-4 md:px-8">
                                     {/* --- Section 1: Basic Info --- */}
                                     <div 
                                         id="section-step1" 
@@ -839,9 +841,9 @@ export const DealWizardModal: React.FC<DealWizardModalProps> = ({
                                         </div>
 
                                         {/* --- Customer Section --- */}
-                                        <div className="bg-white rounded-2xl border border-gray-100 shadow-sm overflow-hidden transition-all hover:shadow-md">
-                                            <div className="px-6 md:px-8 py-4 md:py-5 border-b border-gray-50 flex items-center justify-between">
-                                                <h3 className="text-xs font-bold text-[#131518] uppercase tracking-wider m-0">Customer Profile</h3>
+                                        <div className="bg-white rounded-2xl border border-[var(--border-subtlest)] shadow-sm overflow-hidden transition-all duration-300 hover:shadow-md">
+                                            <div className="px-6 md:px-8 py-4 md:py-5 border-b border-[var(--border-subtlest)] bg-[var(--background-secondary)]/40 flex items-center justify-between">
+                                                <h3 className="text-[11px] font-bold text-[var(--text-subtle)] uppercase tracking-wider m-0">Customer Profile</h3>
                                                 <div className="flex items-center gap-2 text-[#4649E5] text-[12px] font-bold cursor-pointer hover:opacity-70 transition-opacity">
                                                     <Plus size={14} /> Add Secondary
                                                 </div>
@@ -881,15 +883,15 @@ export const DealWizardModal: React.FC<DealWizardModalProps> = ({
                                         {/* --- Items Section --- */}
                                         <div className="space-y-6">
                                             <div className="flex items-center justify-between px-2">
-                                                <h3 className="text-xs font-bold text-[#131518] uppercase tracking-wider m-0">Items & Valuation ({items.length})</h3>
+                                                <h3 className="text-[11px] font-bold text-[var(--text-subtle)] uppercase tracking-wider m-0">Items & Valuation ({items.length})</h3>
                                             </div>
                                             
                                             <div className="space-y-4">
                                                 {items.map((item, index) => (
-                                                    <div key={item.id} className="bg-white rounded-2xl border border-gray-100 shadow-sm transition-all hover:shadow-md relative">
-                                                        <div className="px-6 py-4 bg-[#FBFCFC] border-b border-gray-50 flex items-center justify-between cursor-pointer rounded-t-2xl" onClick={() => toggleItem(item.id)}>
+                                                    <div key={item.id} className="bg-white rounded-2xl border border-[var(--border-subtlest)] shadow-sm transition-all duration-300 hover:shadow-md relative">
+                                                        <div className="px-6 py-4 bg-[var(--background-secondary)]/40 border-b border-[var(--border-subtlest)] flex items-center justify-between cursor-pointer rounded-t-2xl" onClick={() => toggleItem(item.id)}>
                                                             <div className="flex items-center gap-4">
-                                                                <div className="w-8 h-8 rounded-full bg-white border border-gray-100 flex items-center justify-center text-[11px] font-bold text-gray-400">#{index + 1}</div>
+                                                                <div className="w-8 h-8 rounded-full bg-white border border-[var(--border-subtlest)] flex items-center justify-center text-[11px] font-bold text-gray-400">#{index + 1}</div>
                                                                 <div>
                                                                     <p className="text-[13px] font-bold text-[#131518] m-0">{item.title || 'New Item'}</p>
                                                                     <p className="text-[10px] font-bold text-gray-400 m-0 uppercase tracking-tight">{item.category || 'No Category'}</p>
@@ -1054,69 +1056,81 @@ export const DealWizardModal: React.FC<DealWizardModalProps> = ({
 
                                     {/* --- Deal Metadata & Transport --- */}
                                     <div className="grid grid-cols-1 md:grid-cols-2 gap-6">
-                                        <div className="bg-white rounded-2xl border border-gray-100 shadow-sm p-6 md:p-10">
-                                            <h3 className="text-[10px] uppercase font-extrabold tracking-widest text-gray-400 mb-8">Deal Metadata</h3>
-                                            <div className="grid grid-cols-1 md:grid-cols-2 gap-6 md:gap-8">
-                                                <Dropdown 
-                                                    label="Company" 
-                                                    options={[{ label: 'CASHY_AUT', value: 'CASHY_AUT' }, { label: 'CASHY_GER', value: 'CASHY_GER' }]}
-                                                    value={metadata.company}
-                                                    onChange={(val) => setMetadata({...metadata, company: val})}
-                                                />
-                                                <Dropdown 
-                                                    label="Branch" 
-                                                    options={[{ label: 'Vienna Main', value: 'Vienna Main' }, { label: 'Graz South', value: 'Graz South' }]}
-                                                    value={metadata.branch}
-                                                    onChange={(val) => setMetadata({...metadata, branch: val})}
-                                                />
-                                                <Input 
-                                                    label="Duration (Days)" 
-                                                    type="number" 
-                                                    value={metadata.duration}
-                                                    onChange={(e) => setMetadata({...metadata, duration: e.target.value})}
-                                                />
-                                                <Input 
-                                                    label="Due Date (for staff)" 
-                                                    type="date"
-                                                    value={metadata.dueDate}
-                                                    onChange={(e) => setMetadata({ ...metadata, dueDate: e.target.value })}
-                                                />
+                                        <div className="bg-white rounded-2xl border border-[var(--border-subtlest)] shadow-sm overflow-hidden transition-all duration-300 hover:shadow-md flex flex-col">
+                                            <div className="px-6 md:px-8 py-4 md:py-5 border-b border-[var(--border-subtlest)] bg-[var(--background-secondary)]/40 flex items-center justify-between shrink-0">
+                                                <h3 className="text-[11px] font-bold text-[var(--text-subtle)] uppercase tracking-wider m-0">Deal Metadata</h3>
+                                            </div>
+                                            <div className="p-6 md:p-8 flex-1">
+                                                <div className="grid grid-cols-1 md:grid-cols-2 gap-6 md:gap-8">
+                                                    <Dropdown 
+                                                        label="Company" 
+                                                        options={[{ label: 'CASHY_AUT', value: 'CASHY_AUT' }, { label: 'CASHY_GER', value: 'CASHY_GER' }]}
+                                                        value={metadata.company}
+                                                        onChange={(val) => setMetadata({...metadata, company: val})}
+                                                    />
+                                                    <Dropdown 
+                                                        label="Branch" 
+                                                        options={[{ label: 'Vienna Main', value: 'Vienna Main' }, { label: 'Graz South', value: 'Graz South' }]}
+                                                        value={metadata.branch}
+                                                        onChange={(val) => setMetadata({...metadata, branch: val})}
+                                                    />
+                                                    <Input 
+                                                        label="Duration (Days)" 
+                                                        type="number" 
+                                                        value={metadata.duration}
+                                                        onChange={(e) => setMetadata({...metadata, duration: e.target.value})}
+                                                    />
+                                                    <Input 
+                                                        label="Due Date (for staff)" 
+                                                        type="date"
+                                                        value={metadata.dueDate}
+                                                        onChange={(e) => setMetadata({ ...metadata, dueDate: e.target.value })}
+                                                    />
+                                                </div>
                                             </div>
                                         </div>
 
-                                        <div className="bg-white rounded-2xl border border-gray-100 shadow-sm p-6 md:p-10">
-                                            <h3 className="text-[10px] uppercase font-extrabold tracking-widest text-gray-400 mb-8">Transport & Payout</h3>
-                                            <div className="grid grid-cols-1 md:grid-cols-2 gap-6 md:gap-8">
-                                                <Dropdown 
-                                                    label="Transport Method" 
-                                                    options={[{ label: 'Pickup: SHOP', value: 'Pickup: SHOP' }, { label: 'Courier', value: 'Courier' }]}
-                                                />
-                                                <Dropdown 
-                                                    label="Payout Method" 
-                                                    options={[{ label: 'Cash', value: 'Cash' }, { label: 'Bank Transfer', value: 'Bank Transfer' }, { label: 'PayPal', value: 'PayPal' }]}
-                                                    value={metadata.payoutMethod}
-                                                    onChange={(val) => setMetadata({...metadata, payoutMethod: val})}
-                                                />
+                                        <div className="bg-white rounded-2xl border border-[var(--border-subtlest)] shadow-sm overflow-hidden transition-all duration-300 hover:shadow-md flex flex-col">
+                                            <div className="px-6 md:px-8 py-4 md:py-5 border-b border-[var(--border-subtlest)] bg-[var(--background-secondary)]/40 flex items-center justify-between shrink-0">
+                                                <h3 className="text-[11px] font-bold text-[var(--text-subtle)] uppercase tracking-wider m-0">Transport & Payout</h3>
                                             </div>
-                                            <div className="flex-1 min-h-[40px]" />
-                                            <div className="flex items-center gap-2 text-gray-400 text-[11px] font-medium italic">
-                                                <AlertCircle size={14} /> Payout methods vary by country.
+                                            <div className="p-6 md:p-8 flex-1 flex flex-col justify-between">
+                                                <div className="grid grid-cols-1 md:grid-cols-2 gap-6 md:gap-8">
+                                                    <Dropdown 
+                                                        label="Transport Method" 
+                                                        options={[{ label: 'Pickup: SHOP', value: 'Pickup: SHOP' }, { label: 'Courier', value: 'Courier' }]}
+                                                    />
+                                                    <Dropdown 
+                                                        label="Payout Method" 
+                                                        options={[{ label: 'Cash', value: 'Cash' }, { label: 'Bank Transfer', value: 'Bank Transfer' }, { label: 'PayPal', value: 'PayPal' }]}
+                                                        value={metadata.payoutMethod}
+                                                        onChange={(val) => setMetadata({...metadata, payoutMethod: val})}
+                                                    />
+                                                </div>
+                                                <div className="flex-1 min-h-[40px]" />
+                                                <div className="flex items-center gap-2 text-gray-400 text-[11px] font-medium italic">
+                                                    <AlertCircle size={14} /> Payout methods vary by country.
+                                                </div>
                                             </div>
                                         </div>
                                     </div>
 
                                     {/* --- Additional Notes --- */}
-                                    <div className="bg-white rounded-2xl border border-gray-100 shadow-sm p-6 md:p-10">
-                                        <h3 className="text-[10px] uppercase font-extrabold tracking-widest text-gray-400 mb-8">Additional Notes</h3>
-                                        <TextArea 
-                                            placeholder="e.g. Special handling for car keys, documents needed..." 
-                                            rows={4}
-                                        />
+                                    <div className="bg-white rounded-2xl border border-[var(--border-subtlest)] shadow-sm overflow-hidden transition-all duration-300 hover:shadow-md">
+                                        <div className="px-6 md:px-8 py-4 md:py-5 border-b border-[var(--border-subtlest)] bg-[var(--background-secondary)]/40">
+                                            <h3 className="text-[11px] font-bold text-[var(--text-subtle)] uppercase tracking-wider m-0">Additional Notes</h3>
+                                        </div>
+                                        <div className="p-6 md:p-8">
+                                            <TextArea 
+                                                placeholder="e.g. Special handling for car keys, documents needed..." 
+                                                rows={4}
+                                            />
+                                        </div>
                                     </div>
 
                                     {/* Mobile Deal Summary */}
                                     {activeStep === 'step1' && (
-                                        <div className="lg:hidden mt-8 bg-white rounded-2xl border border-gray-100 shadow-sm overflow-hidden">
+                                        <div className="lg:hidden mt-8 bg-white rounded-2xl border border-[var(--border-subtlest)] shadow-sm overflow-hidden">
                                             {renderDealSummary()}
                                         </div>
                                     )}
@@ -1131,7 +1145,6 @@ export const DealWizardModal: React.FC<DealWizardModalProps> = ({
                                         >
                                             {/* Integrated Line & Pill Separator */}
                                             <div className="flex items-center gap-3 px-2 select-none">
-                                                <div className="w-6 h-[1px] bg-[var(--border-subtlest)]" />
                                                 <span className="inline-flex items-center gap-2 px-2.5 py-1 rounded-full bg-[var(--background-secondary)] border border-[var(--border-subtlest)] text-[10px] font-extrabold uppercase tracking-widest text-[var(--text-placeholder)] shrink-0 shadow-sm">
                                                     Step {idx + 2} of {steps.length}
                                                 </span>

@@ -1,6 +1,6 @@
 import { useState, useRef, useEffect } from 'react';
 import { useNavigate, useLocation } from 'react-router';
-import { Menu, X, Settings } from 'lucide-react';
+import { Menu, X, Settings, Layers } from 'lucide-react';
 import svgPaths from "../../imports/svg-4o201vrq4p";
 
 interface HeaderProps {
@@ -33,6 +33,8 @@ export function Header({ onCreateDealClick, currentPage }: HeaderProps) {
     if (currentPage) return currentPage;
     if (location.pathname === '/wizard-builder') return 'wizard-builder';
     if (location.pathname === '/deals') return 'deals';
+    if (location.pathname === '/items') return 'items';
+    if (location.pathname === '/settings/business-areas') return 'business-areas';
     return '';
   };
   const activePage = getActivePage();
@@ -46,7 +48,10 @@ export function Header({ onCreateDealClick, currentPage }: HeaderProps) {
         navigate('/wizard-builder');
         break;
       case 'items':
-        // navigate('/items');
+        navigate('/items');
+        break;
+      case 'business-areas':
+        navigate('/settings/business-areas');
         break;
       case 'customers':
         // navigate('/customers');
@@ -58,7 +63,7 @@ export function Header({ onCreateDealClick, currentPage }: HeaderProps) {
 
   const navItems = [
     { key: 'deals', label: 'Deals', path: '/' },
-    { key: 'items', label: 'Items', path: null },
+    { key: 'items', label: 'Items', path: '/items' },
     { key: 'customers', label: 'Customers', path: null },
     { key: 'cashbook', label: 'Cashbook', path: null },
   ];
@@ -171,6 +176,20 @@ export function Header({ onCreateDealClick, currentPage }: HeaderProps) {
                       <Settings className="size-4" />
                       <span>Wizard Builder</span>
                     </button>
+                    <button
+                      onClick={() => {
+                        handleNavClick('business-areas');
+                        setIsSettingsOpen(false);
+                      }}
+                      className={`w-full text-left px-3 py-2 text-sm font-sans flex items-center gap-2 hover:bg-gray-50 hover:text-gray-900 transition-colors border-none bg-transparent cursor-pointer ${
+                        activePage === 'business-areas'
+                          ? 'text-[#4649e5] font-semibold'
+                          : 'text-gray-700'
+                      }`}
+                    >
+                      <Layers className="size-4" />
+                      <span>Business Areas</span>
+                    </button>
                   </div>
                 )}
               </div>
@@ -282,6 +301,20 @@ export function Header({ onCreateDealClick, currentPage }: HeaderProps) {
             >
               <Settings className="size-4" />
               <span className="text-sm font-semibold">Wizard Builder</span>
+            </button>
+            <button
+              onClick={() => {
+                handleNavClick('business-areas');
+                setIsMobileMenuOpen(false);
+              }}
+              className={`w-full flex items-center gap-3 p-3 rounded-xl transition-all text-left border-none bg-transparent cursor-pointer ${
+                activePage === 'business-areas'
+                  ? 'bg-[#4649e5]/25 text-white font-bold'
+                  : 'hover:bg-white/5 text-[#fbfcfc]/70 hover:text-[#fbfcfc]'
+              }`}
+            >
+              <Layers className="size-4" />
+              <span className="text-sm font-semibold">Business Areas</span>
             </button>
           </div>
         </div>

@@ -1,0 +1,587 @@
+import { useState, useRef, useCallback, useEffect } from 'react';
+import { MoreHorizontal, ArrowUpDown, ArrowUp, ArrowDown, AlertTriangle, X, Search, HelpCircle, Loader2, Image, FileText } from 'lucide-react';
+import type { Deal } from '../../data/mockDeals';
+import { STATUS_STYLES } from '../../data/mockDeals';
+
+export interface SortConfig {
+  key: string;
+  direction: 'asc' | 'desc';
+}
+
+export interface ColumnDef {
+  key: string;
+  label: string;
+  width: number;
+  minWidth: number;
+  visible: boolean;
+  sortable: boolean;
+}
+
+export interface FlatItem {
+  itemId: string;
+  title: string;
+  category: string;
+  businessArea: string;
+  variant: string;
+  marketValue: number;
+  requestedPayout: number;
+  dealId: string;
+  dealStatus: Deal['status'];
+  hasImages: boolean;
+  hasDocuments: boolean;
+  parentDeal: Deal;
+}
+
+interface ItemsTableProps {
+  items: FlatItem[];
+  sortConfigs: SortConfig[];
+  onSortChange: (configs: SortConfig[]) => void;
+  selectedRows: Set<string>; // Set of Item IDs
+  onSelectionChange: (selected: Set<string>) => void;
+  onRowClick: (item: FlatItem) => void;
+  activeItemId: string | null;
+  pageSize: number;
+  currentPage: number;
+  onPageChange: (page: number) => void;
+  onPageSizeChange: (size: number) => void;
+  onRowAction?: (action: string, item: FlatItem) => void;
+  onOpenWizard: (deal: Deal) => void;
+  searchActive?: boolean;
+  searchQuery: string;
+  onSearchChange: (query: string) => void;
+  columns: ColumnDef[];
+  onColumnsChange: React.Dispatch<React.SetStateAction<ColumnDef[]>>;
+}
+
+export const DEFAULT_COLUMNS: ColumnDef[] = [
+  { key: 'itemId', label: 'Item ID', width: 90, minWidth: 80, visible: true, sortable: true },
+  { key: 'title', label: 'Title', width: 140, minWidth: 100, visible: true, sortable: true },
+  { key: 'category', label: 'Category Path', width: 160, minWidth: 120, visible: true, sortable: true },
+  { key: 'businessArea', label: 'Business Area', width: 110, minWidth: 90, visible: true, sortable: true },
+  { key: 'variant', label: 'Variant', width: 130, minWidth: 100, visible: true, sortable: true },
+  { key: 'marketValue', label: 'Market Value', width: 100, minWidth: 80, visible: true, sortable: true },
+  { key: 'payout', label: 'Payout', width: 95, minWidth: 70, visible: true, sortable: true },
+  { key: 'dealId', label: 'Deal ID', width: 90, minWidth: 80, visible: true, sortable: true },
+  { key: 'dealStatus', label: 'Deal Status', width: 125, minWidth: 95, visible: true, sortable: true },
+  { key: 'hasImages', label: 'Images', width: 70, minWidth: 60, visible: true, sortable: true },
+  { key: 'hasDocuments', label: 'Docs', width: 70, minWidth: 60, visible: true, sortable: true },
+];
+
+function formatEur(value: number): string {
+  return new Intl.NumberFormat('de-DE', { style: 'currency', currency: 'EUR', minimumFractionDigits: 0, maximumFractionDigits: 0 }).format(value);
+}
+
+function RowActionMenu({ item, onAction }: { item: FlatItem; onAction: (action: string, item: FlatItem) => void }) {
+  const [open, setOpen] = useState(false);
+  const ref = useRef<HTMLDivElement>(null);
+
+  useEffect(() => {
+    const handler = (e: MouseEvent) => {
+      if (ref.current && !ref.current.contains(e.target as Node)) setOpen(false);
+    };
+    if (open) document.addEventListener('mousedown', handler);
+    return () => document.removeEventListener('mousedown', handler);
+  }, [open]);
+
+  return (
+    <div ref={ref} className="relative flex justify-center">
+      <button
+        onClick={(e) => { e.stopPropagation(); setOpen(!open); }}
+        className="p-1 hover:bg-[var(--background-secondary)] rounded-md transition-colors cursor-pointer focus:outline-none focus-visible:ring-2 focus-visible:ring-[var(--border-brand)]"
+        aria-label="Row context menu"
+        aria-expanded={open}
+      >
+        <MoreHorizontal size={16} className="text-[var(--text-subtlest)] hover:text-[var(--text-primary)]" />
+      </button>
+      {open && (
+        <div className="absolute right-0 top-7 z-50 bg-[var(--background-primary)] border border-[var(--border-subtle)] rounded-lg shadow-xl py-1 w-44 animate-in fade-in zoom-in-95 duration-150">
+          {[
+            { key: 'open', label: 'Open Deal Wizard' },
+            { key: 'comment', label: 'Add Comment' },
+            { key: 'archive', label: 'Mark Archived' },
+            { key: 'export', label: 'Export Row' },
+          ].map(action => (
+            <button
+              key={action.key}
+              onClick={(e) => { e.stopPropagation(); onAction(action.key, item); setOpen(false); }}
+              className="w-full text-left px-3 py-1.5 text-xs text-[var(--text-subtle)] hover:bg-[var(--background-secondary)] hover:text-[var(--text-primary)] transition-colors cursor-pointer font-extrabold focus:outline-none focus:bg-[var(--background-secondary)]"
+            >
+              {action.label}
+            </button>
+          ))}
+        </div>
+      )}
+    </div>
+  );
+}
+
+export function ItemsTable({
+  items,
+  sortConfigs,
+  onSortChange,
+  selectedRows,
+  onSelectionChange,
+  onRowClick,
+  activeItemId,
+  pageSize,
+  currentPage,
+  onPageChange,
+  onPageSizeChange,
+  onRowAction,
+  onOpenWizard,
+  searchActive = false,
+  searchQuery,
+  onSearchChange,
+  columns,
+  onColumnsChange: setColumns,
+}: ItemsTableProps) {
+  const [resizingCol, setResizingCol] = useState<string | null>(null);
+  const [resizeStart, setResizeStart] = useState<{ x: number; width: number } | null>(null);
+
+  const [localSearch, setLocalSearch] = useState(searchQuery);
+  const [isSearching, setIsSearching] = useState(false);
+
+  useEffect(() => {
+    setLocalSearch(searchQuery);
+  }, [searchQuery]);
+
+  useEffect(() => {
+    if (localSearch === searchQuery) return;
+    setIsSearching(true);
+    const delay = setTimeout(() => {
+      onSearchChange(localSearch);
+      setIsSearching(false);
+    }, 300);
+    return () => clearTimeout(delay);
+  }, [localSearch, onSearchChange, searchQuery]);
+
+  const handleResizeStart = useCallback((e: React.MouseEvent, colKey: string) => {
+    e.preventDefault();
+    e.stopPropagation();
+    const col = columns.find(c => c.key === colKey);
+    if (col) {
+      setResizingCol(colKey);
+      setResizeStart({ x: e.clientX, width: col.width });
+    }
+  }, [columns]);
+
+  useEffect(() => {
+    if (!resizingCol || !resizeStart) return;
+
+    const handleMouseMove = (e: MouseEvent) => {
+      const diff = e.clientX - resizeStart.x;
+      const col = columns.find(c => c.key === resizingCol);
+      if (col) {
+        const newWidth = Math.max(col.minWidth, resizeStart.width + diff);
+        setColumns(cols => cols.map(c => c.key === resizingCol ? { ...c, width: newWidth } : c));
+      }
+    };
+
+    const handleMouseUp = () => {
+      setResizingCol(null);
+      setResizeStart(null);
+    };
+
+    document.addEventListener('mousemove', handleMouseMove);
+    document.addEventListener('mouseup', handleMouseUp);
+    return () => {
+      document.removeEventListener('mousemove', handleMouseMove);
+      document.removeEventListener('mouseup', handleMouseUp);
+    };
+  }, [resizingCol, resizeStart, columns, setColumns]);
+
+  const handleSortClick = (key: string, e: React.MouseEvent) => {
+    const existing = sortConfigs.find(s => s.key === key);
+    if (e.shiftKey) {
+      if (existing) {
+        if (existing.direction === 'asc') {
+          onSortChange(sortConfigs.map(s => s.key === key ? { ...s, direction: 'desc' } : s));
+        } else {
+          onSortChange(sortConfigs.filter(s => s.key !== key));
+        }
+      } else {
+        onSortChange([...sortConfigs, { key, direction: 'asc' }]);
+      }
+    } else {
+      if (existing && existing.direction === 'asc') {
+        onSortChange([{ key, direction: 'desc' }]);
+      } else if (existing && existing.direction === 'desc') {
+        onSortChange([]);
+      } else {
+        onSortChange([{ key, direction: 'asc' }]);
+      }
+    }
+  };
+
+  const totalPages = Math.ceil(items.length / pageSize);
+  const paginatedItems = items.slice((currentPage - 1) * pageSize, currentPage * pageSize);
+  const allPageSelected = paginatedItems.length > 0 && paginatedItems.every(i => selectedRows.has(i.itemId));
+  const somePageSelected = paginatedItems.some(i => selectedRows.has(i.itemId));
+
+  const handleSelectAll = () => {
+    const newSet = new Set(selectedRows);
+    if (allPageSelected) {
+      paginatedItems.forEach(i => newSet.delete(i.itemId));
+    } else {
+      paginatedItems.forEach(i => newSet.add(i.itemId));
+    }
+    onSelectionChange(newSet);
+  };
+
+  const toggleRow = (itemId: string) => {
+    const newSet = new Set(selectedRows);
+    if (newSet.has(itemId)) newSet.delete(itemId);
+    else newSet.add(itemId);
+    onSelectionChange(newSet);
+  };
+
+  const visibleColumns = columns.filter(c => c.visible);
+
+  const handleRowAction = (action: string, item: FlatItem) => {
+    if (onRowAction) {
+      onRowAction(action, item);
+    }
+  };
+
+  const handleRowKeyDown = (e: React.KeyboardEvent, item: FlatItem, idx: number) => {
+    if (e.key === 'ArrowDown') {
+      e.preventDefault();
+      const nextRow = document.querySelector(`[data-row-index="${idx + 1}"]`) as HTMLElement;
+      if (nextRow) nextRow.focus();
+    } else if (e.key === 'ArrowUp') {
+      e.preventDefault();
+      const prevRow = document.querySelector(`[data-row-index="${idx - 1}"]`) as HTMLElement;
+      if (prevRow) prevRow.focus();
+    } else if (e.key === ' ') {
+      e.preventDefault();
+      toggleRow(item.itemId);
+    } else if (e.key === 'Enter') {
+      e.preventDefault();
+      onRowClick(item);
+    }
+  };
+
+  const renderCell = (item: FlatItem, col: ColumnDef) => {
+    switch (col.key) {
+      case 'itemId':
+        return <span className="font-extrabold text-[var(--text-primary)] text-[13px]">{item.itemId}</span>;
+      case 'title':
+        return <span className="text-[13px] text-[var(--text-primary)] font-bold truncate max-w-[150px]">{item.title}</span>;
+      case 'category':
+        return (
+          <span className="text-[12px] text-[var(--text-subtle)] font-medium" title={item.category}>
+            {item.category.split('.').map(word => word.charAt(0).toUpperCase() + word.slice(1)).join(' > ')}
+          </span>
+        );
+      case 'businessArea':
+        return (
+          <span className="inline-flex items-center px-2 py-0.5 rounded text-[10px] font-extrabold bg-[var(--background-secondary)] text-[var(--text-subtle)] border border-[var(--border-subtle)] uppercase">
+            {item.businessArea}
+          </span>
+        );
+      case 'variant':
+        return <span className="text-[13px] text-[var(--text-subtlest)] font-normal truncate max-w-[130px]" title={item.variant}>{item.variant || '—'}</span>;
+      case 'marketValue':
+        return <span className="text-[13px] tabular-nums text-[var(--text-primary)] font-semibold">{formatEur(item.marketValue)}</span>;
+      case 'payout':
+        return <span className="text-[13px] tabular-nums text-[var(--text-success)] font-black">{formatEur(item.requestedPayout)}</span>;
+      case 'dealId':
+        return (
+          <button
+            onClick={(e) => {
+              e.stopPropagation();
+              onOpenWizard(item.parentDeal);
+            }}
+            className="text-[13px] font-black text-[#4649e5] hover:text-[#3b3ec3] hover:underline cursor-pointer focus:outline-none"
+          >
+            {item.dealId}
+          </button>
+        );
+      case 'dealStatus': {
+        const style = STATUS_STYLES[item.dealStatus] || { bg: '#f3f4f6', text: '#374151' };
+        return (
+          <span
+            className="inline-flex items-center px-2 py-0.5 rounded text-[10px] font-extrabold tracking-wider uppercase shadow-sm"
+            style={{ backgroundColor: style.bg, color: style.text }}
+          >
+            {item.dealStatus.replace('_', ' ')}
+          </span>
+        );
+      }
+      case 'hasImages':
+        return item.hasImages ? (
+          <div className="flex justify-center w-full">
+            <Image size={15} className="text-[#4649e5]" />
+          </div>
+        ) : (
+          <div className="w-full h-4" />
+        );
+      case 'hasDocuments':
+        return item.hasDocuments ? (
+          <div className="flex justify-center w-full">
+            <FileText size={15} className="text-[#10b981]" />
+          </div>
+        ) : (
+          <div className="w-full h-4" />
+        );
+      default:
+        return null;
+    }
+  };
+
+  return (
+    <div className="flex flex-col flex-1 min-w-0 h-full" role="grid" aria-colcount={visibleColumns.length + 2}>
+      <div className="flex-1 flex flex-col min-h-0 bg-[var(--background-primary)] border border-[var(--border-subtle)] rounded-xl shadow-sm overflow-hidden">
+        
+        {/* Desktop Search bar */}
+        <div className="hidden md:flex items-center justify-between px-4 py-3 shrink-0 select-none border-b border-[var(--border-subtle)] bg-[var(--background-secondary)]">
+          <div className="relative flex-1 max-w-[420px]">
+            <span className="absolute left-3.5 top-1/2 -translate-y-1/2 text-[var(--text-subtlest)] z-10">
+              {isSearching ? (
+                <Loader2 size={16} className="animate-spin text-[var(--text-brand)]" />
+              ) : (
+                <Search size={16} />
+              )}
+            </span>
+            <input
+              type="text"
+              value={localSearch}
+              onChange={(e) => setLocalSearch(e.target.value)}
+              placeholder="Search items by ID, title, variant, category, deal ID..."
+              className="w-full h-10 pl-10 pr-16 bg-[var(--background-primary)] border border-[var(--border-subtle)] rounded-lg text-sm focus:outline-none focus:border-[var(--border-brand)] focus:ring-2 focus:ring-[var(--border-brand)]/20 transition-all text-[var(--text-primary)] placeholder:text-[var(--text-subtlest)] font-medium shadow-sm"
+              aria-label="Search index fields"
+            />
+            {localSearch && (
+              <button
+                onClick={() => { setLocalSearch(''); onSearchChange(''); }}
+                className="absolute right-9 top-1/2 -translate-y-1/2 p-0.5 hover:bg-[var(--background-secondary)] rounded-md transition-colors cursor-pointer focus:outline-none focus-visible:ring-2 focus-visible:ring-[var(--border-brand)]"
+                aria-label="Clear search input"
+              >
+                <X size={14} className="text-[var(--text-subtlest)] hover:text-[var(--text-primary)]" />
+              </button>
+            )}
+
+            <div className="absolute right-3.5 top-1/2 -translate-y-1/2 group z-25 flex items-center">
+              <HelpCircle size={14} className="text-[var(--text-subtlest)] cursor-help hover:text-[var(--text-subtle)]" />
+              <div className="absolute bottom-full right-0 mb-2 w-64 hidden group-hover:block bg-[#131518] text-white text-[10px] font-bold p-3 rounded-lg shadow-xl border border-[#4c5564] leading-relaxed animate-in fade-in duration-150">
+                <span className="block text-[9px] text-[var(--text-brand)] uppercase tracking-wider mb-1 font-black">Search Fields</span>
+                Searches across Item ID, Item Title, Variant, Category Path, Business Area, and parent Deal ID.
+              </div>
+            </div>
+          </div>
+        </div>
+
+        {/* Scrollable Table Area */}
+        <div className="flex-1 overflow-auto slick-scrollbar bg-[var(--background-primary)]">
+          <table 
+            className="w-full border-collapse bg-[var(--background-primary)]" 
+            style={{ 
+              minWidth: (visibleColumns.reduce((sum, c) => sum + c.width, 0) + 95) + 'px'
+            }}
+          >
+            <thead className="sticky top-0 z-30 shadow-[0_1px_0_0_var(--border-subtle)]">
+              <tr className="bg-[var(--background-secondary)] border-b border-[var(--border-subtle)]">
+                {/* Select all checkbox */}
+                <th className="w-10 px-3 py-3.5 text-left sticky top-0 left-0 bg-[var(--background-secondary)] z-20">
+                  <div
+                    className={`w-4 h-4 rounded border flex items-center justify-center cursor-pointer transition-colors ${
+                      allPageSelected 
+                        ? 'bg-[var(--background-brand-solid)] border-[var(--border-brand)] text-white shadow-sm' 
+                        : somePageSelected 
+                          ? 'bg-[var(--background-brand-primary)] border-[var(--border-brand)] text-[var(--text-brand)]' 
+                          : 'border-[var(--border-subtle)] bg-[var(--background-primary)] hover:border-[var(--border-brand-hover)]'
+                    }`}
+                    onClick={handleSelectAll}
+                    role="checkbox"
+                    aria-checked={allPageSelected}
+                    aria-label="Select all items on this page"
+                  >
+                    {allPageSelected && (
+                      <svg width="10" height="8" viewBox="0 0 10 8" fill="none">
+                        <path d="M1 4L3.5 6.5L9 1" stroke="white" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round" />
+                      </svg>
+                    )}
+                    {somePageSelected && !allPageSelected && (
+                      <div className="w-2.5 h-0.5 bg-[var(--text-brand)] rounded" />
+                    )}
+                  </div>
+                </th>
+                {visibleColumns.map(col => {
+                  const sortIdx = sortConfigs.findIndex(s => s.key === col.key);
+                  const sortConfig = sortIdx >= 0 ? sortConfigs[sortIdx] : null;
+                  const isColServerSorted = !searchActive && (col.key === 'itemId' || col.key === 'dealId');
+                  const sortTooltipText = searchActive
+                    ? 'Sorted locally (Server search active)'
+                    : isColServerSorted
+                      ? 'Sorted on Server (Optimized index)'
+                      : 'Sorted locally (Server sort unsupported)';
+
+                  return (
+                    <th
+                      key={col.key}
+                      className="text-left relative group py-3.5 sticky top-0 bg-[var(--background-secondary)] z-10"
+                      style={{ width: col.width + 'px', minWidth: col.minWidth + 'px' }}
+                    >
+                      <div
+                        className="flex items-center gap-1.5 px-2 text-[10px] font-black text-[var(--text-subtlest)] uppercase tracking-wider cursor-pointer hover:text-[var(--text-primary)] select-none focus-visible:text-[var(--text-primary)] focus:outline-none"
+                        onClick={(e) => handleSortClick(col.key, e)}
+                        role="columnheader"
+                        aria-sort={sortConfig ? (sortConfig.direction === 'asc' ? 'ascending' : 'descending') : 'none'}
+                        title={sortTooltipText}
+                      >
+                        <span className="truncate">{col.label}</span>
+                        {!sortConfig && (
+                          <ArrowUpDown size={12} className="opacity-0 group-hover:opacity-60 transition-opacity shrink-0 text-[var(--text-subtlest)]" />
+                        )}
+                        {sortConfig && (
+                          <span className="flex items-center gap-1 shrink-0 animate-in fade-in duration-150">
+                            {sortConfig.direction === 'asc' ? <ArrowUp size={12} className="text-[var(--text-brand)]" /> : <ArrowDown size={12} className="text-[var(--text-brand)]" />}
+                            {sortConfigs.length > 1 && (
+                              <span className="text-[8px] text-[var(--text-brand)] font-extrabold bg-[var(--background-brand-primary)] px-1 rounded-sm">{sortIdx + 1}</span>
+                            )}
+                            <span className={`w-1.5 h-1.5 rounded-full shrink-0 ${isColServerSorted ? 'bg-emerald-500' : 'bg-blue-500'}`} />
+                          </span>
+                        )}
+                      </div>
+
+                      {/* Resize handle */}
+                      <div
+                        className="absolute right-0 top-0 bottom-0 w-1 cursor-col-resize hover:bg-[var(--border-brand-hover)]/30 transition-colors"
+                        onMouseDown={(e) => handleResizeStart(e, col.key)}
+                        aria-hidden="true"
+                      />
+                    </th>
+                  );
+                })}
+                {/* Actions column */}
+                <th className="w-11 px-1.5 sticky top-0 bg-[var(--background-secondary)] z-10" />
+              </tr>
+            </thead>
+            <tbody>
+              {paginatedItems.map((item, idx) => {
+                const isSelected = selectedRows.has(item.itemId);
+                const isActive = activeItemId === item.itemId;
+                return (
+                  <tr
+                    key={item.itemId}
+                    data-row-index={idx}
+                    tabIndex={0}
+                    onKeyDown={(e) => handleRowKeyDown(e, item, idx)}
+                    className={`border-b border-[var(--border-subtle)] transition-colors cursor-pointer group/row outline-none focus:bg-[var(--background-secondary)] focus-visible:ring-2 focus-visible:ring-[var(--border-brand)] focus-visible:ring-inset ${
+                      isActive 
+                        ? 'bg-[var(--background-brand-primary)] border-l-2 border-l-[var(--border-brand)] font-medium' 
+                        : isSelected 
+                          ? 'bg-[var(--background-brand-primary)]/40 hover:bg-[var(--background-brand-primary)]/60' 
+                          : 'odd:bg-[var(--background-primary)] even:bg-[var(--background-secondary)]/10 hover:bg-[var(--background-secondary)]'
+                    }`}
+                    onClick={() => onRowClick(item)}
+                    aria-selected={isActive}
+                  >
+                    {/* Checkbox */}
+                    <td className="px-3 py-4 sticky left-0 z-10 transition-colors" style={{ backgroundColor: isActive ? 'var(--background-brand-primary)' : isSelected ? 'rgba(70, 73, 229, 0.05)' : 'var(--background-primary)' }}>
+                      <div
+                        className={`w-4 h-4 rounded border flex items-center justify-center cursor-pointer transition-colors ${
+                          isSelected 
+                            ? 'bg-[var(--background-brand-solid)] border-[var(--border-brand)] text-white shadow-sm' 
+                            : 'border-[var(--border-subtle)] bg-[var(--background-primary)] group-hover/row:border-[var(--border-brand-hover)]'
+                        }`}
+                        onClick={(e) => { e.stopPropagation(); toggleRow(item.itemId); }}
+                        role="checkbox"
+                        aria-checked={isSelected}
+                      >
+                        {isSelected && (
+                          <svg width="10" height="8" viewBox="0 0 10 8" fill="none">
+                            <path d="M1 4L3.5 6.5L9 1" stroke="white" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round" />
+                          </svg>
+                        )}
+                      </div>
+                    </td>
+                    {/* Data cells */}
+                    {visibleColumns.map(col => (
+                      <td key={col.key} className="px-2 py-4 truncate max-w-[200px] text-[13px]">
+                        {renderCell(item, col)}
+                      </td>
+                    ))}
+                    {/* Row actions */}
+                    <td className="px-1.5 py-4" onClick={(e) => e.stopPropagation()}>
+                      <RowActionMenu item={item} onAction={handleRowAction} />
+                    </td>
+                  </tr>
+                );
+              })}
+              {paginatedItems.length === 0 && (
+                <tr>
+                  <td colSpan={visibleColumns.length + 2} className="text-center py-16 bg-[var(--background-primary)]">
+                    <div className="flex flex-col items-center gap-2.5 select-none animate-in fade-in duration-200">
+                      <AlertTriangle size={24} className="text-[var(--text-subtlest)]" />
+                      <span className="text-sm font-bold text-[var(--text-subtle)]">No items match the current filters.</span>
+                      <span className="text-xs text-[var(--text-subtlest)] font-semibold">Try adjusting or clearing your filters in the sidebar.</span>
+                    </div>
+                  </td>
+                </tr>
+              )}
+            </tbody>
+          </table>
+        </div>
+      </div>
+
+      {/* Pagination Footer */}
+      <div className="flex items-center justify-between px-4 py-3 shrink-0 select-none border-t border-[var(--border-subtle)] bg-[var(--background-secondary)]/30">
+        <div className="flex items-center gap-2">
+          <span className="text-xs text-[var(--text-subtlest)] font-bold">
+            Showing {Math.min((currentPage - 1) * pageSize + 1, items.length)}–{Math.min(currentPage * pageSize, items.length)} of {items.length}
+          </span>
+          {selectedRows.size > 0 && (
+            <span className="text-xs text-[var(--text-brand)] font-extrabold bg-[var(--background-brand-primary)] px-2 py-0.5 rounded-full shadow-sm animate-in zoom-in-95 duration-100">
+              {selectedRows.size} selected
+            </span>
+          )}
+        </div>
+        <div className="flex items-center gap-2.5">
+          <select
+            value={pageSize}
+            onChange={(e) => { onPageSizeChange(Number(e.target.value)); onPageChange(1); }}
+            className="h-8 px-2.5 text-xs bg-[var(--background-primary)] border border-[var(--border-subtle)] rounded-lg text-[var(--text-subtle)] focus:outline-none focus:border-[var(--border-brand)] cursor-pointer transition-all font-bold shadow-sm"
+          >
+            <option value={25}>25 / page</option>
+            <option value={50}>50 / page</option>
+            <option value={100}>100 / page</option>
+          </select>
+
+          <div className="flex items-center gap-1">
+            <button
+              onClick={() => onPageChange(Math.max(1, currentPage - 1))}
+              disabled={currentPage === 1}
+              className="px-2.5 py-1.5 text-xs font-bold text-[var(--text-subtle)] hover:bg-[var(--background-secondary)] rounded-lg transition-colors disabled:opacity-40 disabled:pointer-events-none cursor-pointer border border-[var(--border-subtle)] bg-[var(--background-primary)] shadow-sm focus:outline-none"
+            >
+              ←
+            </button>
+            {Array.from({ length: totalPages }, (_, i) => i + 1).slice(
+              Math.max(0, currentPage - 3),
+              Math.min(totalPages, currentPage + 2)
+            ).map(page => (
+              <button
+                key={page}
+                onClick={() => onPageChange(page)}
+                className={`px-2.5 py-1.5 text-xs font-bold rounded-lg transition-all cursor-pointer border focus:outline-none ${
+                  page === currentPage
+                    ? 'bg-[var(--background-brand-solid)] border-[var(--border-brand)] text-white font-extrabold shadow-sm'
+                    : 'text-[var(--text-subtle)] border-[var(--border-subtle)] bg-[var(--background-primary)] hover:bg-[var(--background-secondary)]'
+                }`}
+              >
+                {page}
+              </button>
+            ))}
+            <button
+              onClick={() => onPageChange(Math.min(totalPages, currentPage + 1))}
+              disabled={currentPage === totalPages || totalPages === 0}
+              className="px-2.5 py-1.5 text-xs font-bold text-[var(--text-subtle)] hover:bg-[var(--background-secondary)] rounded-lg transition-colors disabled:opacity-40 disabled:pointer-events-none cursor-pointer border border-[var(--border-subtle)] bg-[var(--background-primary)] shadow-sm focus:outline-none"
+            >
+              →
+            </button>
+          </div>
+        </div>
+      </div>
+    </div>
+  );
+}

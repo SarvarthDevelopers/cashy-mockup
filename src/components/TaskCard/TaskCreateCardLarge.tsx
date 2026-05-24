@@ -213,6 +213,16 @@ export interface TaskCreateCardLargeProps {
     onCancel: () => void;
     /** Optional additional CSS class for the root element. */
     className?: string;
+    /** Optional initial title for editing */
+    initialTitle?: string;
+    /** Optional initial description for editing */
+    initialDescription?: string;
+    /** Optional initial due date for editing */
+    initialDueDate?: Date;
+    /** Optional custom submit button label */
+    submitLabel?: string;
+    /** Optional custom header title */
+    headerTitle?: string;
 }
 
 /**
@@ -225,13 +235,41 @@ export interface TaskCreateCardLargeProps {
  * - **Calendar** icon → low priority (custom date ≥ day after tomorrow)
  */
 export const TaskCreateCardLarge = React.forwardRef<HTMLDivElement, TaskCreateCardLargeProps>((
-    { onAdd, onCancel, className },
+    { 
+        onAdd, 
+        onCancel, 
+        className, 
+        initialTitle, 
+        initialDescription, 
+        initialDueDate, 
+        submitLabel = 'Add', 
+        headerTitle = 'Adding task' 
+    },
     ref,
 ) => {
-    const [title, setTitle] = useState('');
-    const [description, setDescription] = useState('');
-    const [selectedPriority, setSelectedPriority] = useState<PriorityOption>('today');
-    const [customDate, setCustomDate] = useState<Date | null>(null);
+    const [title, setTitle] = useState(initialTitle ?? '');
+    const [description, setDescription] = useState(initialDescription ?? '');
+    const [selectedPriority, setSelectedPriority] = useState<PriorityOption>(() => {
+        if (!initialDueDate) return 'today';
+        const today = new Date();
+        today.setHours(0, 0, 0, 0);
+        const dateMs = new Date(initialDueDate.getFullYear(), initialDueDate.getMonth(), initialDueDate.getDate()).getTime();
+        const todayMs = today.getTime();
+        if (dateMs === todayMs) return 'today';
+        if (dateMs === todayMs + 86_400_000) return 'tomorrow';
+        return 'custom';
+    });
+    const [customDate, setCustomDate] = useState<Date | null>(() => {
+        if (!initialDueDate) return null;
+        const today = new Date();
+        today.setHours(0, 0, 0, 0);
+        const dateMs = new Date(initialDueDate.getFullYear(), initialDueDate.getMonth(), initialDueDate.getDate()).getTime();
+        const todayMs = today.getTime();
+        if (dateMs !== todayMs && dateMs !== todayMs + 86_400_000) {
+            return initialDueDate;
+        }
+        return null;
+    });
     const [showCalendar, setShowCalendar] = useState(false);
     const [calendarPos, setCalendarPos] = useState<{ top: number; left: number }>({ top: 0, left: 0 });
 
@@ -333,7 +371,7 @@ export const TaskCreateCardLarge = React.forwardRef<HTMLDivElement, TaskCreateCa
         >
             {/* Header: label + Cancel/Add buttons */}
             <div className="task-create-card__header">
-                <p className="task-create-card__header-title">Adding task</p>
+                <p className="task-create-card__header-title">{headerTitle}</p>
                 <div className="task-create-card__header-buttons">
                     <button
                         type="button"
@@ -348,7 +386,7 @@ export const TaskCreateCardLarge = React.forwardRef<HTMLDivElement, TaskCreateCa
                         onClick={handleAdd}
                         disabled={isAddDisabled}
                     >
-                        Add
+                        {submitLabel}
                     </button>
                 </div>
             </div>

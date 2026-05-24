@@ -31,6 +31,8 @@ const BoardColumnWrapper: React.FC<BoardColumnWrapperProps> = ({ children, style
     return <div style={style}>{children}</div>;
 };
 
+const generateTaskId = () => `task-${Math.random().toString(36).substring(2, 7)}`;
+
 interface LandingPageProps {
     onSelectDeal: (deal: DealData) => void;
     selectedDealId?: string | null;
@@ -62,6 +64,7 @@ export const LandingPage: React.FC<LandingPageProps> = ({
 }) => {
     const [tasksByColumn, setTasksByColumn] = useState<Record<string, TaskData[]>>({});
     const [addingToColumn, setAddingToColumn] = useState<string | null>(null);
+    const [editingTaskId, setEditingTaskId] = useState<string | null>(null);
     const [activeConfigColumnId, setActiveConfigColumnId] = useState<string | null>(null);
     const [isDeleteModalOpen, setIsDeleteModalOpen] = useState(false);
     const [columnToDelete, setColumnToDelete] = useState<ColumnConfig | null>(null);
@@ -91,7 +94,7 @@ export const LandingPage: React.FC<LandingPageProps> = ({
         else if (diff <= 86400000) priority = 'medium';
 
         const newTask: TaskData = {
-            id: `task-${Math.random().toString(36).substr(2, 5)}`,
+            id: generateTaskId(),
             title: data.title,
             description: data.description,
             dueDate: data.dueDate,
@@ -104,6 +107,38 @@ export const LandingPage: React.FC<LandingPageProps> = ({
             [columnId]: [newTask, ...(prev[columnId] || [])]
         }));
         setAddingToColumn(null);
+    };
+
+    const handleSaveTask = (columnId: string, taskId: string, data: { title: string; description: string; dueDate: Date }) => {
+        const today = new Date();
+        today.setHours(0, 0, 0, 0);
+        const target = new Date(data.dueDate.getFullYear(), data.dueDate.getMonth(), data.dueDate.getDate());
+        const diff = target.getTime() - today.getTime();
+        
+        let priority: TaskPriority = 'low';
+        if (diff <= 0) priority = 'high';
+        else if (diff <= 86400000) priority = 'medium';
+
+        setTasksByColumn(prev => ({
+            ...prev,
+            [columnId]: (prev[columnId] || []).map(t => t.id === taskId ? {
+                ...t,
+                title: data.title,
+                description: data.description,
+                dueDate: data.dueDate,
+                priority
+            } : t)
+        }));
+        setEditingTaskId(null);
+        showToast('Task updated successfully.', 'success');
+    };
+
+    const handleDeleteTask = (columnId: string, taskId: string) => {
+        setTasksByColumn(prev => ({
+            ...prev,
+            [columnId]: (prev[columnId] || []).filter(t => t.id !== taskId)
+        }));
+        showToast('Task deleted successfully.', 'success');
     };
 
     return (
@@ -190,15 +225,30 @@ export const LandingPage: React.FC<LandingPageProps> = ({
                                         )}
 
                                         {tasksByColumn[column.id]?.map(task => (
-                                            <TaskCardLarge
-                                                key={task.id}
-                                                taskId={task.id.replace('task-', '')}
-                                                title={task.title}
-                                                description={task.description}
-                                                dueDate={task.dueDate}
-                                                priority={task.priority}
-                                                assignee={task.assignee}
-                                            />
+                                            editingTaskId === task.id ? (
+                                                <TaskCreateCardLarge
+                                                    key={task.id}
+                                                    initialTitle={task.title}
+                                                    initialDescription={task.description}
+                                                    initialDueDate={task.dueDate}
+                                                    headerTitle="Editing task"
+                                                    submitLabel="Save"
+                                                    onAdd={(data) => handleSaveTask(column.id, task.id, data)}
+                                                    onCancel={() => setEditingTaskId(null)}
+                                                />
+                                            ) : (
+                                                <TaskCardLarge
+                                                    key={task.id}
+                                                    taskId={task.id.replace('task-', '')}
+                                                    title={task.title}
+                                                    description={task.description}
+                                                    dueDate={task.dueDate}
+                                                    priority={task.priority}
+                                                    assignee={task.assignee}
+                                                    onEdit={() => setEditingTaskId(task.id)}
+                                                    onDelete={() => handleDeleteTask(column.id, task.id)}
+                                                />
+                                            )
                                         ))}
 
                                         {deals.map(deal => {

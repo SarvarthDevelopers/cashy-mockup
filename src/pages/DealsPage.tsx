@@ -8,6 +8,7 @@ import { DealsTable, DEFAULT_COLUMNS } from '../components/Deals/DealsTable';
 import type { SortConfig, ColumnDef } from '../components/Deals/DealsTable';
 import { DealsPreviewPanel } from '../components/Deals/DealsPreviewPanel';
 import type { DealData } from '../data/mockData';
+import { getBusinessAreaForDeal } from '../data/businessAreaMapping';
 
 // Apply filters to deals dataset
 function applyFilters(deals: Deal[], filters: FilterState): Deal[] {
@@ -16,6 +17,7 @@ function applyFilters(deals: Deal[], filters: FilterState): Deal[] {
     if (filters.branch.length > 0 && !filters.branch.includes(deal.branch)) return false;
     if (filters.shop.length > 0 && !filters.shop.includes(deal.shop)) return false;
     if (filters.businessArea.length > 0 && !filters.businessArea.includes(deal.businessArea)) return false;
+    if (filters.categoryPaths.length > 0 && !deal.items.some(item => filters.categoryPaths.includes(item.category))) return false;
     if (filters.mode.length > 0 && !filters.mode.includes(deal.mode)) return false;
     if (filters.status.length > 0 && !filters.status.includes(deal.status)) return false;
     if (filters.labels.length > 0 && !filters.labels.some(l => deal.labels.includes(l))) return false;
@@ -204,7 +206,7 @@ function mapDealToDealData(deal: Deal): DealData {
   const fallbackEmail = deal.primaryCustomer?.email || 'pawn-admin@cashy.at';
   const fallbackPhone = deal.primaryCustomer?.phone || '+43 (0) 1 361999';
   const fallbackBranch = deal.branch || 'Vienna HQ';
-  const fallbackArea = deal.businessArea || 'General';
+  const fallbackArea = getBusinessAreaForDeal(deal.items);
   const fallbackCategory = deal.items?.[0]?.category || 'General';
   const fallbackItemTitle = deal.items?.[0]?.title || 'Pawn Collateral';
 
@@ -275,8 +277,24 @@ export function DealsPage({ onSelectDeal }: DealsPageProps) {
     return () => window.removeEventListener('resize', handleMobileResize);
   }, []);
 
-  // Filtering + Searching logic coordination
-  const allDeals = MOCK_DEALS;
+  // Dynamic in-memory deal cache with real-time business area evaluation
+  const [allDeals, setAllDeals] = useState<Deal[]>(() => {
+    return MOCK_DEALS.map(deal => ({
+      ...deal,
+      businessArea: getBusinessAreaForDeal(deal.items) as unknown as Deal['businessArea']
+    }));
+  });
+
+  useEffect(() => {
+    const handleUpdate = () => {
+      setAllDeals(MOCK_DEALS.map(deal => ({
+        ...deal,
+        businessArea: getBusinessAreaForDeal(deal.items) as unknown as Deal['businessArea']
+      })));
+    };
+    window.addEventListener('cashy_business_areas_updated', handleUpdate);
+    return () => window.removeEventListener('cashy_business_areas_updated', handleUpdate);
+  }, []);
 
   // Structured active filter pills for quick clearing
   const activePills = useMemo(() => {
@@ -303,6 +321,7 @@ export function DealsPage({ onSelectDeal }: DealsPageProps) {
     if (filters.createdDateTo) pills.push({ category: 'To', value: filters.createdDateTo, onClear: () => updateFilter('createdDateTo', '') });
     if (filters.minSuggestedPayout) pills.push({ category: 'Min', value: `€${filters.minSuggestedPayout}`, onClear: () => updateFilter('minSuggestedPayout', '') });
     if (filters.maxSuggestedPayout) pills.push({ category: 'Max', value: `€${filters.maxSuggestedPayout}`, onClear: () => updateFilter('maxSuggestedPayout', '') });
+    filters.categoryPaths.forEach(v => pills.push({ category: 'Category', value: v, onClear: () => updateFilter('categoryPaths', filters.categoryPaths.filter(x => x !== v)) }));
 
     return pills;
   }, [filters]);

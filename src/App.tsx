@@ -12,6 +12,7 @@ import { ToastProvider } from './components/Toast/ToastContext';
 import { INITIAL_DEALS } from './data/mockData';
 import type { DealData } from './data/mockData';
 import type { ColumnConfig } from './components/Board/types';
+import { getBusinessAreaForDeal } from './data/businessAreaMapping';
 
 const INITIAL_COLUMNS: ColumnConfig[] = [
   { id: 'car-inbox', title: 'Inbox', color: '#15B8A7', sortBy: 'dueDate', sortOrder: 'desc', visibleToPartners: true, visibleToShops: ['AT / Wein', 'AT / Graz', 'DE / Berlin'] },
@@ -92,7 +93,21 @@ function App() {
   const [columns, setColumns] = useState<ColumnConfig[]>(INITIAL_COLUMNS);
   
   const [dealsByColumn, setDealsByColumn] = useState<Record<string, DealData[]>>(() => {
-    const sorted = { ...INITIAL_DEALS } as Record<string, DealData[]>;
+    const sorted = JSON.parse(JSON.stringify(INITIAL_DEALS)) as Record<string, DealData[]>;
+    for (const colId in sorted) {
+      sorted[colId] = sorted[colId].map(deal => {
+        const area = getBusinessAreaForDeal(deal.items);
+        return {
+          ...deal,
+          businessArea: area,
+          wizardData: {
+            ...deal.wizardData,
+            businessArea: area,
+            categoryPath: `${area} > ${deal.wizardData?.item || 'General'}`
+          }
+        };
+      });
+    }
     INITIAL_COLUMNS.forEach(col => {
       if (sorted[col.id] && col.sortBy && col.sortBy !== 'manual') {
         sorted[col.id] = sortDealsForColumn(sorted[col.id], col.sortBy, col.sortOrder || 'desc');
@@ -100,6 +115,31 @@ function App() {
     });
     return sorted;
   });
+
+  useEffect(() => {
+    const handleUpdate = () => {
+      setDealsByColumn(prev => {
+        const next = { ...prev };
+        for (const colId in next) {
+          next[colId] = next[colId].map(deal => {
+            const area = getBusinessAreaForDeal(deal.items);
+            return {
+              ...deal,
+              businessArea: area,
+              wizardData: {
+                ...deal.wizardData,
+                businessArea: area,
+                categoryPath: `${area} > ${deal.wizardData?.item || 'General'}`
+              }
+            };
+          });
+        }
+        return next;
+      });
+    };
+    window.addEventListener('cashy_business_areas_updated', handleUpdate);
+    return () => window.removeEventListener('cashy_business_areas_updated', handleUpdate);
+  }, []);
 
   const justDraggedRef = useRef(false);
 
@@ -213,14 +253,25 @@ function App() {
   };
 
   const handleUpdateDeal = (updatedDeal: DealData) => {
+    const resolvedArea = getBusinessAreaForDeal(updatedDeal.items);
+    const resolvedDeal = {
+      ...updatedDeal,
+      businessArea: resolvedArea,
+      wizardData: {
+        ...updatedDeal.wizardData,
+        businessArea: resolvedArea,
+        categoryPath: `${resolvedArea} > ${updatedDeal.wizardData?.item || 'General'}`
+      }
+    };
+
     setDealsByColumn(prev => {
       const newDeals = { ...prev };
       let updatedColId: string | null = null;
       for (const colId in newDeals) {
-        const index = newDeals[colId].findIndex(d => d.id === updatedDeal.id);
+        const index = newDeals[colId].findIndex(d => d.id === resolvedDeal.id);
         if (index !== -1) {
           const updatedCol = [...newDeals[colId]];
-          updatedCol[index] = updatedDeal;
+          updatedCol[index] = resolvedDeal;
           newDeals[colId] = updatedCol;
           updatedColId = colId;
           break;
@@ -234,12 +285,23 @@ function App() {
       }
       return newDeals;
     });
-    setSelectedDeal(updatedDeal);
+    setSelectedDeal(resolvedDeal);
   };
 
   const handleCreateDealSuccess = (newDeal: DealData) => {
+    const resolvedArea = getBusinessAreaForDeal(newDeal.items);
+    const resolvedDeal = {
+      ...newDeal,
+      businessArea: resolvedArea,
+      wizardData: {
+        ...newDeal.wizardData,
+        businessArea: resolvedArea,
+        categoryPath: `${resolvedArea} > ${newDeal.wizardData?.item || 'General'}`
+      }
+    };
+
     setDealsByColumn(prev => {
-      let newInboxDeals = [newDeal, ...(prev['car-inbox'] || [])];
+      let newInboxDeals = [resolvedDeal, ...(prev['car-inbox'] || [])];
       const colConfig = columns.find(c => c.id === 'car-inbox');
       if (colConfig && colConfig.sortBy && colConfig.sortBy !== 'manual') {
         newInboxDeals = sortDealsForColumn(newInboxDeals, colConfig.sortBy, colConfig.sortOrder || 'desc');
@@ -249,7 +311,7 @@ function App() {
         'car-inbox': newInboxDeals
       };
     });
-    setSelectedDeal(newDeal);
+    setSelectedDeal(resolvedDeal);
     setIsNewDeal(false);
   };
 

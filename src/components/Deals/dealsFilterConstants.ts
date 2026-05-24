@@ -10,6 +10,7 @@ export interface FilterState {
   labels: string[];
   assignedTo: string[];
   pickupType: string[];
+  categoryPaths: string[];
   hasMissingDocs: 'all' | 'yes' | 'no';
   isExtension: 'all' | 'yes' | 'no';
   createdDateFrom: string;
@@ -30,6 +31,7 @@ export const INITIAL_FILTERS: FilterState = {
   labels: [],
   assignedTo: [],
   pickupType: [],
+  categoryPaths: [],
   hasMissingDocs: 'all',
   isExtension: 'all',
   createdDateFrom: '',

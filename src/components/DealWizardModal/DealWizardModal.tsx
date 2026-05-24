@@ -17,6 +17,8 @@ import {
 import { ShopLabel } from '../Card/ShopLabel';
 import type { DealData } from '../../data/mockData';
 import { MOCK_WIZARDS, GLOBAL_STEPS } from '../../data/wizardData';
+import { getBusinessAreaForDeal, getCategoryFromItemTitle, CATEGORY_DISPLAY_NAMES } from '../../data/businessAreaMapping';
+import { CategoryTreeDropdown } from '../CategoryTree/CategoryTreeDropdown';
 
 const CAR_DATA: Record<string, string[]> = {
     'Volkswagen': ['Golf', 'Tiguan', 'Passat', 'Polo', 'ID.4'],
@@ -135,7 +137,7 @@ export const DealWizardModal: React.FC<DealWizardModalProps> = ({
             if (dealData.items && dealData.items.length > 0) {
                 setItems(dealData.items.map((it, idx) => ({
                     id: String(idx),
-                    category: dealData.businessArea || 'Car',
+                    category: getCategoryFromItemTitle(it),
                     title: it,
                     requestedPayout: dealData.wizardData?.amount?.replace('€', '').replace(',', '') || '0',
                     condition: 'Used',
@@ -173,6 +175,7 @@ export const DealWizardModal: React.FC<DealWizardModalProps> = ({
     const dealId = currentDeal?.id || 'PENDING';
     const totalRequestedPayout = items.reduce((sum, item) => sum + (parseFloat(item.requestedPayout) || 0), 0);
     const formattedTotal = totalRequestedPayout.toLocaleString('de-DE', { minimumFractionDigits: 2 });
+    const currentBusinessArea = getBusinessAreaForDeal(items);
 
     const handleCreateDeal = () => {
         setIsCreating(true);
@@ -182,6 +185,10 @@ export const DealWizardModal: React.FC<DealWizardModalProps> = ({
         setTimeout(() => setCreationStep(2), 800);
         setTimeout(() => setCreationStep(3), 1600);
         setTimeout(() => {
+            const resolvedArea = getBusinessAreaForDeal(items);
+            const firstCategory = items[0]?.category || 'car';
+            const displayCategory = CATEGORY_DISPLAY_NAMES[firstCategory] || firstCategory;
+
             const newDeal: DealData = {
                 id: Math.floor(100000 + Math.random() * 900000).toString(),
                 countryCode: 'AT',
@@ -191,15 +198,15 @@ export const DealWizardModal: React.FC<DealWizardModalProps> = ({
                 amount: `€${formattedTotal}`,
                 items: items.map(i => i.title || 'Unknown Item'),
                 dealType: dealMode,
-                businessArea: items[0]?.category || 'Automotive',
+                businessArea: resolvedArea,
                 wizardData: {
                     customerName: `${customerData.firstName} ${customerData.lastName}`,
                     email: customerData.email,
                     phone: customerData.phone,
                     branch: metadata.branch,
                     company: metadata.company,
-                    businessArea: items[0]?.category || 'Automotive',
-                    categoryPath: `Automotive > ${items[0]?.category || 'General'}`,
+                    businessArea: resolvedArea,
+                    categoryPath: `${resolvedArea} > ${displayCategory}`,
                     dealDuration: `${metadata.duration} days`,
                     payoutType: dealMode,
                     amount: `€${formattedTotal}`,
@@ -213,34 +220,41 @@ export const DealWizardModal: React.FC<DealWizardModalProps> = ({
             setIsCreating(false);
             setActiveStep('step2');
         }, 2400);
-    };
+     };
+ 
+     // --- AUTO-SAVE LOGIC ---
+     useEffect(() => {
+         if (isCreated && creationFinalized && onUpdateDeal && dealData) {
+             const resolvedArea = getBusinessAreaForDeal(items);
+             const firstCategory = items[0]?.category || 'car';
+             const displayCategory = CATEGORY_DISPLAY_NAMES[firstCategory] || firstCategory;
 
-    // --- AUTO-SAVE LOGIC ---
-    useEffect(() => {
-        if (isCreated && creationFinalized && onUpdateDeal && dealData) {
-            const updatedDeal: DealData = {
-                ...dealData,
-                firstName: customerData.firstName,
-                lastName: customerData.lastName,
-                amount: `€${formattedTotal}`,
-                items: items.map(i => i.title || 'Unknown Item'),
-                dueDate: metadata.dueDate,
-                branch: metadata.branch,
-                wizardData: {
-                    ...dealData.wizardData,
-                    customerName: `${customerData.firstName} ${customerData.lastName}`,
-                    email: customerData.email,
-                    phone: customerData.phone,
-                    branch: metadata.branch,
-                    company: metadata.company,
-                    dealDuration: `${metadata.duration} days`,
-                    amount: `€${formattedTotal}`,
-                    item: items[0]?.title || 'Unknown Item'
-                }
-            };
-            onUpdateDeal(updatedDeal);
-        }
-    }, [customerData, metadata, items, isCreated, creationFinalized]);
+             const updatedDeal: DealData = {
+                 ...dealData,
+                 firstName: customerData.firstName,
+                 lastName: customerData.lastName,
+                 amount: `€${formattedTotal}`,
+                 items: items.map(i => i.title || 'Unknown Item'),
+                 dueDate: metadata.dueDate,
+                 branch: metadata.branch,
+                 businessArea: resolvedArea,
+                 wizardData: {
+                     ...dealData.wizardData,
+                     customerName: `${customerData.firstName} ${customerData.lastName}`,
+                     email: customerData.email,
+                     phone: customerData.phone,
+                     branch: metadata.branch,
+                     company: metadata.company,
+                     businessArea: resolvedArea,
+                     categoryPath: `${resolvedArea} > ${displayCategory}`,
+                     dealDuration: `${metadata.duration} days`,
+                     amount: `€${formattedTotal}`,
+                     item: items[0]?.title || 'Unknown Item'
+                 }
+             };
+             onUpdateDeal(updatedDeal);
+         }
+     }, [customerData, metadata, items, isCreated, creationFinalized]);
 
 
     const addItem = () => {
@@ -272,7 +286,7 @@ export const DealWizardModal: React.FC<DealWizardModalProps> = ({
             const updatedItem = { ...item, [field]: value };
             
             // Auto-generate title for Car
-            if (updatedItem.category === 'Car' && (field === 'make' || field === 'model' || field === 'year')) {
+            if (updatedItem.category === 'car' && (field === 'make' || field === 'model' || field === 'year')) {
                 const parts = [updatedItem.make, updatedItem.model, updatedItem.year].filter(Boolean);
                 updatedItem.title = parts.join(' ');
             }
@@ -304,7 +318,10 @@ export const DealWizardModal: React.FC<DealWizardModalProps> = ({
         setItems(items.map(item => item.id === id ? { ...item, expanded: !item.expanded } : item));
     };
 
-    const [allWizards, setAllWizards] = useState<any[]>(MOCK_WIZARDS);
+    const [allWizards, setAllWizards] = useState<any[]>(() => {
+        const saved = localStorage.getItem('cashy_wizards_v2');
+        return saved ? JSON.parse(saved) : MOCK_WIZARDS;
+    });
 
     useEffect(() => {
         if (isOpen) {
@@ -326,7 +343,20 @@ export const DealWizardModal: React.FC<DealWizardModalProps> = ({
     if (!isOpen) return null;
 
     const getWizardForCategory = (category: string) => {
-        return allWizards.find(w => w.category === category) || allWizards[0];
+        const norm = category.toLowerCase();
+        const match = allWizards.find(w => {
+            const wCat = w.category.toLowerCase();
+            return norm === wCat || norm.startsWith(wCat + '.') || wCat.startsWith(norm + '.');
+        });
+        if (match) return match;
+
+        if (norm === 'car') return allWizards.find(w => w.category === 'Car') || allWizards[0];
+        if (norm.startsWith('electronics')) return allWizards.find(w => w.category === 'General Electronics') || allWizards[0];
+        if (norm === 'watches') return allWizards.find(w => w.category === 'Watches') || allWizards[0];
+        if (norm === 'bags' || norm === 'jewelry') return allWizards.find(w => w.category === 'Luxury') || allWizards[0];
+        return allWizards.find(w => w.category.toLowerCase() === norm) 
+            || allWizards.find(w => w.category === category) 
+            || allWizards[0];
     };
 
     const steps = [
@@ -339,7 +369,7 @@ export const DealWizardModal: React.FC<DealWizardModalProps> = ({
 
     const renderStepItemFields = (stepId: string, itemIdx: number) => {
         const item = items[itemIdx];
-        const wizard = getWizardForCategory(item?.category || 'Car');
+        const wizard = getWizardForCategory(item?.category || 'car');
         const fields = (wizard?.fields || []).filter((f: { stepId: string }) => f.stepId === stepId);
 
         if (fields.length === 0) {
@@ -566,7 +596,7 @@ export const DealWizardModal: React.FC<DealWizardModalProps> = ({
                             <div className="flex justify-between items-start">
                                 <div>
                                     <p className="text-[13px] font-bold text-[var(--text-primary)] m-0">{item.title || `Item ${idx + 1}`}</p>
-                                    <p className="text-[11px] font-medium text-[var(--text-placeholder)] m-0 uppercase tracking-tight">{item.category || 'Select Category'}</p>
+                                    <p className="text-[11px] font-medium text-[var(--text-placeholder)] m-0 uppercase tracking-tight">{CATEGORY_DISPLAY_NAMES[item.category] || item.category || 'Select Category'}</p>
                                 </div>
                                 <div className="text-right">
                                     <p className="text-[13px] font-bold text-[var(--text-primary)] m-0">€ {parseFloat(item.requestedPayout || '0').toLocaleString('de-DE', { minimumFractionDigits: 2 })}</p>
@@ -703,7 +733,7 @@ export const DealWizardModal: React.FC<DealWizardModalProps> = ({
                                     <DetailItem label="Deal ID" value={dealId} />
                                     <DetailItem label="Pawn Duration" value={`${metadata.duration} Days`} />
                                     <DetailItem label="Total Items" value={String(items.length)} />
-                                    <DetailItem label="Secondary" value="NA" />
+                                    <DetailItem label="Business Area" value={currentBusinessArea} />
                                 </div>
                             </div>
                         )}
@@ -897,7 +927,7 @@ export const DealWizardModal: React.FC<DealWizardModalProps> = ({
                                                                 <div className="w-8 h-8 rounded-full bg-white border border-[var(--border-subtlest)] flex items-center justify-center text-[11px] font-bold text-gray-400">#{index + 1}</div>
                                                                 <div>
                                                                     <p className="text-[13px] font-bold text-[#131518] m-0">{item.title || 'New Item'}</p>
-                                                                    <p className="text-[10px] font-bold text-gray-400 m-0 uppercase tracking-tight">{item.category || 'No Category'}</p>
+                                                                    <p className="text-[10px] font-bold text-gray-400 m-0 uppercase tracking-tight">{CATEGORY_DISPLAY_NAMES[item.category] || item.category || 'No Category'}</p>
                                                                 </div>
                                                             </div>
                                                             <div className="flex items-center gap-4">
@@ -914,20 +944,14 @@ export const DealWizardModal: React.FC<DealWizardModalProps> = ({
                                                         </div>
                                                         {item.expanded && (
                                                             <div className="p-6 md:p-8 grid grid-cols-1 md:grid-cols-2 gap-6 animate-in fade-in duration-300">
-                                                                <Dropdown 
+                                                                 <CategoryTreeDropdown 
                                                                     label="Category" 
-                                                                    options={[
-                                                                        { label: 'Car', value: 'Car' },
-                                                                        { label: 'Watches', value: 'Watches' },
-                                                                        { label: 'Electronics', value: 'General Electronics' },
-                                                                        { label: 'Luxury', value: 'Luxury' }
-                                                                    ]}
                                                                     value={item.category}
                                                                     onChange={(val) => handleItemChange(item.id, 'category', val)}
                                                                     disabled={isCreated}
                                                                 />
                                                                 {/* VIN Field for Car */}
-                                                                {item.category === 'Car' && (
+                                                                {item.category === 'car' && (
                                                                     <Input 
                                                                         label="VIN Number" 
                                                                         placeholder="Enter 17-digit VIN..." 
@@ -939,10 +963,10 @@ export const DealWizardModal: React.FC<DealWizardModalProps> = ({
                                                                 )}
 
                                                                 {/* Standard Item Title for non-car items */}
-                                                                {item.category !== 'Car' && item.category !== '' && (
+                                                                {item.category !== 'car' && item.category !== '' && (
                                                                     <Input 
                                                                         label="Item Title" 
-                                                                        placeholder={item.category === 'Smartphones' ? "e.g. iPhone 14 Pro" : "e.g. Rolex Datejust"} 
+                                                                        placeholder={item.category.toLowerCase().includes('smartphone') ? "e.g. iPhone 14 Pro" : "e.g. Rolex Datejust"} 
                                                                         value={item.title}
                                                                         onChange={(e) => handleItemChange(item.id, 'title', e.target.value)}
                                                                         disabled={isCreated}
@@ -950,14 +974,14 @@ export const DealWizardModal: React.FC<DealWizardModalProps> = ({
                                                                 )}
 
                                                                 {/* Indicata Search Simulation for Car */}
-                                                                {item.category === 'Car' && item.indicataStatus === 'searching' && (
+                                                                {item.category === 'car' && item.indicataStatus === 'searching' && (
                                                                     <div className="col-span-2 p-4 bg-blue-50 border border-blue-100 rounded-xl flex items-center gap-3 animate-pulse">
                                                                         <Loader2 size={18} className="text-[#4649E5] animate-spin" />
                                                                         <span className="text-[13px] font-bold text-[#4649E5]">Searching Indicata records...</span>
                                                                     </div>
                                                                 )}
 
-                                                                {item.category === 'Car' && item.indicataStatus === 'not_found' && (
+                                                                {item.category === 'car' && item.indicataStatus === 'not_found' && (
                                                                     <>
                                                                         <div className="col-span-2 p-4 bg-red-50 border border-red-100 rounded-xl flex items-center gap-3 animate-in fade-in zoom-in duration-300">
                                                                             <AlertCircle size={18} className="text-[#E11D48]" />
@@ -1334,6 +1358,10 @@ export const DealWizardModal: React.FC<DealWizardModalProps> = ({
                                 <div className="flex justify-between items-center">
                                     <span className="text-xs font-medium text-[var(--text-subtlest)]">Total Items</span>
                                     <span className="text-xs font-bold text-[var(--text-subtle)]">{items.length}</span>
+                                </div>
+                                <div className="flex justify-between items-center">
+                                    <span className="text-xs font-medium text-[var(--text-subtlest)]">Business Area</span>
+                                    <span className="text-xs font-bold text-[var(--text-subtle)]">{currentBusinessArea}</span>
                                 </div>
                             </div>
 

@@ -244,8 +244,19 @@ export function ItemsPage({ onSelectDeal }: ItemsPageProps) {
     return () => window.removeEventListener('resize', handleMobileResize);
   }, []);
 
+  const [mappingVersion, setMappingVersion] = useState(0);
+  useEffect(() => {
+    const handleUpdate = () => setMappingVersion(v => v + 1);
+    window.addEventListener('cashy_business_areas_updated', handleUpdate);
+    return () => window.removeEventListener('cashy_business_areas_updated', handleUpdate);
+  }, []);
+
   // Flatten and enrich items from MOCK_DEALS on mount & settings mapping changes
   const allItems = useMemo(() => {
+    // Cache bust when mapping version changes
+    if (mappingVersion < 0) {
+      console.log(mappingVersion);
+    }
     const list: FlatItem[] = [];
     MOCK_DEALS.forEach((deal: Deal) => {
       deal.items.forEach((item) => {
@@ -269,7 +280,7 @@ export function ItemsPage({ onSelectDeal }: ItemsPageProps) {
       });
     });
     return list;
-  }, []);
+  }, [mappingVersion]);
 
   // Active pills for toolbar
   const activePills = useMemo(() => {

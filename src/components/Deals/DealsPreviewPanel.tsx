@@ -2,7 +2,7 @@ import { useState, useEffect } from 'react';
 import { X, ExternalLink, FileWarning, RefreshCw, MessageSquare, ArrowRight, Package } from 'lucide-react';
 import { motion } from 'motion/react';
 import type { Deal } from '../../data/mockDeals';
-import { BUSINESS_AREA_COLORS, STATUS_STYLES } from '../../data/mockDeals';
+import { STATUS_STYLES } from '../../data/mockDeals';
 import { ShopLabel } from '../Card/ShopLabel';
 
 interface DealsPreviewPanelProps {
@@ -103,7 +103,6 @@ export function DealsPreviewPanel({ deal, isLoading = false, onClose, onOpenWiza
 
   if (!deal) return null;
 
-  const areaColor = BUSINESS_AREA_COLORS[deal.businessArea] || '#6b7280';
   const statusStyle = STATUS_STYLES[deal.status];
   const timeline = generateTimeline(deal);
 
@@ -177,7 +176,7 @@ export function DealsPreviewPanel({ deal, isLoading = false, onClose, onOpenWiza
               }`}>
                 {deal.mode === 'custom_deal' ? 'Purchase' : 'Pawn'}
               </span>
-              <span className="inline-flex items-center gap-1 px-2 py-0.5 rounded text-[10px] font-black text-white shadow-sm" style={{ backgroundColor: areaColor }}>
+              <span className="inline-flex items-center gap-1 px-2 py-0.5 rounded text-[10px] font-extrabold uppercase tracking-wider bg-[var(--background-secondary)] text-[var(--text-subtle)] border border-[var(--border-subtle)]">
                 {deal.businessArea}
               </span>
             </div>

@@ -496,14 +496,6 @@ export function generateMockDeals(count = 100): Deal[] {
 
 export const MOCK_DEALS = generateMockDeals(100);
 
-// Business Area color mapping
-export const BUSINESS_AREA_COLORS: Record<string, string> = {
-  'Automotive': '#3b82f6',
-  'Electronics': '#8b5cf6',
-  'Luxury': '#f59e0b',
-  'Mixed': '#6b7280',
-};
-
 // Status badge styling
 export const STATUS_STYLES: Record<Deal['status'], { bg: string; text: string }> = {
   'BOOKED': { bg: '#e0f2fe', text: '#0369a1' },

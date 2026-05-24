@@ -1,8 +1,9 @@
 import { useState, useMemo } from 'react';
-import { X } from 'lucide-react';
+import { X, Search } from 'lucide-react';
 import type { FlatItem } from './ItemsTable';
 import { INITIAL_FILTERS } from './itemsFilterConstants';
 import type { FilterState } from './itemsFilterConstants';
+import { getBusinessAreas, buildCategoryTree, getDescendants, type CategoryNode } from '../../data/businessAreaMapping';
 
 export { INITIAL_FILTERS };
 export type { FilterState };
@@ -13,44 +14,6 @@ interface ItemsFilterRailProps {
   items: FlatItem[];
   collapsed: boolean;
   onToggleCollapse: () => void;
-}
-
-interface CategoryNode {
-  name: string;
-  fullPath: string;
-  children: Record<string, CategoryNode>;
-}
-
-function buildCategoryTree(categories: string[]): CategoryNode {
-  const root: CategoryNode = { name: 'Root', fullPath: '', children: {} };
-  categories.forEach(cat => {
-    if (!cat) return;
-    const parts = cat.split('.');
-    let current = root;
-    let pathAcc = '';
-    parts.forEach(part => {
-      pathAcc = pathAcc ? `${pathAcc}.${part}` : part;
-      if (!current.children[part]) {
-        current.children[part] = {
-          name: part,
-          fullPath: pathAcc,
-          children: {}
-        };
-      }
-      current = current.children[part];
-    });
-  });
-  return root;
-}
-
-function getDescendants(node: CategoryNode): string[] {
-  const paths: string[] = [];
-  const recurse = (n: CategoryNode) => {
-    if (n.fullPath) paths.push(n.fullPath);
-    Object.values(n.children).forEach(recurse);
-  };
-  recurse(node);
-  return paths;
 }
 
 // Collapsible Section Wrapper
@@ -94,6 +57,7 @@ interface CategoryTreeNodeProps {
   onCheckboxChange: (path: string, checked: boolean) => void;
   countMap: Record<string, number>;
   level: number;
+  matchingPaths: Set<string> | null;
 }
 
 const CategoryTreeNode: React.FC<CategoryTreeNodeProps> = ({
@@ -103,15 +67,21 @@ const CategoryTreeNode: React.FC<CategoryTreeNodeProps> = ({
   onToggleExpand,
   onCheckboxChange,
   countMap,
-  level = 0
+  level = 0,
+  matchingPaths
 }) => {
   const children = Object.values(node.children);
   const isLeaf = children.length === 0;
-  const isExpanded = !!expandedPaths[node.fullPath];
-  
+
   const descendants = useMemo(() => {
     return getDescendants(node);
   }, [node]);
+
+  if (matchingPaths && node.fullPath && !matchingPaths.has(node.fullPath)) {
+    return null;
+  }
+
+  const isExpanded = !!expandedPaths[node.fullPath];
 
   const checkedDescendantsCount = descendants.filter(d => selectedPaths.includes(d)).length;
   const isChecked = descendants.length > 0 && checkedDescendantsCount === descendants.length;
@@ -130,7 +100,7 @@ const CategoryTreeNode: React.FC<CategoryTreeNodeProps> = ({
     }
   };
 
-  const displayName = node.name.charAt(0).toUpperCase() + node.name.slice(1);
+  const displayName = node.displayName;
   const count = countMap[node.fullPath] || 0;
 
   return (
@@ -205,6 +175,7 @@ const CategoryTreeNode: React.FC<CategoryTreeNodeProps> = ({
               onCheckboxChange={onCheckboxChange}
               countMap={countMap}
               level={node.fullPath ? level + 1 : level}
+              matchingPaths={matchingPaths}
             />
           ))}
         </div>
@@ -331,6 +302,7 @@ function MultiCheckboxFilter({
 
 export function ItemsFilterRail({ filters, onFiltersChange, items, collapsed, onToggleCollapse }: ItemsFilterRailProps) {
   const [expandedPaths, setExpandedPaths] = useState<Record<string, boolean>>({});
+  const [categorySearchQuery, setCategorySearchQuery] = useState('');
 
   const updateFilter = <K extends keyof FilterState>(key: K, value: FilterState[K]) => {
     onFiltersChange({ ...filters, [key]: value });
@@ -341,6 +313,14 @@ export function ItemsFilterRail({ filters, onFiltersChange, items, collapsed, on
     const categories = Array.from(new Set(items.map(i => i.category)));
     return buildCategoryTree(categories);
   }, [items]);
+
+  const businessAreaOptions = useMemo(() => {
+    const areas = getBusinessAreas().map(a => a.name);
+    if (!areas.includes('Mixed')) {
+      areas.push('Mixed');
+    }
+    return areas;
+  }, []);
 
   // Derive initial expanded paths synchronously from categoryTree
   // When categoryTree changes, we update expandedPaths by comparing to previous tree
@@ -355,6 +335,74 @@ export function ItemsFilterRail({ filters, onFiltersChange, items, collapsed, on
     recurse(categoryTree);
     setExpandedPaths(initialExpanded);
   }
+
+  // Matching paths for search query
+  const matchingPaths = useMemo(() => {
+    if (!categorySearchQuery.trim()) return null;
+    const query = categorySearchQuery.toLowerCase().trim();
+    const matches = new Set<string>();
+
+    const checkNode = (node: CategoryNode): boolean => {
+      const isMatch = node.name.toLowerCase().includes(query) || node.fullPath.toLowerCase().includes(query) || node.displayName.toLowerCase().includes(query);
+      
+      let childMatches = false;
+      Object.values(node.children).forEach(child => {
+        if (checkNode(child)) {
+          childMatches = true;
+        }
+      });
+
+      if (isMatch || childMatches) {
+        if (node.fullPath) {
+          matches.add(node.fullPath);
+        }
+        return true;
+      }
+      return false;
+    };
+
+    checkNode(categoryTree);
+    return matches;
+  }, [categorySearchQuery, categoryTree]);
+
+  // Auto-expand parents of search results when search changes
+  const handleCategorySearch = (query: string) => {
+    setCategorySearchQuery(query);
+    if (!query.trim()) return;
+
+    const q = query.toLowerCase().trim();
+    const matches = new Set<string>();
+
+    const checkNode = (node: CategoryNode): boolean => {
+      const isMatch = node.name.toLowerCase().includes(q) || node.fullPath.toLowerCase().includes(q) || node.displayName.toLowerCase().includes(q);
+      let childMatches = false;
+      Object.values(node.children).forEach(child => {
+        if (checkNode(child)) {
+          childMatches = true;
+        }
+      });
+      if (isMatch || childMatches) {
+        if (node.fullPath) {
+          matches.add(node.fullPath);
+        }
+        return true;
+      }
+      return false;
+    };
+
+    checkNode(categoryTree);
+
+    const newExpanded: Record<string, boolean> = {};
+    matches.forEach(path => {
+      const parts = path.split('.');
+      let current = '';
+      parts.forEach(part => {
+        current = current ? `${current}.${part}` : part;
+        newExpanded[current] = true;
+      });
+    });
+    setExpandedPaths(newExpanded);
+  };
 
   // Compute total category mapping counts
   const categoryCountMap = useMemo(() => {
@@ -469,6 +517,27 @@ export function ItemsFilterRail({ filters, onFiltersChange, items, collapsed, on
 
           {/* Hierarchical Categories Tree filter */}
           <FilterSection title="Item Category" defaultOpen={true}>
+            <div className="relative w-full mb-2">
+              <span className="absolute left-2.5 top-1/2 -translate-y-1/2 text-[var(--text-subtlest)]">
+                <Search size={12} />
+              </span>
+              <input
+                type="text"
+                placeholder="Search categories..."
+                value={categorySearchQuery}
+                onChange={(e) => handleCategorySearch(e.target.value)}
+                className="w-full h-8 pl-8 pr-4 text-[11px] font-semibold bg-[var(--background-secondary)] border border-[var(--border-subtle)] rounded-md focus:outline-none focus:border-[var(--border-brand)] hover:bg-[var(--background-secondary-hover)] focus:bg-[var(--background-primary)] text-[var(--text-primary)] transition-all placeholder:text-[var(--text-subtlest)]"
+              />
+              {categorySearchQuery && (
+                <button
+                  type="button"
+                  onClick={() => handleCategorySearch('')}
+                  className="absolute right-2 top-1/2 -translate-y-1/2 text-[10px] font-bold text-[var(--text-subtlest)] hover:text-[var(--text-primary)] border-none bg-transparent cursor-pointer"
+                >
+                  &times;
+                </button>
+              )}
+            </div>
             <div className="flex flex-col gap-0.5 max-h-60 overflow-y-auto slick-scrollbar border border-[var(--border-subtle)] rounded-lg p-1.5 bg-[var(--background-primary)]">
               {Object.keys(categoryTree.children).length === 0 ? (
                 <span className="text-[11px] text-[var(--text-subtlest)] font-semibold italic p-2">No categories available</span>
@@ -481,6 +550,7 @@ export function ItemsFilterRail({ filters, onFiltersChange, items, collapsed, on
                   onCheckboxChange={handleCategoryCheckboxChange}
                   countMap={categoryCountMap}
                   level={0}
+                  matchingPaths={matchingPaths}
                 />
               )}
             </div>
@@ -489,7 +559,7 @@ export function ItemsFilterRail({ filters, onFiltersChange, items, collapsed, on
           {/* Business Area filter */}
           <FilterSection title="Business Area" defaultOpen={true}>
             <MultiCheckboxFilter
-              options={['Automotive', 'Electronics', 'Luxury', 'Mixed']}
+              options={businessAreaOptions}
               selected={filters.businessAreas}
               onChange={(val) => updateFilter('businessAreas', val)}
               items={items}

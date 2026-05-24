@@ -1,13 +1,108 @@
 import { useState, useMemo } from 'react';
-import { X, Calendar } from 'lucide-react';
+import { X, Calendar, ChevronRight, ChevronDown } from 'lucide-react';
 import type { Deal } from '../../data/mockDeals';
 import { SHOP_METADATA } from '../../data/mockDeals';
+import { getBusinessAreas, ALL_EXISTING_CATEGORIES, buildCategoryTree, getDescendants, type CategoryNode } from '../../data/businessAreaMapping';
+import { Checkbox } from '../Checkbox/Checkbox';
 
 import { INITIAL_FILTERS } from './dealsFilterConstants';
 import type { FilterState } from './dealsFilterConstants';
 
 export { INITIAL_FILTERS };
 export type { FilterState };
+
+interface CategoryTreeNodeProps {
+  node: CategoryNode;
+  selectedPaths: string[];
+  expandedPaths: Record<string, boolean>;
+  onToggleExpand: (path: string) => void;
+  onCheckboxChange: (path: string, checked: boolean) => void;
+  level: number;
+}
+
+const CategoryTreeNode: React.FC<CategoryTreeNodeProps> = ({
+  node,
+  selectedPaths,
+  expandedPaths,
+  onToggleExpand,
+  onCheckboxChange,
+  level = 0
+}) => {
+  const children = Object.values(node.children);
+  const isLeaf = children.length === 0;
+  const isExpanded = !!expandedPaths[node.fullPath];
+  
+  const descendants = useMemo(() => {
+    return getDescendants(node);
+  }, [node]);
+
+  const checkedDescendantsCount = descendants.filter(d => selectedPaths.includes(d)).length;
+  const isChecked = descendants.length > 0 && checkedDescendantsCount === descendants.length;
+  const isIndeterminate = descendants.length > 0 && checkedDescendantsCount > 0 && checkedDescendantsCount < descendants.length;
+
+  const handleCheckboxClick = (e: React.MouseEvent) => {
+    e.stopPropagation();
+    onCheckboxChange(node.fullPath, !isChecked);
+  };
+
+  const handleRowClick = () => {
+    if (!isLeaf) {
+      onToggleExpand(node.fullPath);
+    } else {
+      onCheckboxChange(node.fullPath, !isChecked);
+    }
+  };
+
+  return (
+    <div className="flex flex-col w-full">
+      {node.fullPath && (
+        <div 
+          onClick={handleRowClick}
+          className="flex items-center justify-between py-1.5 px-2 hover:bg-[var(--background-secondary)] rounded-lg transition-colors cursor-pointer text-left w-full h-9 select-none"
+          style={{ paddingLeft: `${level * 12 + 6}px` }}
+        >
+          <div className="flex items-center gap-2 min-w-0">
+            {/* Expand indicator */}
+            <div className="w-3.5 h-3.5 flex items-center justify-center shrink-0 text-[var(--text-placeholder)]">
+              {!isLeaf && (
+                isExpanded ? <ChevronDown size={12} /> : <ChevronRight size={12} />
+              )}
+            </div>
+            
+            {/* Checkbox */}
+            <div onClick={handleCheckboxClick} className="flex items-center shrink-0">
+              <Checkbox 
+                checked={isChecked} 
+                indeterminate={isIndeterminate}
+                onChange={() => {}}
+              />
+            </div>
+            
+            <span className={`text-[12px] truncate ${isChecked ? 'text-[var(--text-brand)] font-bold' : 'text-[var(--text-primary)] font-semibold'}`}>
+              {node.displayName}
+            </span>
+          </div>
+        </div>
+      )}
+      
+      {(!node.fullPath || isExpanded) && children.length > 0 && (
+        <div className="flex flex-col w-full">
+          {children.map(child => (
+            <CategoryTreeNode
+              key={child.fullPath}
+              node={child}
+              selectedPaths={selectedPaths}
+              expandedPaths={expandedPaths}
+              onToggleExpand={onToggleExpand}
+              onCheckboxChange={onCheckboxChange}
+              level={level + 1}
+            />
+          ))}
+        </div>
+      )}
+    </div>
+  );
+};
 
 interface DealsFilterRailProps {
   filters: FilterState;
@@ -166,6 +261,53 @@ export function DealsFilterRail({ filters, onFiltersChange, deals, collapsed, on
     return [...new Set(shops)].sort();
   }, [filters.branch, deals]);
 
+  const businessAreaOptions = useMemo(() => {
+    const areas = getBusinessAreas().map(a => a.name);
+    if (!areas.includes('Mixed')) {
+      areas.push('Mixed');
+    }
+    return areas;
+  }, []);
+
+  const categoryTree = useMemo(() => {
+    return buildCategoryTree(ALL_EXISTING_CATEGORIES);
+  }, []);
+
+  const [expandedPaths, setExpandedPaths] = useState<Record<string, boolean>>({});
+
+  const handleToggleExpand = (path: string) => {
+    setExpandedPaths(prev => ({
+      ...prev,
+      [path]: !prev[path]
+    }));
+  };
+
+  const handleCategoryCheckboxChange = (path: string, checked: boolean) => {
+    const findNode = (node: CategoryNode, targetPath: string): CategoryNode | null => {
+      if (node.fullPath === targetPath) return node;
+      for (const child of Object.values(node.children)) {
+        const found = findNode(child, targetPath);
+        if (found) return found;
+      }
+      return null;
+    };
+
+    const targetNode = findNode(categoryTree, path);
+    if (!targetNode) return;
+
+    const descendants = getDescendants(targetNode);
+    let newPaths = [...filters.categoryPaths];
+
+    if (checked) {
+      descendants.forEach(d => {
+        if (!newPaths.includes(d)) newPaths.push(d);
+      });
+    } else {
+      newPaths = newPaths.filter(p => !descendants.includes(p));
+    }
+    updateFilter('categoryPaths', newPaths);
+  };
+
 
 
   // Sidebar CSS classes for mobile drawer transitions
@@ -249,12 +391,30 @@ export function DealsFilterRail({ filters, onFiltersChange, deals, collapsed, on
           {/* Business Area */}
           <FilterSection title="Business Area" defaultOpen={false}>
             <MultiCheckboxFilter
-              options={['Automotive', 'Electronics', 'Luxury', 'Mixed']}
+              options={businessAreaOptions}
               selected={filters.businessArea}
               onChange={(val) => updateFilter('businessArea', val)}
               deals={deals}
               filterKey="businessArea"
             />
+          </FilterSection>
+
+          {/* Item Category Tree */}
+          <FilterSection title="Item Category" defaultOpen={false}>
+            <div className="flex flex-col gap-0.5 max-h-60 overflow-y-auto slick-scrollbar border border-[var(--border-subtle)] rounded-xl p-2 bg-[var(--background-secondary)]/10">
+              {Object.keys(categoryTree.children).length === 0 ? (
+                <span className="text-[11px] text-[var(--text-placeholder)] font-bold italic p-2">No categories available</span>
+              ) : (
+                <CategoryTreeNode
+                  node={categoryTree}
+                  selectedPaths={filters.categoryPaths}
+                  expandedPaths={expandedPaths}
+                  onToggleExpand={handleToggleExpand}
+                  onCheckboxChange={handleCategoryCheckboxChange}
+                  level={0}
+                />
+              )}
+            </div>
           </FilterSection>
 
           {/* Deal Type */}

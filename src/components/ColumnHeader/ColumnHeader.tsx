@@ -68,7 +68,7 @@ export const ColumnHeader = forwardRef<HTMLDivElement, ColumnHeaderProps>(
                             </Tooltip>
                         )}
                         
-                        <Tooltip content="Add item">
+                        <Tooltip content="Add Task">
                             <button
                                 type="button"
                                 className={styles.iconButton}

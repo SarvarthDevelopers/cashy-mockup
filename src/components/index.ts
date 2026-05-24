@@ -15,3 +15,4 @@ export * from './TextArea/TextArea';
 export * from './FileUpload/FileUpload';
 export * from './ImageUpload/ImageUpload';
 export * from './Tooltip/Tooltip';
+export * from './Modal/ConfirmationModal';

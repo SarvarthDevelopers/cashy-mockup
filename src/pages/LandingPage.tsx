@@ -10,6 +10,7 @@ import { TaskCreateCardLarge } from '../components/TaskCard/TaskCreateCardLarge'
 import { useToast } from '../components/Toast/ToastContext';
 import type { ColumnConfig } from '../components/Board/types';
 import { ColumnConfigPanel } from '../components/Board/ColumnConfigPanel';
+import { ConfirmationModal } from '../components/Modal/ConfirmationModal';
 
 interface TaskData {
     id: string;
@@ -62,6 +63,9 @@ export const LandingPage: React.FC<LandingPageProps> = ({
     const [tasksByColumn, setTasksByColumn] = useState<Record<string, TaskData[]>>({});
     const [addingToColumn, setAddingToColumn] = useState<string | null>(null);
     const [activeConfigColumnId, setActiveConfigColumnId] = useState<string | null>(null);
+    const [isDeleteModalOpen, setIsDeleteModalOpen] = useState(false);
+    const [columnToDelete, setColumnToDelete] = useState<ColumnConfig | null>(null);
+    const [deleteModalType, setDeleteModalType] = useState<'confirm' | 'warning'>('confirm');
     const { showToast } = useToast();
 
     const handleAddColumn = (index: number) => {
@@ -166,8 +170,14 @@ export const LandingPage: React.FC<LandingPageProps> = ({
                                         onChange={onUpdateColumn}
                                         onClose={() => setActiveConfigColumnId(null)}
                                         onDelete={() => {
-                                            onDeleteColumn(column.id);
-                                            setActiveConfigColumnId(null);
+                                            const deals = dealsByColumn[column.id] || [];
+                                            setColumnToDelete(column);
+                                            if (deals.length > 0) {
+                                                setDeleteModalType('warning');
+                                            } else {
+                                                setDeleteModalType('confirm');
+                                            }
+                                            setIsDeleteModalOpen(true);
                                         }}
                                     />
                                 ) : (
@@ -222,6 +232,28 @@ export const LandingPage: React.FC<LandingPageProps> = ({
                 </KanBanBoard>
                 </KanBanDndProvider>
             </div>
+            
+            <ConfirmationModal
+                isOpen={isDeleteModalOpen}
+                onOpenChange={setIsDeleteModalOpen}
+                title={deleteModalType === 'warning' ? "Cannot Delete Column" : "Delete Column"}
+                description={
+                    deleteModalType === 'warning'
+                        ? "This column contains active deal cards. You must move all deals in this column to another column first in order to delete it."
+                        : `Are you sure you want to delete the column "${columnToDelete?.title}"? All tasks in this column will be permanently deleted. This action cannot be undone.`
+                }
+                variant={deleteModalType === 'warning' ? "warning" : "danger"}
+                confirmText={deleteModalType === 'warning' ? "I Understand" : "Delete Column"}
+                cancelText="Cancel"
+                onConfirm={() => {
+                    if (columnToDelete) {
+                        onDeleteColumn(columnToDelete.id);
+                        setActiveConfigColumnId(null);
+                        setIsDeleteModalOpen(false);
+                        setColumnToDelete(null);
+                    }
+                }}
+            />
         </div>
     );
 };

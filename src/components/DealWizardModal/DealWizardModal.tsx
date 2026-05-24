@@ -813,7 +813,7 @@ export const DealWizardModal: React.FC<DealWizardModalProps> = ({
 
                 {/* --- CONTENT AREA --- */}
                 <div className="flex-1 flex overflow-hidden">
-                    <div className="flex-1 flex flex-col min-w-0 bg-[#FBFCFC] relative">
+                    <div className="flex-1 flex flex-col min-w-0 bg-[var(--background-tertiary)] relative">
                         {creationFinalized && activeStep !== 'step1' && (
                             <div className="px-8 bg-white border-b border-gray-100 hidden md:flex gap-8 shrink-0 overflow-x-auto scrollbar-hide z-10">
                                 {items.map((item, idx) => (

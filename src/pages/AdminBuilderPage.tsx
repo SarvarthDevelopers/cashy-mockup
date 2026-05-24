@@ -90,7 +90,7 @@ export const WizardBuilderPage: React.FC = () => {
     if (isLoading) {
         if (!selectedWizard) {
             return (
-                <div className="bg-[var(--background-secondary)] h-full w-full p-8 flex flex-col gap-8 animate-pulse select-none">
+                <div className="bg-[var(--background-tertiary)] h-full w-full p-8 flex flex-col gap-8 animate-pulse select-none">
                     {/* Header */}
                     <div className="flex items-center justify-between">
                         <div className="space-y-2">
@@ -138,7 +138,7 @@ export const WizardBuilderPage: React.FC = () => {
                                 <div className="h-10 w-24 bg-gray-200 rounded-xl" />
                             </div>
                         </div>
-                        <div className="flex-grow p-8 bg-[var(--background-secondary)] flex flex-col gap-6 overflow-hidden">
+                        <div className="flex-grow p-8 bg-[var(--background-tertiary)] flex flex-col gap-6 overflow-hidden">
                             <div className="h-12 w-full bg-white border border-[var(--border-subtle)] rounded-xl flex gap-3 p-2 shrink-0">
                                 {[1, 2, 3].map(idx => (
                                     <div key={idx} className="h-8 w-24 bg-gray-100 rounded-lg" />

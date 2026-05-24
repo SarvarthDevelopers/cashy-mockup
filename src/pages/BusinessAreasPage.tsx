@@ -144,7 +144,7 @@ export const BusinessAreasPage: React.FC = () => {
 
   if (isLoading) {
     return (
-      <div className="bg-[var(--background-secondary)] min-h-full w-full overflow-y-auto font-['Inter',sans-serif] px-4 py-8 md:px-10 md:py-10 relative animate-pulse select-none">
+      <div className="bg-[var(--background-tertiary)] min-h-full w-full overflow-y-auto font-['Inter',sans-serif] px-4 py-8 md:px-10 md:py-10 relative animate-pulse select-none">
         <div className="max-w-6xl mx-auto flex flex-col gap-8 pb-16">
           {/* Header strip */}
           <div className="flex flex-col sm:flex-row sm:items-center justify-between gap-6">
@@ -184,7 +184,7 @@ export const BusinessAreasPage: React.FC = () => {
   }
 
   return (
-    <div className="bg-[var(--background-secondary)] min-h-full w-full overflow-y-auto font-['Inter',sans-serif] px-4 py-8 md:px-10 md:py-10 relative animate-in fade-in duration-500">
+    <div className="bg-[var(--background-tertiary)] min-h-full w-full overflow-y-auto font-['Inter',sans-serif] px-4 py-8 md:px-10 md:py-10 relative animate-in fade-in duration-500">
       <div className="max-w-6xl mx-auto flex flex-col gap-8 pb-16">
         
         {/* Header strip */}

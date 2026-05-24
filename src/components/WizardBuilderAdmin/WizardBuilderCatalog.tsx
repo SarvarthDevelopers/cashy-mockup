@@ -234,7 +234,7 @@ export const WizardBuilderCatalog: React.FC<WizardBuilderCatalogProps> = ({
   };
 
   return (
-    <div className="p-8 flex flex-col gap-8 h-full bg-[var(--background-secondary)] overflow-y-auto slick-scrollbar">
+    <div className="p-8 flex flex-col gap-8 h-full bg-[var(--background-tertiary)] overflow-y-auto slick-scrollbar">
       <div className="flex flex-col gap-1">
         <h1 className="text-3xl font-extrabold text-[var(--text-primary)]">Wizard Builder Catalog</h1>
         <p className="text-[var(--text-subtle)] text-sm">Manage wizard templates for different categories and branches</p>

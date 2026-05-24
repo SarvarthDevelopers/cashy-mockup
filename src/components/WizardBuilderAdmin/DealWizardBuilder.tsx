@@ -196,7 +196,7 @@ export function DealWizardBuilder({ wizardConfig, onBack, onSave, onDelete }: De
 
   return (
     <DndProvider backend={HTML5Backend}>
-      <div className="bg-[#edeef1] h-full w-full overflow-hidden flex flex-col">
+      <div className="bg-[var(--background-tertiary)] h-full w-full overflow-hidden flex flex-col">
         <div className="px-[24px] py-[16px] flex-1 min-h-0 min-w-0">
           <div className="flex gap-[24px] items-start h-full min-w-[1200px]">
             <Sidebar onAddField={addField} />

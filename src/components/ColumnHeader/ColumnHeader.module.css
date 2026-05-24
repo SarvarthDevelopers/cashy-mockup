@@ -111,3 +111,34 @@
 .iconButton > svg {
     flex-shrink: 0;
 }
+
+.closeButton {
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    width: 32px;
+    height: 32px;
+    background-color: var(--background-error-primary, #FEF2F2);
+    border: 1px solid var(--border-error, #FCA5A5);
+    border-radius: var(--radius-200); /* 8px */
+    color: var(--text-error, #EF4444);
+    cursor: pointer;
+    box-sizing: border-box;
+    transition: background-color 0.2s ease, border-color 0.2s ease, color 0.2s ease;
+    padding: 0;
+    outline: none;
+}
+
+.closeButton:hover {
+    background-color: var(--background-error-subtle, #FEE2E2);
+    border-color: var(--border-error-hover, #F87171);
+    color: var(--text-error, #DC2626);
+}
+
+.closeButton:focus-visible {
+    box-shadow: 0 0 0 2px var(--background-primary), 0 0 0 4px var(--purple-200);
+}
+
+.closeButton > svg {
+    flex-shrink: 0;
+}

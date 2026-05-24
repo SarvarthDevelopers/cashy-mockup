@@ -67,10 +67,9 @@
      height:100% (below) gives this overflow context a definite size to scroll within. */
   overflow: hidden;
 
-  /* Applying explicit border to column for the hover state */
-  border: 1px solid transparent;
-  box-sizing: border-box;
-  transition: border-color 0.2s ease;
+  /* Use box-shadow for side/bottom borders to prevent 1px content offset and allow full-width top color strips */
+  box-shadow: -1px 0 0 0 transparent, 1px 0 0 0 transparent, 0 1px 0 0 transparent;
+  transition: box-shadow 0.2s ease;
   
   padding: 0;
   display: flex;
@@ -81,12 +80,12 @@
 }
 
 .cashy-kanban-column:hover {
-  border-color: var(--border-primary-hover);
+  box-shadow: -1px 0 0 0 var(--border-primary-hover), 1px 0 0 0 var(--border-primary-hover), 0 1px 0 0 var(--border-primary-hover);
 }
 
-/* Focus State strictly for newly injected columns */
+/* Focus State strictly for newly injected columns (excluding the top border) */
 .cashy-kanban-column.cashy-kanban-column--focused {
-  border: 2px solid var(--border-focused, #0052CC); /* Pure explicit solid ring outside child bounds */
+  box-shadow: -2px 0 0 0 var(--border-focused, #0052CC), 2px 0 0 0 var(--border-focused, #0052CC), 0 2px 0 0 var(--border-focused, #0052CC);
   transition: none; /* Immediately snap without fading "gradient" interpolation */
 }
 

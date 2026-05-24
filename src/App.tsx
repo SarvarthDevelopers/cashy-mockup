@@ -10,13 +10,97 @@ import { Header } from './components/Header/Header';
 import { DealWizardModal } from './components/DealWizardModal/DealWizardModal';
 import { ToastProvider } from './components/Toast/ToastContext';
 import { INITIAL_DEALS } from './data/mockData';
-import type { DealData, ColumnId } from './data/mockData';
+import type { DealData } from './data/mockData';
+import type { ColumnConfig } from './components/Board/types';
+
+const INITIAL_COLUMNS: ColumnConfig[] = [
+  { id: 'car-inbox', title: 'Inbox', color: '#15B8A7', sortBy: 'dueDate', sortOrder: 'desc', visibleToPartners: true, visibleToShops: ['AT / Wein', 'AT / Graz', 'DE / Berlin'] },
+  { id: 'call-attempt', title: 'Call Attempt', color: '#15B8A7', sortBy: 'dueDate', sortOrder: 'desc', visibleToPartners: true, visibleToShops: ['AT / Wein', 'AT / Graz', 'DE / Berlin'] },
+  { id: 'send-documents', title: 'Send Documents', color: '#EF4544', sortBy: 'dueDate', sortOrder: 'desc', visibleToPartners: true, visibleToShops: ['AT / Wein', 'AT / Graz', 'DE / Berlin'] },
+  { id: 'data-received', title: 'Data Received', color: '#CA8B04', sortBy: 'dueDate', sortOrder: 'desc', visibleToPartners: true, visibleToShops: ['AT / Wein', 'AT / Graz', 'DE / Berlin'] },
+  { id: 'price-research', title: 'Request Approval', color: '#CA8B04', sortBy: 'dueDate', sortOrder: 'desc', visibleToPartners: true, visibleToShops: ['AT / Wein', 'AT / Graz', 'DE / Berlin'] },
+  { id: 'waiting-documents', title: 'Waiting for Documents', color: '#EF4544', sortBy: 'dueDate', sortOrder: 'desc', visibleToPartners: true, visibleToShops: ['AT / Wein', 'AT / Graz', 'DE / Berlin'] },
+  { id: 'final-control', title: 'Final Control', color: '#167BDA', sortBy: 'dueDate', sortOrder: 'desc', visibleToPartners: true, visibleToShops: ['AT / Wein', 'AT / Graz', 'DE / Berlin'] },
+  { id: 'appointment', title: 'Appointment', color: '#167BDA', sortBy: 'dueDate', sortOrder: 'desc', visibleToPartners: true, visibleToShops: ['AT / Wein', 'AT / Graz', 'DE / Berlin'] },
+  { id: 'payout-storage', title: 'Ready for Payout / Storage', color: '#6366F1', sortBy: 'dueDate', sortOrder: 'desc', visibleToPartners: true, visibleToShops: ['AT / Wein', 'AT / Graz', 'DE / Berlin'] },
+  { id: 'archive', title: 'Archive', color: '#6366F1', sortBy: 'dueDate', sortOrder: 'desc', visibleToPartners: true, visibleToShops: ['AT / Wein', 'AT / Graz', 'DE / Berlin'] }
+];
+
+const parseDealDate = (dateStr?: string): Date => {
+  if (!dateStr || dateStr === 'No Date') {
+    return new Date(2099, 11, 31);
+  }
+  const parts = dateStr.split(' ');
+  if (parts.length === 2) {
+    const months: Record<string, number> = {
+      jan: 0, feb: 1, mar: 2, apr: 3, may: 4, jun: 5,
+      jul: 6, aug: 7, sep: 8, oct: 9, nov: 10, dec: 11
+    };
+    const monthStr = parts[0].toLowerCase().slice(0, 3);
+    const day = parseInt(parts[1], 10);
+    if (monthStr in months && !isNaN(day)) {
+      return new Date(2026, months[monthStr], day);
+    }
+  }
+  const parsed = Date.parse(dateStr);
+  if (!isNaN(parsed)) return new Date(parsed);
+  return new Date(2099, 11, 31);
+};
+
+const parseDealAmount = (amountStr?: string): number => {
+  if (!amountStr) return 0;
+  const clean = amountStr.replace(/,/g, '').replace(/[^0-9.]/g, '');
+  const num = parseFloat(clean);
+  return isNaN(num) ? 0 : num;
+};
+
+const sortDealsForColumn = (deals: DealData[], sortBy: string, sortOrder: 'asc' | 'desc'): DealData[] => {
+  if (sortBy === 'manual') return deals;
+  
+  return [...deals].sort((a, b) => {
+    let valA: any = null;
+    let valB: any = null;
+    
+    if (sortBy === 'dueDate') {
+      const dateA = parseDealDate(a.dueDate || a.appointmentDate);
+      const dateB = parseDealDate(b.dueDate || b.appointmentDate);
+      valA = dateA.getTime();
+      valB = dateB.getTime();
+    } else if (sortBy === 'amount') {
+      valA = parseDealAmount(a.amount);
+      valB = parseDealAmount(b.amount);
+    } else if (sortBy === 'customerName') {
+      valA = `${a.firstName} ${a.lastName}`.toLowerCase();
+      valB = `${b.firstName} ${b.lastName}`.toLowerCase();
+    } else if (sortBy === 'id') {
+      valA = a.id;
+      valB = b.id;
+    } else {
+      return 0;
+    }
+    
+    if (valA < valB) return sortOrder === 'asc' ? -1 : 1;
+    if (valA > valB) return sortOrder === 'asc' ? 1 : -1;
+    return 0;
+  });
+};
 
 function App() {
   const [isModalOpen, setIsModalOpen] = useState(false);
   const [selectedDeal, setSelectedDeal] = useState<DealData | null>(null);
   const [isNewDeal, setIsNewDeal] = useState(false);
-  const [dealsByColumn, setDealsByColumn] = useState<Record<ColumnId, DealData[]>>(INITIAL_DEALS);
+  const [columns, setColumns] = useState<ColumnConfig[]>(INITIAL_COLUMNS);
+  
+  const [dealsByColumn, setDealsByColumn] = useState<Record<string, DealData[]>>(() => {
+    const sorted = { ...INITIAL_DEALS } as Record<string, DealData[]>;
+    INITIAL_COLUMNS.forEach(col => {
+      if (sorted[col.id] && col.sortBy && col.sortBy !== 'manual') {
+        sorted[col.id] = sortDealsForColumn(sorted[col.id], col.sortBy, col.sortOrder || 'desc');
+      }
+    });
+    return sorted;
+  });
+
   const justDraggedRef = useRef(false);
 
   useEffect(() => {
@@ -45,13 +129,30 @@ function App() {
     }, 100);
 
     let foundDeal: DealData | null = null;
+    let foundColumnId: string | null = null;
     for (const colId in dealsByColumn) {
-      const deal = dealsByColumn[colId as ColumnId].find(d => d.id === dealId);
+      const deal = dealsByColumn[colId].find(d => d.id === dealId);
       if (deal) {
         foundDeal = deal;
+        foundColumnId = colId;
         break;
       }
     }
+
+    if (foundColumnId) {
+      setDealsByColumn(prev => {
+        const colConfig = columns.find(c => c.id === foundColumnId);
+        if (colConfig && colConfig.sortBy && colConfig.sortBy !== 'manual') {
+          const sorted = sortDealsForColumn(prev[foundColumnId!], colConfig.sortBy, colConfig.sortOrder || 'desc');
+          return {
+            ...prev,
+            [foundColumnId!]: sorted
+          };
+        }
+        return prev;
+      });
+    }
+
     if (foundDeal) {
       setSelectedDeal(foundDeal);
     }
@@ -69,7 +170,7 @@ function App() {
     setIsModalOpen(true);
   };
 
-  const handleDealDragOver = (dealId: string, fromColumn: ColumnId, toColumn: ColumnId, toIndex: number) => {
+  const handleDealDragOver = (dealId: string, fromColumn: string, toColumn: string, toIndex: number) => {
     setDealsByColumn(prev => {
       const sourceDeals = prev[fromColumn] || [];
       const targetDeals = prev[toColumn] || [];
@@ -93,13 +194,20 @@ function App() {
     });
   };
 
-  const handleDealDragEnd = (columnId: ColumnId, oldIndex: number, newIndex: number) => {
+  const handleDealDragEnd = (columnId: string, oldIndex: number, newIndex: number) => {
     setDealsByColumn(prev => {
       const deals = prev[columnId] || [];
-      if (!deals.length || oldIndex === newIndex) return prev;
+      if (!deals.length) return prev;
+      let newDeals = oldIndex === newIndex ? deals : arrayMove(deals, oldIndex, newIndex);
+      
+      const colConfig = columns.find(c => c.id === columnId);
+      if (colConfig && colConfig.sortBy && colConfig.sortBy !== 'manual') {
+        newDeals = sortDealsForColumn(newDeals, colConfig.sortBy, colConfig.sortOrder || 'desc');
+      }
+
       return {
         ...prev,
-        [columnId]: arrayMove(deals, oldIndex, newIndex)
+        [columnId]: newDeals
       };
     });
   };
@@ -107,27 +215,40 @@ function App() {
   const handleUpdateDeal = (updatedDeal: DealData) => {
     setDealsByColumn(prev => {
       const newDeals = { ...prev };
+      let updatedColId: string | null = null;
       for (const colId in newDeals) {
-        const col = colId as ColumnId;
-        const index = newDeals[col].findIndex(d => d.id === updatedDeal.id);
+        const index = newDeals[colId].findIndex(d => d.id === updatedDeal.id);
         if (index !== -1) {
-          const updatedCol = [...newDeals[col]];
+          const updatedCol = [...newDeals[colId]];
           updatedCol[index] = updatedDeal;
-          newDeals[col] = updatedCol;
+          newDeals[colId] = updatedCol;
+          updatedColId = colId;
           break;
+        }
+      }
+      if (updatedColId) {
+        const colConfig = columns.find(c => c.id === updatedColId);
+        if (colConfig && colConfig.sortBy && colConfig.sortBy !== 'manual') {
+          newDeals[updatedColId] = sortDealsForColumn(newDeals[updatedColId], colConfig.sortBy, colConfig.sortOrder || 'desc');
         }
       }
       return newDeals;
     });
-    // Also update selectedDeal to keep wizard in sync
     setSelectedDeal(updatedDeal);
   };
 
   const handleCreateDealSuccess = (newDeal: DealData) => {
-    setDealsByColumn(prev => ({
-      ...prev,
-      'car-inbox': [newDeal, ...prev['car-inbox']]
-    }));
+    setDealsByColumn(prev => {
+      let newInboxDeals = [newDeal, ...(prev['car-inbox'] || [])];
+      const colConfig = columns.find(c => c.id === 'car-inbox');
+      if (colConfig && colConfig.sortBy && colConfig.sortBy !== 'manual') {
+        newInboxDeals = sortDealsForColumn(newInboxDeals, colConfig.sortBy, colConfig.sortOrder || 'desc');
+      }
+      return {
+        ...prev,
+        'car-inbox': newInboxDeals
+      };
+    });
     setSelectedDeal(newDeal);
     setIsNewDeal(false);
   };
@@ -137,19 +258,96 @@ function App() {
       const newDeals = { ...prev };
       let dealToArchive: DealData | null = null;
       for (const colId in newDeals) {
-        const col = colId as ColumnId;
-        const index = newDeals[col].findIndex(d => d.id === dealId);
+        const index = newDeals[colId].findIndex(d => d.id === dealId);
         if (index !== -1) {
-          dealToArchive = newDeals[col][index];
-          newDeals[col] = newDeals[col].filter(d => d.id !== dealId);
+          dealToArchive = newDeals[colId][index];
+          newDeals[colId] = newDeals[colId].filter(d => d.id !== dealId);
           break;
         }
       }
       if (dealToArchive) {
-        newDeals['archive'] = [dealToArchive, ...(newDeals['archive'] || [])];
+        let newArchiveDeals = [dealToArchive, ...(newDeals['archive'] || [])];
+        const colConfig = columns.find(c => c.id === 'archive');
+        if (colConfig && colConfig.sortBy && colConfig.sortBy !== 'manual') {
+          newArchiveDeals = sortDealsForColumn(newArchiveDeals, colConfig.sortBy, colConfig.sortOrder || 'desc');
+        }
+        newDeals['archive'] = newArchiveDeals;
       }
       return newDeals;
     });
+  };
+
+  const handleUpdateColumn = (updatedColumn: ColumnConfig) => {
+    setColumns(prev => prev.map(col => col.id === updatedColumn.id ? updatedColumn : col));
+    
+    setDealsByColumn(prev => {
+      const deals = prev[updatedColumn.id] || [];
+      if (deals.length && updatedColumn.sortBy && updatedColumn.sortBy !== 'manual') {
+        const sorted = sortDealsForColumn(deals, updatedColumn.sortBy, updatedColumn.sortOrder || 'desc');
+        return {
+          ...prev,
+          [updatedColumn.id]: sorted
+        };
+      }
+      return prev;
+    });
+  };
+
+  const handleDeleteColumn = (columnId: string) => {
+    setDealsByColumn(prev => {
+      const dealsToArchive = prev[columnId] || [];
+      if (dealsToArchive.length === 0) {
+        const nextDeals: Record<string, DealData[]> = { ...prev };
+        delete nextDeals[columnId];
+        return nextDeals;
+      }
+      
+      let newArchiveDeals = [...(prev['archive'] || []), ...dealsToArchive];
+      const colConfig = columns.find(c => c.id === 'archive');
+      if (colConfig && colConfig.sortBy && colConfig.sortBy !== 'manual') {
+        newArchiveDeals = sortDealsForColumn(newArchiveDeals, colConfig.sortBy, colConfig.sortOrder || 'desc');
+      }
+      
+      const nextDeals: Record<string, DealData[]> = {
+        ...prev,
+        'archive': newArchiveDeals
+      };
+      delete nextDeals[columnId];
+      return nextDeals;
+    });
+
+    setColumns(prev => prev.filter(col => col.id !== columnId));
+  };
+
+  const handleAddColumn = (index: number): string => {
+    const newId = `col-${Date.now()}`;
+    const newColumn: ColumnConfig = {
+      id: newId,
+      title: 'New Column',
+      color: '#15B8A7',
+      sortBy: 'dueDate',
+      sortOrder: 'desc',
+      visibleToPartners: true,
+      visibleToShops: ['AT / Wein', 'AT / Graz', 'DE / Berlin'],
+      focused: true
+    };
+
+    setColumns(prev => {
+      const nextCols = prev.map(c => c.focused ? { ...c, focused: false } : c);
+      nextCols.splice(index, 0, newColumn);
+      return nextCols;
+    });
+
+    setDealsByColumn(prev => ({
+      ...prev,
+      [newId]: []
+    }));
+
+    return newId;
+  };
+
+  const handleClearColumnsFocus = () => {
+    setColumns(prev => prev.map(col => col.focused ? { ...col, focused: false } : col));
   };
 
   return (
@@ -160,13 +358,13 @@ function App() {
         />
         <main className="flex-1 overflow-hidden relative">
           <Routes>
-            <Route path="/" element={<LandingPage onSelectDeal={handleSelectDeal} selectedDealId={selectedDeal?.id} dealsByColumn={dealsByColumn} onDealDragOver={handleDealDragOver} onDealDragEnd={handleDealDragEnd} onArchiveDeal={handleArchiveDeal} onDragEndComplete={handleDragEndComplete} />} />
+            <Route path="/" element={<LandingPage onSelectDeal={handleSelectDeal} selectedDealId={selectedDeal?.id} dealsByColumn={dealsByColumn} columns={columns} onUpdateColumn={handleUpdateColumn} onDeleteColumn={handleDeleteColumn} onAddColumn={handleAddColumn} onClearColumnsFocus={handleClearColumnsFocus} onDealDragOver={handleDealDragOver} onDealDragEnd={handleDealDragEnd} onArchiveDeal={handleArchiveDeal} onDragEndComplete={handleDragEndComplete} />} />
             <Route path="/deals" element={<DealsPage onSelectDeal={handleSelectDeal} />} />
             <Route path="/items" element={<ItemsPage onSelectDeal={handleSelectDeal} />} />
             <Route path="/settings/business-areas" element={<BusinessAreasPage />} />
             <Route path="/wizard-builder" element={<WizardBuilderPage />} />
             <Route path="/wizard-builder/builder/:id" element={<WizardBuilderPage />} />
-            <Route path="*" element={<LandingPage onSelectDeal={handleSelectDeal} selectedDealId={selectedDeal?.id} dealsByColumn={dealsByColumn} onDealDragOver={handleDealDragOver} onDealDragEnd={handleDealDragEnd} onArchiveDeal={handleArchiveDeal} onDragEndComplete={handleDragEndComplete} />} />
+            <Route path="*" element={<LandingPage onSelectDeal={handleSelectDeal} selectedDealId={selectedDeal?.id} dealsByColumn={dealsByColumn} columns={columns} onUpdateColumn={handleUpdateColumn} onDeleteColumn={handleDeleteColumn} onAddColumn={handleAddColumn} onClearColumnsFocus={handleClearColumnsFocus} onDealDragOver={handleDealDragOver} onDealDragEnd={handleDealDragEnd} onArchiveDeal={handleArchiveDeal} onDragEndComplete={handleDragEndComplete} />} />
           </Routes>
         </main>
 

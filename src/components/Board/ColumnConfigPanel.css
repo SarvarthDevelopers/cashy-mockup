@@ -1,0 +1,99 @@
+.cashy-column-config {
+  display: flex;
+  flex-direction: column;
+  height: 100%;
+  width: 100%;
+  background-color: var(--background-primary, #FFFFFF);
+  box-sizing: border-box;
+}
+
+.cashy-column-config__body {
+  flex: 1;
+  overflow-y: auto;
+  padding: var(--space-400, 16px) 18px;
+  display: flex;
+  flex-direction: column;
+  gap: var(--space-500, 20px);
+  box-sizing: border-box;
+}
+
+/* Custom scrollbar for config panel scrollable body */
+.cashy-column-config__body::-webkit-scrollbar {
+  width: 6px;
+}
+
+.cashy-column-config__body::-webkit-scrollbar-track {
+  background: transparent;
+}
+
+.cashy-column-config__body::-webkit-scrollbar-thumb {
+  background-color: rgba(0, 0, 0, 0.1);
+  border-radius: var(--radius-200, 8px);
+}
+
+.cashy-column-config__title {
+  margin: 0;
+  font-size: var(--scale-04, 16px);
+  font-weight: var(--weight-semibold, 600);
+  color: var(--text-primary, #111827);
+  line-height: 1.4;
+}
+
+.cashy-column-config__subtitle {
+  display: block;
+  font-size: var(--scale-03, 14px);
+  font-weight: var(--weight-medium, 500);
+  color: var(--text-primary, #111827);
+  margin-bottom: var(--space-200, 8px);
+}
+
+.cashy-column-config__divider {
+  border: none;
+  border-top: 1px solid var(--border-subtle, #EDEEF1);
+  margin: 0;
+  width: 100%;
+}
+
+.cashy-column-config__section {
+  display: flex;
+  flex-direction: column;
+  width: 100%;
+}
+
+.cashy-column-config__checkbox-group {
+  display: flex;
+  flex-direction: column;
+  gap: var(--space-300, 12px);
+  margin-top: var(--space-200, 8px);
+}
+
+.cashy-column-config__footer {
+  display: flex;
+  justify-content: space-between;
+  align-items: center;
+  padding: var(--space-400, 16px) 18px;
+  border-top: 1px solid var(--border-subtle, #EDEEF1);
+  background-color: var(--background-primary, #FFFFFF);
+  position: sticky;
+  bottom: 0;
+  z-index: 10;
+  box-sizing: border-box;
+  gap: var(--space-300, 12px);
+}
+
+.cashy-column-config__delete-btn {
+  flex: 1;
+  font-size: 13px !important;
+  font-weight: var(--weight-semibold, 600) !important;
+}
+
+.cashy-column-config__close-btn {
+  flex: 1;
+  background-color: #111827 !important;
+  color: #FFFFFF !important;
+  font-weight: var(--weight-semibold, 600) !important;
+}
+
+.cashy-column-config__close-btn:hover {
+  background-color: #1f2937 !important;
+}

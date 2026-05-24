@@ -16,20 +16,20 @@ import { DealCardLarge } from '../Card/DealCardLarge';
 
 interface KanBanDndProviderProps {
   children: React.ReactNode;
-  onDealDragOver: (dealId: string, fromColumn: ColumnId, toColumn: ColumnId, toIndex: number) => void;
-  onDealDragEnd: (columnId: ColumnId, oldIndex: number, newIndex: number) => void;
-  dealsByColumn: Record<ColumnId, DealData[]>;
+  onDealDragOver: (dealId: string, fromColumn: string, toColumn: string, toIndex: number) => void;
+  onDealDragEnd: (columnId: string, oldIndex: number, newIndex: number) => void;
+  dealsByColumn: Record<string, DealData[]>;
   onDragEndComplete?: (dealId: string) => void;
 }
 
 export const KanBanDndProvider: React.FC<KanBanDndProviderProps> = ({ children, onDealDragOver, onDealDragEnd, dealsByColumn, onDragEndComplete }) => {
   const [activeDeal, setActiveDeal] = useState<DealData | null>(null);
 
-  const findColumn = (id: string): ColumnId | null => {
-    if (id in dealsByColumn) return id as ColumnId;
+  const findColumn = (id: string): string | null => {
+    if (id in dealsByColumn) return id;
     for (const colId in dealsByColumn) {
-      if (dealsByColumn[colId as ColumnId].find(d => d.id === id)) {
-        return colId as ColumnId;
+      if (dealsByColumn[colId].find(d => d.id === id)) {
+        return colId;
       }
     }
     return null;
@@ -74,7 +74,7 @@ export const KanBanDndProvider: React.FC<KanBanDndProviderProps> = ({ children, 
     const overId = over.id as string;
 
     const activeColumn = findColumn(activeId);
-    const overColumn = findColumn(overId) || (overId as ColumnId);
+    const overColumn = findColumn(overId) || overId;
 
     if (!activeColumn || !overColumn || activeColumn === overColumn) {
       return;
@@ -97,7 +97,7 @@ export const KanBanDndProvider: React.FC<KanBanDndProviderProps> = ({ children, 
       newIndex = overItems.length;
     }
 
-    onDealDragOver(activeId, activeColumn, overColumn as ColumnId, newIndex);
+    onDealDragOver(activeId, activeColumn, overColumn, newIndex);
   };
 
   const handleDragEnd = (event: DragEndEvent) => {
@@ -114,7 +114,7 @@ export const KanBanDndProvider: React.FC<KanBanDndProviderProps> = ({ children, 
     const overId = over.id as string;
     
     const activeColumn = findColumn(activeId);
-    const overColumn = findColumn(overId) || (overId as ColumnId);
+    const overColumn = findColumn(overId) || overId;
 
     if (!activeColumn || !overColumn || activeColumn !== overColumn) {
       return;

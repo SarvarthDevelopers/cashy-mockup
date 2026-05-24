@@ -4,11 +4,12 @@ import { KanBanDndProvider } from '../components/Board/KanBanDndProvider';
 import { KanBanColumn } from '../components/Board/KanBanColumn';
 import { ColumnHeader } from '../components/ColumnHeader/ColumnHeader';
 import { DraggableDealCard } from '../components/Card/DraggableDealCard';
-import { COLUMNS } from '../data/mockData';
-import type { ColumnId, DealData } from '../data/mockData';
+import type { DealData } from '../data/mockData';
 import { TaskCardLarge, type TaskPriority } from '../components/TaskCard/TaskCardLarge';
 import { TaskCreateCardLarge } from '../components/TaskCard/TaskCreateCardLarge';
 import { useToast } from '../components/Toast/ToastContext';
+import type { ColumnConfig } from '../components/Board/types';
+import { ColumnConfigPanel } from '../components/Board/ColumnConfigPanel';
 
 interface TaskData {
     id: string;
@@ -19,23 +20,55 @@ interface TaskData {
     assignee: string;
 }
 
+interface BoardColumnWrapperProps {
+    focused?: boolean;
+    children: React.ReactNode;
+    style?: React.CSSProperties;
+}
+
+const BoardColumnWrapper: React.FC<BoardColumnWrapperProps> = ({ children, style }) => {
+    return <div style={style}>{children}</div>;
+};
+
 interface LandingPageProps {
     onSelectDeal: (deal: DealData) => void;
     selectedDealId?: string | null;
-    dealsByColumn: Record<ColumnId, DealData[]>;
-    onDealDragOver: (dealId: string, fromColumn: ColumnId, toColumn: ColumnId, toIndex: number) => void;
-    onDealDragEnd: (columnId: ColumnId, oldIndex: number, newIndex: number) => void;
+    dealsByColumn: Record<string, DealData[]>;
+    columns: ColumnConfig[];
+    onUpdateColumn: (updatedColumn: ColumnConfig) => void;
+    onDeleteColumn: (columnId: string) => void;
+    onAddColumn: (index: number) => string;
+    onClearColumnsFocus?: () => void;
+    onDealDragOver: (dealId: string, fromColumn: string, toColumn: string, toIndex: number) => void;
+    onDealDragEnd: (columnId: string, oldIndex: number, newIndex: number) => void;
     onArchiveDeal?: (dealId: string) => void;
     onDragEndComplete?: (dealId: string) => void;
 }
 
-export const LandingPage: React.FC<LandingPageProps> = ({ onSelectDeal, selectedDealId, dealsByColumn, onDealDragOver, onDealDragEnd, onArchiveDeal, onDragEndComplete }) => {
-    const [tasksByColumn, setTasksByColumn] = useState<Record<ColumnId, TaskData[]>>({} as any);
-    const [addingToColumn, setAddingToColumn] = useState<ColumnId | null>(null);
+export const LandingPage: React.FC<LandingPageProps> = ({ 
+    onSelectDeal, 
+    selectedDealId, 
+    dealsByColumn, 
+    columns, 
+    onUpdateColumn, 
+    onDeleteColumn, 
+    onAddColumn, 
+    onClearColumnsFocus,
+    onDealDragOver, 
+    onDealDragEnd, 
+    onArchiveDeal, 
+    onDragEndComplete 
+}) => {
+    const [tasksByColumn, setTasksByColumn] = useState<Record<string, TaskData[]>>({});
+    const [addingToColumn, setAddingToColumn] = useState<string | null>(null);
+    const [activeConfigColumnId, setActiveConfigColumnId] = useState<string | null>(null);
     const { showToast } = useToast();
 
-    const onAddColumn = (index: number) => {
-        console.log('Add column at index:', index);
+    const handleAddColumn = (index: number) => {
+        const newId = onAddColumn(index);
+        if (newId) {
+            showToast('New column added successfully.', 'success');
+        }
     };
 
     const handleArchive = (dealId: string) => {
@@ -43,7 +76,7 @@ export const LandingPage: React.FC<LandingPageProps> = ({ onSelectDeal, selected
         showToast(`Deal #${dealId} archived successfully.`, 'success');
     };
 
-    const handleAddTask = (columnId: ColumnId, data: { title: string; description: string; dueDate: Date }) => {
+    const handleAddTask = (columnId: string, data: { title: string; description: string; dueDate: Date }) => {
         const today = new Date();
         today.setHours(0, 0, 0, 0);
         const target = new Date(data.dueDate.getFullYear(), data.dueDate.getMonth(), data.dueDate.getDate());
@@ -70,74 +103,118 @@ export const LandingPage: React.FC<LandingPageProps> = ({ onSelectDeal, selected
     };
 
     return (
-        <div className="flex flex-col h-full w-full bg-background text-foreground overflow-hidden relative">
+        <div className="flex flex-col h-full w-full bg-background text-foreground overflow-hidden relative" onClick={onClearColumnsFocus}>
             <div className="flex-1 overflow-hidden relative">
                 <KanBanDndProvider onDealDragOver={onDealDragOver} onDealDragEnd={onDealDragEnd} dealsByColumn={dealsByColumn} onDragEndComplete={onDragEndComplete}>
-                <KanBanBoard onAddColumn={onAddColumn}>
-                    {COLUMNS.map((column) => {
+                <KanBanBoard onAddColumn={handleAddColumn}>
+                    {columns.map((column) => {
                         const deals = dealsByColumn[column.id] || [];
                         const tasks = tasksByColumn[column.id] || [];
 
-                        // Show column if it has deals, tasks, or if the user is currently adding a task to it.
-                        if (deals.length === 0 && tasks.length === 0 && addingToColumn !== column.id) return null;
+                        // Show column if it is a custom column, has deals, has tasks, or is being configured/edited
+                        const isInitialColumn = [
+                            'car-inbox', 'call-attempt', 'send-documents', 'data-received', 
+                            'price-research', 'waiting-documents', 'final-control', 
+                            'appointment', 'payout-storage', 'archive'
+                        ].includes(column.id);
+
+                        if (isInitialColumn && 
+                            deals.length === 0 && 
+                            tasks.length === 0 && 
+                            addingToColumn !== column.id && 
+                            activeConfigColumnId !== column.id
+                        ) {
+                            return null;
+                        }
+
+                        const isConfigActive = activeConfigColumnId === column.id;
 
                         return (
-                            <div key={column.id} style={{ display: 'flex', flexDirection: 'column', height: '100%', width: '100%' }}>
+                            <BoardColumnWrapper key={column.id} focused={column.focused} style={{ display: 'flex', flexDirection: 'column', height: '100%', width: '100%' }}>
+                                {/* Top color strip */}
+                                <div 
+                                    style={{ 
+                                        height: '6px', 
+                                        backgroundColor: column.color || 'transparent', 
+                                        width: '100%',
+                                        flexShrink: 0
+                                    }} 
+                                />
+
                                 <div className="cashy-kanban-column-header">
                                     <ColumnHeader
                                         title={column.title}
                                         count={(deals.length + (tasksByColumn[column.id]?.length || 0))}
                                         variant="admin"
-                                        onConfigClick={() => console.log('Config click')}
+                                        isConfigActive={isConfigActive}
+                                        onConfigClick={() => {
+                                            if (isConfigActive) {
+                                                setActiveConfigColumnId(null);
+                                            } else {
+                                                setActiveConfigColumnId(column.id);
+                                            }
+                                        }}
                                         onAddClick={() => setAddingToColumn(column.id)}
                                     />
                                 </div>
 
-                                <KanBanColumn id={column.id} dealIds={deals.map(d => d.id)}>
-                                    {addingToColumn === column.id && (
-                                        <TaskCreateCardLarge
-                                            onAdd={(data) => handleAddTask(column.id, data)}
-                                            onCancel={() => setAddingToColumn(null)}
-                                        />
-                                    )}
-
-                                    {tasksByColumn[column.id]?.map(task => (
-                                        <TaskCardLarge
-                                            key={task.id}
-                                            taskId={task.id.replace('task-', '')}
-                                            title={task.title}
-                                            description={task.description}
-                                            dueDate={task.dueDate}
-                                            priority={task.priority}
-                                            assignee={task.assignee}
-                                        />
-                                    ))}
-
-                                    {deals.map(deal => {
-                                        const isHighPriority = deal.flags?.includes('HIGH VALUE');
-
-                                        return (
-                                            <DraggableDealCard
-                                                key={deal.id}
-                                                dealId={deal.id}
-                                                bookingNo={`#${deal.id}`}
-                                                customerName={`${deal.firstName} ${deal.lastName}`}
-                                                amount={deal.amount || ''}
-                                                dueDate={deal.dueDate || deal.appointmentDate || 'No Date'}
-                                                priority={isHighPriority}
-                                                priorityType={isHighPriority ? "Highest" : "Medium"}
-                                                shopLabelCountry={deal.countryCode}
-                                                shopLabelBranch={deal.branch}
-                                                items={deal.items}
-                                                categories={[deal.businessArea || 'General']}
-                                                state={deal.id === selectedDealId ? "Selected" : "Default"}
-                                                onClick={() => onSelectDeal(deal)}
-                                                onArchive={() => handleArchive(deal.id)}
+                                {isConfigActive ? (
+                                    <ColumnConfigPanel
+                                        column={column}
+                                        onChange={onUpdateColumn}
+                                        onClose={() => setActiveConfigColumnId(null)}
+                                        onDelete={() => {
+                                            onDeleteColumn(column.id);
+                                            setActiveConfigColumnId(null);
+                                        }}
+                                    />
+                                ) : (
+                                    <KanBanColumn id={column.id} dealIds={deals.map(d => d.id)}>
+                                        {addingToColumn === column.id && (
+                                            <TaskCreateCardLarge
+                                                onAdd={(data) => handleAddTask(column.id, data)}
+                                                onCancel={() => setAddingToColumn(null)}
                                             />
-                                        );
-                                    })}
-                                </KanBanColumn>
-                            </div>
+                                        )}
+
+                                        {tasksByColumn[column.id]?.map(task => (
+                                            <TaskCardLarge
+                                                key={task.id}
+                                                taskId={task.id.replace('task-', '')}
+                                                title={task.title}
+                                                description={task.description}
+                                                dueDate={task.dueDate}
+                                                priority={task.priority}
+                                                assignee={task.assignee}
+                                            />
+                                        ))}
+
+                                        {deals.map(deal => {
+                                            const isHighPriority = deal.flags?.includes('HIGH VALUE');
+
+                                            return (
+                                                <DraggableDealCard
+                                                    key={deal.id}
+                                                    dealId={deal.id}
+                                                    bookingNo={`#${deal.id}`}
+                                                    customerName={`${deal.firstName} ${deal.lastName}`}
+                                                    amount={deal.amount || ''}
+                                                    dueDate={deal.dueDate || deal.appointmentDate || 'No Date'}
+                                                    priority={isHighPriority}
+                                                    priorityType={isHighPriority ? "Highest" : "Medium"}
+                                                    shopLabelCountry={deal.countryCode}
+                                                    shopLabelBranch={deal.branch}
+                                                    items={deal.items}
+                                                    categories={[deal.businessArea || 'General']}
+                                                    state={deal.id === selectedDealId ? "Selected" : "Default"}
+                                                    onClick={() => onSelectDeal(deal)}
+                                                    onArchive={() => handleArchive(deal.id)}
+                                                />
+                                            );
+                                        })}
+                                    </KanBanColumn>
+                                )}
+                            </BoardColumnWrapper>
                         );
                     })}
                 </KanBanBoard>

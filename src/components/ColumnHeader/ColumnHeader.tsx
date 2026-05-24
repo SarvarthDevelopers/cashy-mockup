@@ -19,6 +19,10 @@ export interface ColumnHeaderProps extends React.HTMLAttributes<HTMLDivElement> 
      */
     variant?: 'admin' | 'staff';
     /**
+     * If true, the column is currently in configuration mode
+     */
+    isConfigActive?: boolean;
+    /**
      * Callback when the config button is clicked
      */
     onConfigClick?: () => void;
@@ -29,7 +33,7 @@ export interface ColumnHeaderProps extends React.HTMLAttributes<HTMLDivElement> 
 }
 
 export const ColumnHeader = forwardRef<HTMLDivElement, ColumnHeaderProps>(
-    ({ title, count = 0, variant = 'admin', onConfigClick, onAddClick, className, ...props }, ref) => {
+    ({ title, count = 0, variant = 'admin', isConfigActive = false, onConfigClick, onAddClick, className, ...props }, ref) => {
         return (
             <div ref={ref} className={`${styles.container} ${className || ''}`} {...props}>
                 <div className={styles.header}>
@@ -47,11 +51,17 @@ export const ColumnHeader = forwardRef<HTMLDivElement, ColumnHeaderProps>(
                         {variant === 'admin' && (
                             <button
                                 type="button"
-                                className={styles.iconButton}
+                                className={isConfigActive ? styles.closeButton : styles.iconButton}
                                 onClick={onConfigClick}
-                                aria-label="Configure column"
+                                aria-label={isConfigActive ? "Close configuration" : "Configure column"}
                             >
-                                <ConfigIcon width="16" height="16" />
+                                {isConfigActive ? (
+                                    <svg width="14" height="14" viewBox="0 0 14 14" fill="none" xmlns="http://www.w3.org/2000/svg">
+                                        <path d="M10.5 3.5L3.5 10.5M3.5 3.5l7 7" stroke="currentColor" strokeWidth="1.5" strokeLinecap="round" strokeLinejoin="round" />
+                                    </svg>
+                                ) : (
+                                    <ConfigIcon width="16" height="16" />
+                                )}
                             </button>
                         )}
                         

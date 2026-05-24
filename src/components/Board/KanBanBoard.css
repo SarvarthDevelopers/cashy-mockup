@@ -115,10 +115,6 @@
   overflow-y: auto;
   overflow-x: hidden;
   
-  /* Hide scrollbars completely across browsers */
-  scrollbar-width: none; /* Firefox */
-  -ms-overflow-style: none; /* IE/Edge */
-  
   display: flex;
   flex-direction: column;
   gap: var(--space-300, 12px);
@@ -131,7 +127,20 @@
 }
 
 .cashy-kanban-column-body::-webkit-scrollbar {
-  display: none; /* Chrome, Safari, Opera */
+  width: 6px;
+}
+
+.cashy-kanban-column-body::-webkit-scrollbar-track {
+  background: transparent;
+}
+
+.cashy-kanban-column-body::-webkit-scrollbar-thumb {
+  background-color: rgba(0, 0, 0, 0.1);
+  border-radius: var(--radius-200, 8px);
+}
+
+.cashy-kanban-column-body::-webkit-scrollbar-thumb:hover {
+  background-color: rgba(0, 0, 0, 0.18);
 }
 
 /* This zone creates the 16px gap between columns AND acts as the hover flex layer */

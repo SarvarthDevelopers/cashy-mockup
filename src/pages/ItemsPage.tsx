@@ -232,6 +232,15 @@ export function ItemsPage({ onSelectDeal }: ItemsPageProps) {
   const [bulkActionStatus, setBulkActionStatus] = useState<'idle' | 'processing' | 'success' | 'error'>('idle');
   const [bulkErrorMessage, setBulkErrorMessage] = useState('');
 
+  const [isLoading, setIsLoading] = useState(true);
+
+  useEffect(() => {
+    const timer = setTimeout(() => {
+      setIsLoading(false);
+    }, 600);
+    return () => clearTimeout(timer);
+  }, []);
+
   // Mobile layout responsiveness
   useEffect(() => {
     const handleMobileResize = () => {
@@ -407,8 +416,67 @@ export function ItemsPage({ onSelectDeal }: ItemsPageProps) {
     }
   }, [handleOpenWizard, triggerSimulatedExport, executeBulkAction]);
 
+  if (isLoading) {
+    return (
+      <div className="bg-[var(--background-secondary)] h-full w-full overflow-hidden flex flex-col font-['Inter',sans-serif] animate-pulse select-none">
+        <div className="flex-1 min-h-0 flex flex-col px-3 py-3 md:px-6 md:py-4 gap-4">
+          {/* Toolbar Skeleton */}
+          <div className="h-14 bg-white border border-[var(--border-subtle)] rounded-xl flex items-center justify-between px-4 shrink-0">
+            <div className="flex items-center gap-3">
+              <div className="h-9 w-40 bg-gray-100 rounded-lg" />
+              <div className="h-5 w-24 bg-gray-100 rounded" />
+            </div>
+            <div className="flex items-center gap-2">
+              <div className="h-9 w-20 bg-gray-100 rounded-lg" />
+              <div className="h-9 w-24 bg-gray-100 rounded-lg" />
+            </div>
+          </div>
+
+          {/* Main Grid Viewport Skeleton */}
+          <div className="flex gap-4 flex-1 min-h-0 relative">
+            {/* Sidebar Filter Rail Skeleton */}
+            <div className="w-64 bg-white border border-[var(--border-subtle)] rounded-2xl p-4 flex flex-col gap-6 shrink-0 h-full">
+              <div className="h-5 w-28 bg-gray-100 rounded" />
+              {[1, 2, 3, 4].map(idx => (
+                <div className="flex flex-col gap-2" key={idx}>
+                  <div className="h-4 w-20 bg-gray-100 rounded" />
+                  <div className="h-9 w-full bg-gray-50 border border-gray-100 rounded-lg" />
+                </div>
+              ))}
+            </div>
+
+            {/* Spreadsheet Table Skeleton */}
+            <div className="flex-1 bg-white border border-[var(--border-subtle)] rounded-2xl flex flex-col h-full overflow-hidden">
+              {/* Table Header */}
+              <div className="h-10 bg-gray-50 border-b border-gray-100 flex items-center px-4 justify-between shrink-0">
+                {[1, 2, 3, 4, 5].map(idx => (
+                  <div key={idx} className="h-4 w-24 bg-gray-200 rounded" />
+                ))}
+              </div>
+              {/* Table Rows */}
+              <div className="flex-1 flex flex-col gap-0.5 p-1 overflow-hidden">
+                {[1, 2, 3, 4, 5, 6, 7, 8].map(rowIdx => (
+                  <div key={rowIdx} className="h-12 border-b border-gray-50 flex items-center px-3 justify-between">
+                    <div className="flex items-center gap-3">
+                      <div className="h-4 w-4 bg-gray-100 rounded" />
+                      <div className="h-4 w-16 bg-gray-100 rounded" />
+                    </div>
+                    <div className="h-4 w-32 bg-gray-100 rounded" />
+                    <div className="h-4 w-20 bg-gray-100 rounded" />
+                    <div className="h-4 w-24 bg-gray-100 rounded" />
+                    <div className="h-5 w-16 bg-gray-100 rounded-full" />
+                  </div>
+                ))}
+              </div>
+            </div>
+          </div>
+        </div>
+      </div>
+    );
+  }
+
   return (
-    <div className="bg-[var(--background-secondary)] h-full w-full overflow-hidden flex flex-col font-['Inter',sans-serif]">
+    <div className="bg-[var(--background-secondary)] h-full w-full overflow-hidden flex flex-col font-['Inter',sans-serif] animate-in fade-in duration-500">
       <div className="flex-1 min-h-0 flex flex-col px-3 py-3 md:px-6 md:py-4">
         
         {/* Toolbar */}

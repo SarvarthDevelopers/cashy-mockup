@@ -1,4 +1,4 @@
-import React, { useState } from 'react';
+import React, { useState, useEffect } from 'react';
 import { KanBanBoard } from '../components/Board/KanBanBoard';
 import { KanBanDndProvider } from '../components/Board/KanBanDndProvider';
 import { KanBanColumn } from '../components/Board/KanBanColumn';
@@ -11,6 +11,8 @@ import { useToast } from '../components/Toast/useToast';
 import type { ColumnConfig } from '../components/Board/types';
 import { ColumnConfigPanel } from '../components/Board/ColumnConfigPanel';
 import { ConfirmationModal } from '../components/Modal/ConfirmationModal';
+// @ts-expect-error canvas-confetti does not have TypeScript declaration files installed in this project
+import confetti from 'canvas-confetti';
 
 interface TaskData {
     id: string;
@@ -71,10 +73,29 @@ export const LandingPage: React.FC<LandingPageProps> = ({
     const [deleteModalType, setDeleteModalType] = useState<'confirm' | 'warning'>('confirm');
     const { showToast } = useToast();
 
+    const [isLoading, setIsLoading] = useState(true);
+    useEffect(() => {
+        const timer = setTimeout(() => {
+            setIsLoading(false);
+        }, 1000);
+        return () => clearTimeout(timer);
+    }, []);
+
     const handleAddColumn = (index: number) => {
         const newId = onAddColumn(index);
         if (newId) {
             showToast('New column added successfully.', 'success');
+            // Confetti burst for micro-interaction delight!
+            try {
+                confetti({
+                    particleCount: 80,
+                    spread: 60,
+                    origin: { y: 0.8 },
+                    colors: ['#4649e5', '#60a5fa', '#34d399', '#f472b6']
+                });
+            } catch (err) {
+                console.error('Failed to trigger confetti', err);
+            }
         }
     };
 
@@ -144,8 +165,36 @@ export const LandingPage: React.FC<LandingPageProps> = ({
     return (
         <div className="flex flex-col h-full w-full bg-background text-foreground overflow-hidden relative" onClick={onClearColumnsFocus}>
             <div className="flex-1 overflow-hidden relative">
-                <KanBanDndProvider onDealDragOver={onDealDragOver} onDealDragEnd={onDealDragEnd} dealsByColumn={dealsByColumn} onDragEndComplete={onDragEndComplete}>
-                <KanBanBoard onAddColumn={handleAddColumn}>
+                {isLoading ? (
+                    <div className="cashy-kanban-board animate-pulse flex gap-6 p-6 h-full overflow-hidden select-none bg-[var(--background-secondary)]/50">
+                        {[1, 2, 3, 4].map(idx => (
+                            <div key={idx} className="cashy-kanban-column w-[300px] min-w-[300px] h-full flex flex-col gap-4 p-4 bg-white border border-[var(--border-subtle)] rounded-2xl shadow-sm shrink-0">
+                                <div className="flex items-center justify-between pb-2 border-b border-gray-100">
+                                    <div className="h-5 w-24 bg-gray-200 rounded-md" />
+                                    <div className="h-5 w-5 bg-gray-200 rounded-full" />
+                                </div>
+                                <div className="flex flex-col gap-3 flex-grow overflow-hidden mt-2">
+                                    {[1, 2].map(cardIdx => (
+                                        <div key={cardIdx} className="p-4 bg-gray-50 border border-gray-100 rounded-xl flex flex-col gap-3">
+                                            <div className="flex items-center justify-between">
+                                                <div className="h-4 w-12 bg-gray-200 rounded" />
+                                                <div className="h-3 w-8 bg-gray-200 rounded" />
+                                            </div>
+                                            <div className="h-5 w-4/5 bg-gray-200 rounded" />
+                                            <div className="h-3.5 w-3/5 bg-gray-200 rounded" />
+                                            <div className="flex gap-1.5 mt-2">
+                                                <div className="h-4 w-14 bg-gray-200 rounded-full" />
+                                                <div className="h-4 w-12 bg-gray-200 rounded-full" />
+                                            </div>
+                                        </div>
+                                    ))}
+                                </div>
+                            </div>
+                        ))}
+                    </div>
+                ) : (
+                    <KanBanDndProvider onDealDragOver={onDealDragOver} onDealDragEnd={onDealDragEnd} dealsByColumn={dealsByColumn} onDragEndComplete={onDragEndComplete}>
+                    <KanBanBoard onAddColumn={handleAddColumn} className="animate-in fade-in duration-500">
                     {columns.map((column) => {
                         const deals = dealsByColumn[column.id] || [];
                         const tasks = tasksByColumn[column.id] || [];
@@ -281,6 +330,7 @@ export const LandingPage: React.FC<LandingPageProps> = ({
                     })}
                 </KanBanBoard>
                 </KanBanDndProvider>
+                )}
             </div>
             
             <ConfirmationModal

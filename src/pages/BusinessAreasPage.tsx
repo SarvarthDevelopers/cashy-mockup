@@ -36,6 +36,14 @@ export const BusinessAreasPage: React.FC = () => {
   const [formCategories, setFormCategories] = useState<string[]>([]);
   const [formError, setFormError] = useState('');
 
+  const [isLoading, setIsLoading] = useState(true);
+  useEffect(() => {
+    const timer = setTimeout(() => {
+      setIsLoading(false);
+    }, 600);
+    return () => clearTimeout(timer);
+  }, []);
+
   // Sync state with local storage updates
   useEffect(() => {
     const handleStorageUpdate = () => {
@@ -134,8 +142,49 @@ export const BusinessAreasPage: React.FC = () => {
     return map;
   }, [areas, editingArea]);
 
+  if (isLoading) {
+    return (
+      <div className="bg-[var(--background-secondary)] min-h-full w-full overflow-y-auto font-['Inter',sans-serif] px-4 py-8 md:px-10 md:py-10 relative animate-pulse select-none">
+        <div className="max-w-6xl mx-auto flex flex-col gap-8 pb-16">
+          {/* Header strip */}
+          <div className="flex flex-col sm:flex-row sm:items-center justify-between gap-6">
+            <div className="flex items-center gap-5">
+              <div className="w-12 h-12 bg-white border border-[var(--border-subtle)] rounded-2xl shrink-0" />
+              <div className="space-y-2">
+                <div className="h-3 w-20 bg-gray-200 rounded" />
+                <div className="h-7 w-48 bg-gray-200 rounded" />
+                <div className="h-4 w-96 bg-gray-200 rounded" />
+              </div>
+            </div>
+            <div className="flex items-center gap-3">
+              <div className="h-11 w-32 bg-white border border-[var(--border-subtle)] rounded-xl" />
+              <div className="h-11 w-32 bg-white border border-[var(--border-subtle)] rounded-xl" />
+            </div>
+          </div>
+
+          {/* Cards Grid Skeleton */}
+          <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-6">
+            {[1, 2, 3].map(idx => (
+              <div key={idx} className="bg-white border border-[var(--border-subtle)] rounded-2xl h-80 p-6 flex flex-col justify-between">
+                <div className="space-y-3">
+                  <div className="h-6 w-32 bg-gray-200 rounded" />
+                  <div className="h-4 w-20 bg-gray-200 rounded" />
+                </div>
+                <div className="space-y-2 flex-1 mt-6">
+                  <div className="h-4 w-24 bg-gray-200 rounded" />
+                  <div className="h-10 w-full bg-gray-50 border border-gray-100 rounded-xl" />
+                  <div className="h-10 w-full bg-gray-50 border border-gray-100 rounded-xl" />
+                </div>
+              </div>
+            ))}
+          </div>
+        </div>
+      </div>
+    );
+  }
+
   return (
-    <div className="bg-[var(--background-secondary)] min-h-full w-full overflow-y-auto font-['Inter',sans-serif] px-4 py-8 md:px-10 md:py-10 relative">
+    <div className="bg-[var(--background-secondary)] min-h-full w-full overflow-y-auto font-['Inter',sans-serif] px-4 py-8 md:px-10 md:py-10 relative animate-in fade-in duration-500">
       <div className="max-w-6xl mx-auto flex flex-col gap-8 pb-16">
         
         {/* Header strip */}

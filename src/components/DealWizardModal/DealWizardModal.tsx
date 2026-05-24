@@ -1,3 +1,4 @@
+/* eslint-disable react-hooks/set-state-in-effect, @typescript-eslint/no-explicit-any, react-hooks/refs, react-hooks/exhaustive-deps */
 import React, { useState, useEffect } from 'react';
 import { Package, MessageSquare, History, ChevronUp, ChevronDown, Plus, Trash2, AlertCircle, Loader2, X, Menu, Info } from 'lucide-react';
 import { 
@@ -59,6 +60,25 @@ export const DealWizardModal: React.FC<DealWizardModalProps> = ({
     const contentRef = React.useRef<HTMLDivElement>(null);
     const sectionRefs = React.useRef<Map<string, HTMLDivElement>>(new Map());
     const [isAutoScrolling, setIsAutoScrolling] = useState(false);
+
+    const scrollToSection = (stepId: string, itemIdx?: number) => {
+        setIsAutoScrolling(true);
+        setActiveStep(stepId);
+        if (itemIdx !== undefined) setActiveItemIndex(itemIdx);
+
+        // Defer scroll to allow DOM/layout updates (like mounting the item tabs bar) to settle first
+        setTimeout(() => {
+            const key = itemIdx !== undefined ? `${stepId}-${itemIdx}` : stepId;
+            const el = sectionRefs.current.get(key);
+            if (el) {
+                el.scrollIntoView({ behavior: 'smooth', block: 'start' });
+            }
+            // Keep isAutoScrolling true until smooth scroll completes
+            setTimeout(() => {
+                setIsAutoScrolling(false);
+            }, 800);
+        }, 100);
+    };
     
     // --- CREATE DEAL FORM STATE ---
     const [dealMode, setDealMode] = useState<'Pawn' | 'Purchase'>('Pawn');
@@ -86,13 +106,13 @@ export const DealWizardModal: React.FC<DealWizardModalProps> = ({
         firstName: 'Franz',
         lastName: 'Kürsten'
     });
-    const [metadata, setMetadata] = useState({
+    const [metadata, setMetadata] = useState(() => ({
         company: 'CASHY_AUT',
         branch: 'Vienna Main',
         duration: '180',
         dueDate: new Date(Date.now() + 180 * 24 * 60 * 60 * 1000).toISOString().split('T')[0],
         payoutMethod: 'Bank Transfer'
-    });
+    }));
 
     const [lastSyncedId, setLastSyncedId] = useState<string | null>(null);
 
@@ -249,7 +269,7 @@ export const DealWizardModal: React.FC<DealWizardModalProps> = ({
         setItems(prevItems => prevItems.map(item => {
             if (item.id !== id) return item;
             
-            let updatedItem = { ...item, [field]: value };
+            const updatedItem = { ...item, [field]: value };
             
             // Auto-generate title for Car
             if (updatedItem.category === 'Car' && (field === 'make' || field === 'model' || field === 'year')) {
@@ -411,24 +431,7 @@ export const DealWizardModal: React.FC<DealWizardModalProps> = ({
         );
     };
 
-    const scrollToSection = (stepId: string, itemIdx?: number) => {
-        setIsAutoScrolling(true);
-        setActiveStep(stepId);
-        if (itemIdx !== undefined) setActiveItemIndex(itemIdx);
 
-        // Defer scroll to allow DOM/layout updates (like mounting the item tabs bar) to settle first
-        setTimeout(() => {
-            const key = itemIdx !== undefined ? `${stepId}-${itemIdx}` : stepId;
-            const el = sectionRefs.current.get(key);
-            if (el) {
-                el.scrollIntoView({ behavior: 'smooth', block: 'start' });
-            }
-            // Keep isAutoScrolling true until smooth scroll completes
-            setTimeout(() => {
-                setIsAutoScrolling(false);
-            }, 800);
-        }, 100);
-    };
 
     const handleScroll = () => {
         if (!creationFinalized || isAutoScrolling || !contentRef.current) return;

@@ -20,28 +20,39 @@ interface ItemsFilterRailProps {
 function FilterSection({ title, children, defaultOpen = true }: { title: string; children: React.ReactNode; defaultOpen?: boolean }) {
   const [open, setOpen] = useState(defaultOpen);
   return (
-    <div className="flex flex-col w-full border-b border-[var(--border-subtle)] last:border-b-0 mr-[-8px]">
+    <div className="content-stretch flex flex-col gap-0 items-start relative shrink-0 w-full last:border-b-0" data-name="Section">
       <button
-        onClick={() => setOpen(!open)}
-        className="bg-[var(--background-primary)] w-full py-4 pl-4 pr-6 hover:bg-[var(--background-secondary)] transition-colors focus:outline-none text-left flex items-center justify-between cursor-pointer"
-        aria-expanded={open}
+          onClick={() => setOpen(!open)}
+          className="bg-[var(--background-primary)] relative shrink-0 w-full cursor-pointer hover:bg-[var(--background-secondary)] transition-colors focus:outline-none focus-visible:ring-2 focus-visible:ring-[var(--border-brand)] text-left"
+          data-name="Section Header"
+          aria-expanded={open}
       >
-        <span className="font-bold text-[14px] text-[var(--text-primary)]">{title}</span>
-        <div className="text-[var(--text-subtlest)]">
-          {open ? (
-            <svg width="10" height="6" viewBox="0 0 10 6" fill="none">
-              <path d="M1 1L5 5L9 1" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round"/>
-            </svg>
-          ) : (
-            <svg width="6" height="10" viewBox="0 0 6 10" fill="none">
-              <path d="M1 1L5 5L1 9" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round"/>
-            </svg>
-          )}
+        <div className="flex flex-row items-center size-full">
+          <div className="content-stretch flex gap-[8px] items-center py-[16px] pl-[16px] pr-[16px] relative w-full">
+            <div className="content-stretch flex gap-[12px] items-center relative shrink-0" data-name="Title">
+              <div className="relative shrink-0 size-[24px] flex items-center justify-center text-[var(--text-primary)]">
+                {open ? (
+                  <svg width="14" height="8" viewBox="0 0 14 8" fill="none" xmlns="http://www.w3.org/2000/svg">
+                    <path d="M1 1L7 7L13 1" stroke="currentColor" strokeWidth="1.5" strokeLinecap="round" strokeLinejoin="round"/>
+                  </svg>
+                ) : (
+                  <svg width="8" height="14" viewBox="0 0 8 14" fill="none" xmlns="http://www.w3.org/2000/svg">
+                    <path d="M1 1L7 7L1 13" stroke="currentColor" strokeWidth="1.5" strokeLinecap="round" strokeLinejoin="round"/>
+                  </svg>
+                )}
+              </div>
+              <div className="flex flex-col font-['Inter',sans-serif] font-bold justify-center leading-[0] not-italic relative shrink-0 text-[var(--text-primary)] text-[15px] whitespace-nowrap">
+                <p className="leading-[1.4]">{title}</p>
+              </div>
+            </div>
+          </div>
         </div>
       </button>
-      {open && (
-        <div className="pb-4 pl-4 pr-6 flex flex-col gap-2 w-full animate-in fade-in duration-200">
-          {children}
+      {open && children && (
+        <div className="relative shrink-0 w-full pb-[16px] pl-[16px] pr-[16px]">
+          <div className="content-stretch flex flex-col gap-[6px] items-stretch relative w-full">
+            {children}
+          </div>
         </div>
       )}
     </div>
@@ -117,11 +128,11 @@ const CategoryTreeNode: React.FC<CategoryTreeNodeProps> = ({
               {!isLeaf && (
                 isExpanded ? (
                   <svg width="8" height="5" viewBox="0 0 10 6" fill="none">
-                    <path d="M1 1L5 5L9 1" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round"/>
+                    <path d="M1 1L5 5L9 1" stroke="currentColor" strokeWidth="1.5" strokeLinecap="round" strokeLinejoin="round"/>
                   </svg>
                 ) : (
                   <svg width="5" height="8" viewBox="0 0 6 10" fill="none">
-                    <path d="M1 1L5 5L1 9" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round"/>
+                    <path d="M1 1L5 5L1 9" stroke="currentColor" strokeWidth="1.5" strokeLinecap="round" strokeLinejoin="round"/>
                   </svg>
                 )
               )}
@@ -132,7 +143,7 @@ const CategoryTreeNode: React.FC<CategoryTreeNodeProps> = ({
               onClick={handleCheckboxClick}
               className={`w-3.5 h-3.5 rounded border flex items-center justify-center shrink-0 transition-colors cursor-pointer ${
                 isChecked 
-                  ? 'bg-[var(--background-brand-solid)] border-[var(--border-brand)] text-white shadow-sm' 
+                  ? 'bg-[var(--background-brand-solid)] border-[var(--border-brand)] text-white' 
                   : isIndeterminate
                     ? 'bg-[var(--background-brand-primary)] border-[var(--border-brand)] text-[var(--text-brand)]'
                     : 'border-[var(--border-subtle)] bg-[var(--background-primary)]'
@@ -140,7 +151,7 @@ const CategoryTreeNode: React.FC<CategoryTreeNodeProps> = ({
             >
               {isChecked && (
                 <svg width="8" height="6" viewBox="0 0 10 8" fill="none">
-                  <path d="M1 4L3.5 6.5L9 1" stroke="white" strokeWidth="2.5" strokeLinecap="round" strokeLinejoin="round" />
+                  <path d="M1 4L3.5 6.5L9 1" stroke="white" strokeWidth="1.5" strokeLinecap="round" strokeLinejoin="round" />
                 </svg>
               )}
               {isIndeterminate && (
@@ -196,7 +207,7 @@ function SegmentedToggle({
 }) {
   return (
     <div className="flex flex-col gap-1.5 w-full">
-      <span className="text-[11px] font-black text-[var(--text-subtlest)] uppercase tracking-wider">{label}</span>
+      <span className="text-[10px] font-bold text-[var(--text-subtlest)] uppercase tracking-wider">{label}</span>
       <div className="flex bg-[var(--background-secondary)] p-1 rounded-lg border border-[var(--border-subtle)] w-full">
         {(['all', 'yes', 'no'] as const).map(opt => {
           const isActive = value === opt;
@@ -206,7 +217,7 @@ function SegmentedToggle({
               onClick={() => onChange(opt)}
               className={`flex-1 text-center py-1 text-xs font-bold rounded-md transition-all cursor-pointer focus:outline-none capitalize ${
                 isActive
-                  ? 'bg-[var(--background-primary)] text-[var(--text-brand)] shadow-sm border border-[var(--border-subtle)] font-extrabold'
+                  ? 'bg-[var(--background-primary)] text-[var(--text-brand)] border border-[var(--border-subtle)] font-bold'
                   : 'text-[var(--text-subtlest)] hover:text-[var(--text-primary)]'
               }`}
             >
@@ -274,12 +285,12 @@ function MultiCheckboxFilter({
             <div className="flex items-center gap-[10px]">
               <div className={`w-4 h-4 rounded-[4px] border flex items-center justify-center shrink-0 transition-all ${
                 checked 
-                  ? 'bg-[var(--background-brand-solid)] border-[var(--border-brand)] text-white shadow-sm' 
+                  ? 'bg-[var(--background-brand-solid)] border-[var(--border-brand)] text-white' 
                   : 'border-[var(--border-subtle)] bg-[var(--background-primary)]'
               }`}>
                 {checked && (
                   <svg width="10" height="8" viewBox="0 0 10 8" fill="none">
-                    <path d="M1 4L3.5 6.5L9 1" stroke="white" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round" />
+                    <path d="M1 4L3.5 6.5L9 1" stroke="white" strokeWidth="1.5" strokeLinecap="round" strokeLinejoin="round" />
                   </svg>
                 )}
               </div>
@@ -476,9 +487,9 @@ export function ItemsFilterRail({ filters, onFiltersChange, items, collapsed, on
         <div className="flex items-center justify-between px-4 py-3.5 border-b border-[var(--border-subtle)] bg-[var(--background-secondary)] md:bg-transparent shrink-0">
           <div className="flex items-center gap-2.5">
             <svg width="16" height="16" viewBox="0 0 16 16" fill="none">
-              <path d="M2 4h12M4 8h8M6 12h4" stroke="var(--text-primary)" strokeWidth="1.8" strokeLinecap="round" />
+              <path d="M2 4h12M4 8h8M6 12h4" stroke="var(--text-primary)" strokeWidth="1.5" strokeLinecap="round" />
             </svg>
-            <span className="text-sm font-extrabold text-[var(--text-primary)]">Filters</span>
+            <span className="text-sm font-semibold text-[var(--text-primary)]">Filters</span>
           </div>
           <div className="md:hidden">
             <button
@@ -492,7 +503,7 @@ export function ItemsFilterRail({ filters, onFiltersChange, items, collapsed, on
         </div>
 
         {/* Scrollable sections */}
-        <div className="flex-1 overflow-y-auto slick-scrollbar slick-scrollbar--overlay">
+        <div className="flex-1 overflow-y-auto slick-scrollbar">
           {/* Item ID filter */}
           <FilterSection title="Item ID" defaultOpen={true}>
             <input
@@ -615,18 +626,18 @@ export function ItemsFilterRail({ filters, onFiltersChange, items, collapsed, on
         </div>
 
         {/* Mobile footer */}
-        <div className="p-4 border-t border-[var(--border-subtle)] bg-[var(--background-secondary)] md:hidden shrink-0 flex items-center justify-between gap-3 shadow-lg">
+        <div className="p-4 border-t border-[var(--border-subtle)] bg-[var(--background-secondary)] md:hidden shrink-0 flex items-center justify-between gap-3">
           <button
             onClick={() => {
               onFiltersChange(INITIAL_FILTERS);
             }}
-            className="flex-1 h-11 text-xs font-bold text-[var(--text-subtle)] bg-[var(--background-primary)] border border-[var(--border-subtle)] rounded-lg hover:bg-[var(--background-secondary-hover)] transition-all cursor-pointer focus:outline-none"
+            className="flex-1 h-11 text-xs font-semibold text-[var(--text-subtle)] bg-[var(--background-primary)] border border-[var(--border-subtle)] rounded-lg hover:bg-[var(--background-secondary-hover)] transition-all cursor-pointer focus:outline-none"
           >
             Reset All
           </button>
           <button
             onClick={onToggleCollapse}
-            className="flex-1 h-11 text-xs font-black text-white bg-[var(--background-brand-solid)] hover:bg-[var(--background-brand-solid-hover)] rounded-lg transition-all shadow-sm cursor-pointer focus:outline-none"
+            className="flex-1 h-11 text-xs font-semibold text-white bg-[var(--background-brand-solid)] hover:bg-[var(--background-brand-solid-hover)] rounded-lg transition-all cursor-pointer focus:outline-none"
           >
             Apply Filters
           </button>

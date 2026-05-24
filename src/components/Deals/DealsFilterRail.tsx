@@ -65,7 +65,7 @@ const CategoryTreeNode: React.FC<CategoryTreeNodeProps> = ({
             {/* Expand indicator */}
             <div className="w-3.5 h-3.5 flex items-center justify-center shrink-0 text-[var(--text-placeholder)]">
               {!isLeaf && (
-                isExpanded ? <ChevronDown size={12} /> : <ChevronRight size={12} />
+                isExpanded ? <ChevronDown size={12} strokeWidth={1.5} /> : <ChevronRight size={12} strokeWidth={1.5} />
               )}
             </div>
             
@@ -116,24 +116,24 @@ interface DealsFilterRailProps {
 function FilterSection({ title, children, defaultOpen = true }: { title: string; children: React.ReactNode; defaultOpen?: boolean }) {
   const [open, setOpen] = useState(defaultOpen);
   return (
-    <div className="content-stretch flex flex-col gap-0 items-start relative shrink-0 w-full border-b border-[var(--border-subtle)] last:border-b-0 mr-[-8px]" data-name="Section">
+    <div className="content-stretch flex flex-col gap-0 items-start relative shrink-0 w-full last:border-b-0" data-name="Section">
       <button
-        onClick={() => setOpen(!open)}
-        className="bg-[var(--background-primary)] relative shrink-0 w-full cursor-pointer hover:bg-[var(--background-secondary)] transition-colors focus:outline-none focus-visible:ring-2 focus-visible:ring-[var(--border-brand)] text-left"
-        data-name="Section Header"
-        aria-expanded={open}
+          onClick={() => setOpen(!open)}
+          className="bg-[var(--background-primary)] relative shrink-0 w-full cursor-pointer hover:bg-[var(--background-secondary)] transition-colors focus:outline-none focus-visible:ring-2 focus-visible:ring-[var(--border-brand)] text-left"
+          data-name="Section Header"
+          aria-expanded={open}
       >
         <div className="flex flex-row items-center size-full">
-          <div className="content-stretch flex gap-[8px] items-center py-[16px] pl-[16px] pr-[24px] relative w-full">
+          <div className="content-stretch flex gap-[8px] items-center py-[16px] pl-[16px] pr-[16px] relative w-full">
             <div className="content-stretch flex gap-[12px] items-center relative shrink-0" data-name="Title">
               <div className="relative shrink-0 size-[24px] flex items-center justify-center text-[var(--text-primary)]">
                 {open ? (
                   <svg width="14" height="8" viewBox="0 0 14 8" fill="none" xmlns="http://www.w3.org/2000/svg">
-                    <path d="M1 1L7 7L13 1" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round"/>
+                    <path d="M1 1L7 7L13 1" stroke="currentColor" strokeWidth="1.5" strokeLinecap="round" strokeLinejoin="round"/>
                   </svg>
                 ) : (
                   <svg width="8" height="14" viewBox="0 0 8 14" fill="none" xmlns="http://www.w3.org/2000/svg">
-                    <path d="M1 1L7 7L1 13" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round"/>
+                    <path d="M1 1L7 7L1 13" stroke="currentColor" strokeWidth="1.5" strokeLinecap="round" strokeLinejoin="round"/>
                   </svg>
                 )}
               </div>
@@ -145,7 +145,7 @@ function FilterSection({ title, children, defaultOpen = true }: { title: string;
         </div>
       </button>
       {open && children && (
-        <div className="relative shrink-0 w-full pb-[16px] pl-[16px] pr-[24px]">
+        <div className="relative shrink-0 w-full pb-[16px] pl-[16px] pr-[16px]">
           <div className="content-stretch flex flex-col gap-[6px] items-stretch relative w-full">
             {children}
           </div>
@@ -211,12 +211,12 @@ function MultiCheckboxFilter({
               {/* Checkbox Indicator */}
               <div className={`w-4 h-4 rounded-[4px] border flex items-center justify-center shrink-0 transition-all ${
                 checked 
-                  ? 'bg-[var(--background-brand-solid)] border-[var(--border-brand)] text-white shadow-sm' 
+                  ? 'bg-[var(--background-brand-solid)] border-[var(--border-brand)] text-white' 
                   : 'border-[var(--border-subtle)] bg-[var(--background-primary)]'
               }`}>
                 {checked && (
                   <svg width="10" height="8" viewBox="0 0 10 8" fill="none">
-                    <path d="M1 4L3.5 6.5L9 1" stroke="white" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round" />
+                    <path d="M1 4L3.5 6.5L9 1" stroke="white" strokeWidth="1.5" strokeLinecap="round" strokeLinejoin="round" />
                   </svg>
                 )}
               </div>
@@ -334,7 +334,7 @@ export function DealsFilterRail({ filters, onFiltersChange, deals, collapsed, on
         <div className="flex items-center justify-between px-4 py-3.5 border-b border-[var(--border-subtle)] bg-[var(--background-secondary)] md:bg-transparent shrink-0">
           <div className="flex items-center gap-2.5">
             <svg width="16" height="16" viewBox="0 0 16 16" fill="none">
-              <path d="M2 4h12M4 8h8M6 12h4" stroke="var(--text-primary)" strokeWidth="1.8" strokeLinecap="round" />
+              <path d="M2 4h12M4 8h8M6 12h4" stroke="var(--text-primary)" strokeWidth="1.5" strokeLinecap="round" />
             </svg>
             <span className="text-sm font-extrabold text-[var(--text-primary)]">Filters</span>
           </div>
@@ -344,13 +344,13 @@ export function DealsFilterRail({ filters, onFiltersChange, deals, collapsed, on
               className="p-1 hover:bg-[var(--background-secondary)] rounded-md transition-colors cursor-pointer focus:outline-none focus-visible:ring-2 focus-visible:ring-[var(--border-brand)]"
               aria-label="Collapse filters sidebar"
             >
-              <X size={15} className="text-[var(--text-subtlest)] hover:text-[var(--text-primary)]" />
+              <X size={15} strokeWidth={1.5} className="text-[var(--text-subtlest)] hover:text-[var(--text-primary)]" />
             </button>
           </div>
         </div>
 
         {/* Scrollable filter sections */}
-        <div className="flex-1 overflow-y-auto slick-scrollbar slick-scrollbar--overlay">
+        <div className="flex-1 overflow-y-auto slick-scrollbar">
           {/* Company Division */}
           <FilterSection title="Company Division" defaultOpen={true}>
             <MultiCheckboxFilter
@@ -497,7 +497,7 @@ export function DealsFilterRail({ filters, onFiltersChange, deals, collapsed, on
           <FilterSection title="Created Date" defaultOpen={false}>
             <div className="flex flex-col gap-1.5 w-full">
               <div className="relative w-full">
-                <Calendar size={11} className="absolute left-2.5 top-1/2 -translate-y-1/2 text-[var(--text-subtlest)] pointer-events-none" />
+                <Calendar size={11} strokeWidth={1.5} className="absolute left-2.5 top-1/2 -translate-y-1/2 text-[var(--text-subtlest)] pointer-events-none" />
                 <input
                   type="date"
                   value={filters.createdDateFrom}
@@ -507,7 +507,7 @@ export function DealsFilterRail({ filters, onFiltersChange, deals, collapsed, on
                 />
               </div>
               <div className="relative w-full">
-                <Calendar size={11} className="absolute left-2.5 top-1/2 -translate-y-1/2 text-[var(--text-subtlest)] pointer-events-none" />
+                <Calendar size={11} strokeWidth={1.5} className="absolute left-2.5 top-1/2 -translate-y-1/2 text-[var(--text-subtlest)] pointer-events-none" />
                 <input
                   type="date"
                   value={filters.createdDateTo}
@@ -521,7 +521,7 @@ export function DealsFilterRail({ filters, onFiltersChange, deals, collapsed, on
         </div>
 
         {/* Mobile Sticky Footer */}
-        <div className="p-4 border-t border-[var(--border-subtle)] bg-[var(--background-secondary)] md:hidden shrink-0 flex items-center justify-between gap-3 shadow-lg">
+        <div className="p-4 border-t border-[var(--border-subtle)] bg-[var(--background-secondary)] md:hidden shrink-0 flex items-center justify-between gap-3">
           <button
             onClick={() => {
               onFiltersChange(INITIAL_FILTERS);
@@ -532,7 +532,7 @@ export function DealsFilterRail({ filters, onFiltersChange, deals, collapsed, on
           </button>
           <button
             onClick={onToggleCollapse}
-            className="flex-1 h-11 text-xs font-black text-white bg-[var(--background-brand-solid)] hover:bg-[var(--background-brand-solid-hover)] rounded-lg transition-all shadow-sm cursor-pointer focus:outline-none"
+            className="flex-1 h-11 text-xs font-black text-white bg-[var(--background-brand-solid)] hover:bg-[var(--background-brand-solid-hover)] rounded-lg transition-all cursor-pointer focus:outline-none"
           >
             Apply Filters
           </button>

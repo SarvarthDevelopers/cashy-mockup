@@ -79,10 +79,10 @@ function RowActionMenu({ item, onAction }: { item: FlatItem; onAction: (action: 
         aria-label="Row context menu"
         aria-expanded={open}
       >
-        <MoreHorizontal size={16} className="text-[var(--text-subtlest)] hover:text-[var(--text-primary)]" />
+        <MoreHorizontal size={16} strokeWidth={1.5} className="text-[var(--text-subtlest)] hover:text-[var(--text-primary)]" />
       </button>
       {open && (
-        <div className="absolute right-0 top-7 z-50 bg-[var(--background-primary)] border border-[var(--border-subtle)] rounded-lg shadow-xl py-1 w-44 animate-in fade-in zoom-in-95 duration-150">
+        <div className="absolute right-0 top-7 z-50 bg-[var(--background-primary)] border border-[var(--border-subtle)] rounded-lg py-1 w-44 animate-in fade-in zoom-in-95 duration-150">
           {[
             { key: 'open', label: 'Open Deal Wizard' },
             { key: 'comment', label: 'Add Comment' },
@@ -92,7 +92,7 @@ function RowActionMenu({ item, onAction }: { item: FlatItem; onAction: (action: 
             <button
               key={action.key}
               onClick={(e) => { e.stopPropagation(); onAction(action.key, item); setOpen(false); }}
-              className="w-full text-left px-3 py-1.5 text-xs text-[var(--text-subtle)] hover:bg-[var(--background-secondary)] hover:text-[var(--text-primary)] transition-colors cursor-pointer font-extrabold focus:outline-none focus:bg-[var(--background-secondary)]"
+              className="w-full text-left px-3 py-1.5 text-xs text-[var(--text-subtle)] hover:bg-[var(--background-secondary)] hover:text-[var(--text-primary)] transition-colors cursor-pointer font-semibold focus:outline-none focus:bg-[var(--background-secondary)]"
             >
               {action.label}
             </button>
@@ -258,9 +258,9 @@ export function ItemsTable({
   const renderCell = (item: FlatItem, col: ColumnDef) => {
     switch (col.key) {
       case 'itemId':
-        return <span className="font-extrabold text-[var(--text-primary)] text-[13px]">{item.itemId}</span>;
+        return <span className="font-semibold text-[var(--text-primary)] text-[13px]">{item.itemId}</span>;
       case 'title':
-        return <span className="text-[13px] text-[var(--text-primary)] font-bold truncate max-w-[150px]">{item.title}</span>;
+        return <span className="text-[13px] text-[var(--text-primary)] font-medium truncate max-w-[150px]">{item.title}</span>;
       case 'category':
         return (
           <span className="text-[12px] text-[var(--text-subtle)] font-medium" title={item.category}>
@@ -269,7 +269,7 @@ export function ItemsTable({
         );
       case 'businessArea':
         return (
-          <span className="inline-flex items-center px-2 py-0.5 rounded text-[10px] font-extrabold bg-[var(--background-secondary)] text-[var(--text-subtle)] border border-[var(--border-subtle)] uppercase">
+          <span className="inline-flex items-center px-2 py-0.5 rounded text-[10px] font-semibold bg-[var(--background-secondary)] text-[var(--text-subtle)] border border-[var(--border-subtle)] uppercase">
             {item.businessArea}
           </span>
         );
@@ -278,7 +278,7 @@ export function ItemsTable({
       case 'marketValue':
         return <span className="text-[13px] tabular-nums text-[var(--text-primary)] font-semibold">{formatEur(item.marketValue)}</span>;
       case 'payout':
-        return <span className="text-[13px] tabular-nums text-[var(--text-success)] font-black">{formatEur(item.requestedPayout)}</span>;
+        return <span className="text-[13px] tabular-nums text-[var(--text-success)] font-semibold">{formatEur(item.requestedPayout)}</span>;
       case 'dealId':
         return (
           <button
@@ -286,7 +286,7 @@ export function ItemsTable({
               e.stopPropagation();
               onOpenWizard(item.parentDeal);
             }}
-            className="text-[13px] font-black text-[#4649e5] hover:text-[#3b3ec3] hover:underline cursor-pointer focus:outline-none"
+            className="text-[13px] font-semibold text-[#4649e5] hover:text-[#3b3ec3] hover:underline cursor-pointer focus:outline-none"
           >
             {item.dealId}
           </button>
@@ -295,7 +295,7 @@ export function ItemsTable({
         const style = STATUS_STYLES[item.dealStatus] || { bg: '#f3f4f6', text: '#374151' };
         return (
           <span
-            className="inline-flex items-center px-2 py-0.5 rounded text-[10px] font-extrabold tracking-wider uppercase shadow-sm"
+            className="inline-flex items-center px-2 py-0.5 rounded text-[10px] font-bold tracking-wider uppercase"
             style={{ backgroundColor: style.bg, color: style.text }}
           >
             {item.dealStatus.replace('_', ' ')}
@@ -305,7 +305,7 @@ export function ItemsTable({
       case 'hasImages':
         return item.hasImages ? (
           <div className="flex justify-center w-full">
-            <Image size={15} className="text-[#4649e5]" />
+            <Image size={15} strokeWidth={1.5} className="text-[#4649e5]" />
           </div>
         ) : (
           <div className="w-full h-4" />
@@ -313,7 +313,7 @@ export function ItemsTable({
       case 'hasDocuments':
         return item.hasDocuments ? (
           <div className="flex justify-center w-full">
-            <FileText size={15} className="text-[#10b981]" />
+            <FileText size={15} strokeWidth={1.5} className="text-[#10b981]" />
           </div>
         ) : (
           <div className="w-full h-4" />
@@ -325,16 +325,16 @@ export function ItemsTable({
 
   return (
     <div className="flex flex-col flex-1 min-w-0 h-full" role="grid" aria-colcount={visibleColumns.length + 2}>
-      <div className="flex-1 flex flex-col min-h-0 bg-[var(--background-primary)] border border-[var(--border-subtle)] rounded-xl shadow-sm overflow-hidden">
+      <div className="flex-1 flex flex-col min-h-0 bg-[var(--background-primary)] border border-[var(--border-subtle)] rounded-xl overflow-hidden">
         
         {/* Desktop Search bar */}
         <div className="hidden md:flex items-center justify-between px-4 py-3 shrink-0 select-none border-b border-[var(--border-subtle)] bg-[var(--background-secondary)]">
           <div className="relative flex-1 max-w-[420px]">
             <span className="absolute left-3.5 top-1/2 -translate-y-1/2 text-[var(--text-subtlest)] z-10">
               {isSearching ? (
-                <Loader2 size={16} className="animate-spin text-[var(--text-brand)]" />
+                <Loader2 size={16} strokeWidth={1.5} className="animate-spin text-[var(--text-brand)]" />
               ) : (
-                <Search size={16} />
+                <Search size={16} strokeWidth={1.5} />
               )}
             </span>
             <input
@@ -342,7 +342,7 @@ export function ItemsTable({
               value={localSearch}
               onChange={(e) => handleLocalSearchChange(e.target.value)}
               placeholder="Search items by ID, title, variant, category, deal ID..."
-              className="w-full h-10 pl-10 pr-16 bg-[var(--background-primary)] border border-[var(--border-subtle)] rounded-lg text-sm focus:outline-none focus:border-[var(--border-brand)] focus:ring-2 focus:ring-[var(--border-brand)]/20 transition-all text-[var(--text-primary)] placeholder:text-[var(--text-subtlest)] font-medium shadow-sm"
+              className="w-full h-10 pl-10 pr-16 bg-[var(--background-primary)] border border-[var(--border-subtle)] rounded-lg text-sm focus:outline-none focus:border-[var(--border-brand)] focus:ring-2 focus:ring-[var(--border-brand)]/20 transition-all text-[var(--text-primary)] placeholder:text-[var(--text-subtlest)] font-medium"
               aria-label="Search index fields"
             />
             {localSearch && (
@@ -351,14 +351,14 @@ export function ItemsTable({
                 className="absolute right-9 top-1/2 -translate-y-1/2 p-0.5 hover:bg-[var(--background-secondary)] rounded-md transition-colors cursor-pointer focus:outline-none focus-visible:ring-2 focus-visible:ring-[var(--border-brand)]"
                 aria-label="Clear search input"
               >
-                <X size={14} className="text-[var(--text-subtlest)] hover:text-[var(--text-primary)]" />
+                <X size={14} strokeWidth={1.5} className="text-[var(--text-subtlest)] hover:text-[var(--text-primary)]" />
               </button>
             )}
 
             <div className="absolute right-3.5 top-1/2 -translate-y-1/2 group z-25 flex items-center">
-              <HelpCircle size={14} className="text-[var(--text-subtlest)] cursor-help hover:text-[var(--text-subtle)]" />
-              <div className="absolute bottom-full right-0 mb-2 w-64 hidden group-hover:block bg-[#131518] text-white text-[10px] font-bold p-3 rounded-lg shadow-xl border border-[#4c5564] leading-relaxed animate-in fade-in duration-150">
-                <span className="block text-[9px] text-[var(--text-brand)] uppercase tracking-wider mb-1 font-black">Search Fields</span>
+              <HelpCircle size={14} strokeWidth={1.5} className="text-[var(--text-subtlest)] cursor-help hover:text-[var(--text-subtle)]" />
+              <div className="absolute bottom-full right-0 mb-2 w-64 hidden group-hover:block bg-[#131518] text-white text-[10px] font-semibold p-3 rounded-lg border border-[#4c5564] leading-relaxed animate-in fade-in duration-150">
+                <span className="block text-[9px] text-[var(--text-brand)] uppercase tracking-wider mb-1 font-semibold">Search Fields</span>
                 Searches across Item ID, Item Title, Variant, Category Path, Business Area, and parent Deal ID.
               </div>
             </div>
@@ -380,7 +380,7 @@ export function ItemsTable({
                   <div
                     className={`w-4 h-4 rounded border flex items-center justify-center cursor-pointer transition-colors ${
                       allPageSelected 
-                        ? 'bg-[var(--background-brand-solid)] border-[var(--border-brand)] text-white shadow-sm' 
+                        ? 'bg-[var(--background-brand-solid)] border-[var(--border-brand)] text-white' 
                         : somePageSelected 
                           ? 'bg-[var(--background-brand-primary)] border-[var(--border-brand)] text-[var(--text-brand)]' 
                           : 'border-[var(--border-subtle)] bg-[var(--background-primary)] hover:border-[var(--border-brand-hover)]'
@@ -392,7 +392,7 @@ export function ItemsTable({
                   >
                     {allPageSelected && (
                       <svg width="10" height="8" viewBox="0 0 10 8" fill="none">
-                        <path d="M1 4L3.5 6.5L9 1" stroke="white" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round" />
+                        <path d="M1 4L3.5 6.5L9 1" stroke="white" strokeWidth="1.5" strokeLinecap="round" strokeLinejoin="round" />
                       </svg>
                     )}
                     {somePageSelected && !allPageSelected && (
@@ -409,15 +409,16 @@ export function ItemsTable({
                     : isColServerSorted
                       ? 'Sorted on Server (Optimized index)'
                       : 'Sorted locally (Server sort unsupported)';
+                  const isNumeric = col.key === 'marketValue' || col.key === 'payout';
 
                   return (
                     <th
                       key={col.key}
-                      className="text-left relative group py-3.5 sticky top-0 bg-[var(--background-secondary)] z-10"
+                      className={`${isNumeric ? 'text-right' : 'text-left'} relative group py-3.5 sticky top-0 bg-[var(--background-secondary)] z-10`}
                       style={{ width: col.width + 'px', minWidth: col.minWidth + 'px' }}
                     >
                       <div
-                        className="flex items-center gap-1.5 px-2 text-[10px] font-black text-[var(--text-subtlest)] uppercase tracking-wider cursor-pointer hover:text-[var(--text-primary)] select-none focus-visible:text-[var(--text-primary)] focus:outline-none"
+                        className={`flex items-center ${isNumeric ? 'justify-end' : 'justify-start'} gap-1.5 px-2 text-[10px] font-black text-[var(--text-subtlest)] uppercase tracking-wider cursor-pointer hover:text-[var(--text-primary)] select-none focus-visible:text-[var(--text-primary)] focus:outline-none`}
                         onClick={(e) => handleSortClick(col.key, e)}
                         role="columnheader"
                         aria-sort={sortConfig ? (sortConfig.direction === 'asc' ? 'ascending' : 'descending') : 'none'}
@@ -425,11 +426,11 @@ export function ItemsTable({
                       >
                         <span className="truncate">{col.label}</span>
                         {!sortConfig && (
-                          <ArrowUpDown size={12} className="opacity-0 group-hover:opacity-60 transition-opacity shrink-0 text-[var(--text-subtlest)]" />
+                          <ArrowUpDown size={12} strokeWidth={1.5} className="opacity-0 group-hover:opacity-60 transition-opacity shrink-0 text-[var(--text-subtlest)]" />
                         )}
                         {sortConfig && (
                           <span className="flex items-center gap-1 shrink-0 animate-in fade-in duration-150">
-                            {sortConfig.direction === 'asc' ? <ArrowUp size={12} className="text-[var(--text-brand)]" /> : <ArrowDown size={12} className="text-[var(--text-brand)]" />}
+                            {sortConfig.direction === 'asc' ? <ArrowUp size={12} strokeWidth={1.5} className="text-[var(--text-brand)]" /> : <ArrowDown size={12} strokeWidth={1.5} className="text-[var(--text-brand)]" />}
                             {sortConfigs.length > 1 && (
                               <span className="text-[8px] text-[var(--text-brand)] font-extrabold bg-[var(--background-brand-primary)] px-1 rounded-sm">{sortIdx + 1}</span>
                             )}
@@ -472,11 +473,11 @@ export function ItemsTable({
                     aria-selected={isActive}
                   >
                     {/* Checkbox */}
-                    <td className="px-3 py-4 sticky left-0 z-10 transition-colors" style={{ backgroundColor: isActive ? 'var(--background-brand-primary)' : isSelected ? 'rgba(70, 73, 229, 0.05)' : 'var(--background-primary)' }}>
+                    <td className="px-3 py-5 sticky left-0 z-10 transition-colors" style={{ backgroundColor: isActive ? 'var(--background-brand-primary)' : isSelected ? 'rgba(70, 73, 229, 0.05)' : 'var(--background-primary)' }}>
                       <div
                         className={`w-4 h-4 rounded border flex items-center justify-center cursor-pointer transition-colors ${
                           isSelected 
-                            ? 'bg-[var(--background-brand-solid)] border-[var(--border-brand)] text-white shadow-sm' 
+                            ? 'bg-[var(--background-brand-solid)] border-[var(--border-brand)] text-white' 
                             : 'border-[var(--border-subtle)] bg-[var(--background-primary)] group-hover/row:border-[var(--border-brand-hover)]'
                         }`}
                         onClick={(e) => { e.stopPropagation(); toggleRow(item.itemId); }}
@@ -485,19 +486,25 @@ export function ItemsTable({
                       >
                         {isSelected && (
                           <svg width="10" height="8" viewBox="0 0 10 8" fill="none">
-                            <path d="M1 4L3.5 6.5L9 1" stroke="white" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round" />
+                            <path d="M1 4L3.5 6.5L9 1" stroke="white" strokeWidth="1.5" strokeLinecap="round" strokeLinejoin="round" />
                           </svg>
                         )}
                       </div>
                     </td>
                     {/* Data cells */}
-                    {visibleColumns.map(col => (
-                      <td key={col.key} className="px-2 py-4 truncate max-w-[200px] text-[13px]">
-                        {renderCell(item, col)}
-                      </td>
-                    ))}
+                    {visibleColumns.map(col => {
+                      const isNumeric = col.key === 'marketValue' || col.key === 'payout';
+                      return (
+                        <td 
+                          key={col.key} 
+                          className={`px-2 py-5 truncate max-w-[200px] text-[13px] ${isNumeric ? 'text-right' : 'text-left'}`}
+                        >
+                          {renderCell(item, col)}
+                        </td>
+                      );
+                    })}
                     {/* Row actions */}
-                    <td className="px-1.5 py-4" onClick={(e) => e.stopPropagation()}>
+                    <td className="px-1.5 py-5" onClick={(e) => e.stopPropagation()}>
                       <RowActionMenu item={item} onAction={handleRowAction} />
                     </td>
                   </tr>
@@ -507,7 +514,7 @@ export function ItemsTable({
                 <tr>
                   <td colSpan={visibleColumns.length + 2} className="text-center py-16 bg-[var(--background-primary)]">
                     <div className="flex flex-col items-center gap-2.5 select-none animate-in fade-in duration-200">
-                      <AlertTriangle size={24} className="text-[var(--text-subtlest)]" />
+                      <AlertTriangle size={24} strokeWidth={1.5} className="text-[var(--text-subtlest)]" />
                       <span className="text-sm font-bold text-[var(--text-subtle)]">No items match the current filters.</span>
                       <span className="text-xs text-[var(--text-subtlest)] font-semibold">Try adjusting or clearing your filters in the sidebar.</span>
                     </div>
@@ -522,11 +529,11 @@ export function ItemsTable({
       {/* Pagination Footer */}
       <div className="flex items-center justify-between px-4 py-3 shrink-0 select-none border-t border-[var(--border-subtle)] bg-[var(--background-secondary)]/30">
         <div className="flex items-center gap-2">
-          <span className="text-xs text-[var(--text-subtlest)] font-bold">
+          <span className="text-xs text-[var(--text-subtlest)] font-semibold">
             Showing {Math.min((currentPage - 1) * pageSize + 1, items.length)}–{Math.min(currentPage * pageSize, items.length)} of {items.length}
           </span>
           {selectedRows.size > 0 && (
-            <span className="text-xs text-[var(--text-brand)] font-extrabold bg-[var(--background-brand-primary)] px-2 py-0.5 rounded-full shadow-sm animate-in zoom-in-95 duration-100">
+            <span className="text-xs text-[var(--text-brand)] font-semibold bg-[var(--background-brand-primary)] px-2 py-0.5 rounded-full animate-in zoom-in-95 duration-100">
               {selectedRows.size} selected
             </span>
           )}
@@ -535,7 +542,7 @@ export function ItemsTable({
           <select
             value={pageSize}
             onChange={(e) => { onPageSizeChange(Number(e.target.value)); onPageChange(1); }}
-            className="h-8 px-2.5 text-xs bg-[var(--background-primary)] border border-[var(--border-subtle)] rounded-lg text-[var(--text-subtle)] focus:outline-none focus:border-[var(--border-brand)] cursor-pointer transition-all font-bold shadow-sm"
+            className="h-8 px-2.5 text-xs bg-[var(--background-primary)] border border-[var(--border-subtle)] rounded-lg text-[var(--text-subtle)] focus:outline-none focus:border-[var(--border-brand)] cursor-pointer transition-all font-semibold"
           >
             <option value={25}>25 / page</option>
             <option value={50}>50 / page</option>
@@ -546,7 +553,7 @@ export function ItemsTable({
             <button
               onClick={() => onPageChange(Math.max(1, currentPage - 1))}
               disabled={currentPage === 1}
-              className="px-2.5 py-1.5 text-xs font-bold text-[var(--text-subtle)] hover:bg-[var(--background-secondary)] rounded-lg transition-colors disabled:opacity-40 disabled:pointer-events-none cursor-pointer border border-[var(--border-subtle)] bg-[var(--background-primary)] shadow-sm focus:outline-none"
+              className="px-2.5 py-1.5 text-xs font-semibold text-[var(--text-subtle)] hover:bg-[var(--background-secondary)] rounded-lg transition-colors disabled:opacity-40 disabled:pointer-events-none cursor-pointer border border-[var(--border-subtle)] bg-[var(--background-primary)] focus:outline-none"
             >
               ←
             </button>
@@ -557,10 +564,10 @@ export function ItemsTable({
               <button
                 key={page}
                 onClick={() => onPageChange(page)}
-                className={`px-2.5 py-1.5 text-xs font-bold rounded-lg transition-all cursor-pointer border focus:outline-none ${
+                className={`px-2.5 py-1.5 text-xs rounded-lg transition-all cursor-pointer border focus:outline-none ${
                   page === currentPage
-                    ? 'bg-[var(--background-brand-solid)] border-[var(--border-brand)] text-white font-extrabold shadow-sm'
-                    : 'text-[var(--text-subtle)] border-[var(--border-subtle)] bg-[var(--background-primary)] hover:bg-[var(--background-secondary)]'
+                    ? 'bg-[var(--background-brand-solid)] border-[var(--border-brand)] text-white font-bold'
+                    : 'text-[var(--text-subtle)] border-[var(--border-subtle)] bg-[var(--background-primary)] hover:bg-[var(--background-secondary)] font-semibold'
                 }`}
               >
                 {page}
@@ -569,7 +576,7 @@ export function ItemsTable({
             <button
               onClick={() => onPageChange(Math.min(totalPages, currentPage + 1))}
               disabled={currentPage === totalPages || totalPages === 0}
-              className="px-2.5 py-1.5 text-xs font-bold text-[var(--text-subtle)] hover:bg-[var(--background-secondary)] rounded-lg transition-colors disabled:opacity-40 disabled:pointer-events-none cursor-pointer border border-[var(--border-subtle)] bg-[var(--background-primary)] shadow-sm focus:outline-none"
+              className="px-2.5 py-1.5 text-xs font-semibold text-[var(--text-subtle)] hover:bg-[var(--background-secondary)] rounded-lg transition-colors disabled:opacity-40 disabled:pointer-events-none cursor-pointer border border-[var(--border-subtle)] bg-[var(--background-primary)] focus:outline-none"
             >
               →
             </button>

@@ -18,15 +18,6 @@
   box-sizing: border-box;
 }
 
-.cashy-column-config__body > * {
-  margin-right: -6px;
-}
-
-.cashy-column-config__title,
-.cashy-column-config__section {
-  padding-right: 6px;
-}
-
 /* Custom scrollbar for config panel scrollable body */
 .cashy-column-config__body::-webkit-scrollbar {
   width: 6px;

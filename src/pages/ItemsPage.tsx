@@ -418,7 +418,7 @@ export function ItemsPage({ onSelectDeal }: ItemsPageProps) {
 
   if (isLoading) {
     return (
-      <div className="bg-[var(--background-secondary)] h-full w-full overflow-hidden flex flex-col font-['Inter',sans-serif] animate-pulse select-none">
+      <div className="bg-[var(--background-tertiary)] h-full w-full overflow-hidden flex flex-col font-['Inter',sans-serif] animate-pulse select-none">
         <div className="flex-1 min-h-0 flex flex-col px-3 py-3 md:px-6 md:py-4 gap-4">
           {/* Toolbar Skeleton */}
           <div className="h-14 bg-white border border-[var(--border-subtle)] rounded-xl flex items-center justify-between px-4 shrink-0">
@@ -476,7 +476,7 @@ export function ItemsPage({ onSelectDeal }: ItemsPageProps) {
   }
 
   return (
-    <div className="bg-[var(--background-secondary)] h-full w-full overflow-hidden flex flex-col font-['Inter',sans-serif] animate-in fade-in duration-500">
+    <div className="bg-[var(--background-tertiary)] h-full w-full overflow-hidden flex flex-col font-['Inter',sans-serif] animate-in fade-in duration-500">
       <div className="flex-1 min-h-0 flex flex-col px-3 py-3 md:px-6 md:py-4">
         
         {/* Toolbar */}

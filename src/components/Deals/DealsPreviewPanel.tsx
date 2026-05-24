@@ -129,7 +129,7 @@ export function DealsPreviewPanel({ deal, isLoading = false, onClose, onOpenWiza
         if (info.offset.y > 150) onClose();
       }}
       className={`
-        bg-[var(--background-primary)] border-[var(--border-subtle)] flex flex-col h-full overflow-hidden shrink-0 shadow-2xl z-45
+        bg-[var(--background-primary)] border-[var(--border-subtle)] flex flex-col h-full overflow-hidden shrink-0 z-45
         ${isMobile 
           ? 'fixed inset-x-0 bottom-0 top-12 rounded-t-2xl max-w-full w-full' 
           : 'w-96 border-l border-t-0 rounded-l-none'
@@ -150,7 +150,7 @@ export function DealsPreviewPanel({ deal, isLoading = false, onClose, onOpenWiza
             <div className="flex items-center gap-2.5">
               <span className="text-sm font-black text-[var(--text-primary)]">{deal.dealId}</span>
               <span
-                className="inline-flex items-center px-2 py-0.5 rounded text-[10px] font-black uppercase tracking-wider shadow-sm"
+                className="inline-flex items-center px-2 py-0.5 rounded text-[10px] font-black uppercase tracking-wider"
                 style={{ backgroundColor: statusStyle.bg, color: statusStyle.text }}
               >
                 {deal.status.replace('_', ' ')}
@@ -161,7 +161,7 @@ export function DealsPreviewPanel({ deal, isLoading = false, onClose, onOpenWiza
               className="p-1 hover:bg-[var(--background-primary)] border border-transparent hover:border-[var(--border-subtle)] rounded-lg transition-colors cursor-pointer focus:outline-none focus-visible:ring-2 focus-visible:ring-[var(--border-brand)]"
               aria-label="Close deal preview side sheet"
             >
-              <X size={16} className="text-[var(--text-subtlest)] hover:text-[var(--text-primary)]" />
+              <X size={16} strokeWidth={1.5} className="text-[var(--text-subtlest)] hover:text-[var(--text-primary)]" />
             </button>
           </div>
 
@@ -200,7 +200,7 @@ export function DealsPreviewPanel({ deal, isLoading = false, onClose, onOpenWiza
               </h4>
               <div className="flex flex-col gap-2">
                 {deal.items.map(item => (
-                  <div key={item.itemId} className="flex items-center justify-between p-3 bg-[var(--background-secondary)] rounded-xl border border-[var(--border-subtle)] shadow-sm">
+                  <div key={item.itemId} className="flex items-center justify-between p-3 bg-[var(--background-secondary)] rounded-xl border border-[var(--border-subtle)]">
                     <div className="flex flex-col gap-0.5">
                       <span className="text-xs font-black text-[var(--text-primary)]">{item.title}</span>
                       <span className="text-[10px] font-bold text-[var(--text-subtlest)]">{item.variant}</span>
@@ -259,8 +259,8 @@ export function DealsPreviewPanel({ deal, isLoading = false, onClose, onOpenWiza
             {(deal.hasMissingDocs || deal.isExtension) && (
               <div className="px-5 py-4 border-b border-[var(--border-subtle)] flex flex-col gap-2">
                 {deal.hasMissingDocs && (
-                  <div className="flex items-start gap-2.5 p-3 bg-[var(--background-secondary)] border border-[var(--border-subtle)] rounded-xl shadow-sm">
-                    <FileWarning size={16} className="text-[var(--text-error)] shrink-0 mt-0.5" />
+                  <div className="flex items-start gap-2.5 p-3 bg-[var(--background-secondary)] border border-[var(--border-subtle)] rounded-xl">
+                    <FileWarning size={16} strokeWidth={1.5} className="text-[var(--text-error)] shrink-0 mt-0.5" />
                     <div className="flex flex-col gap-0.5">
                       <span className="text-xs font-extrabold text-[var(--text-primary)]">Missing Owner Documents</span>
                       <p className="text-[11px] text-[var(--text-subtle)] leading-relaxed">Required customer identification, pawn sheets, or item registration paperwork are currently incomplete.</p>
@@ -268,8 +268,8 @@ export function DealsPreviewPanel({ deal, isLoading = false, onClose, onOpenWiza
                   </div>
                 )}
                 {deal.isExtension && (
-                  <div className="flex items-start gap-2.5 p-3 bg-[var(--background-brand-primary)] border border-[var(--border-brand-subtle)] rounded-xl shadow-sm">
-                    <RefreshCw size={16} className="text-[var(--text-brand)] shrink-0 mt-0.5" />
+                  <div className="flex items-start gap-2.5 p-3 bg-[var(--background-brand-primary)] border border-[var(--border-brand-subtle)] rounded-xl">
+                    <RefreshCw size={16} strokeWidth={1.5} className="text-[var(--text-brand)] shrink-0 mt-0.5" />
                     <div className="flex flex-col gap-0.5">
                       <span className="text-xs font-extrabold text-[var(--text-brand)]">Extension Contract</span>
                       <p className="text-[11px] text-[var(--text-subtle)] leading-relaxed">This deal represents a rollover term extension derived from a previous pawn contract index.</p>
@@ -334,7 +334,7 @@ export function DealsPreviewPanel({ deal, isLoading = false, onClose, onOpenWiza
                         <div className="absolute left-[9.5px] top-6 bottom-0 w-[1.5px] bg-[var(--border-subtle)]" />
                       )}
                       <div className="w-5 h-5 rounded-full bg-[var(--background-secondary)] border border-[var(--border-subtle)] flex items-center justify-center shrink-0 mt-0.5 z-10">
-                        <Icon size={10} className="text-[var(--text-subtle)]" />
+                        <Icon size={10} strokeWidth={1.5} className="text-[var(--text-subtle)]" />
                       </div>
                       <div className="flex flex-col pb-3.5">
                         <span className="text-xs font-bold text-[var(--text-primary)] leading-tight">{event.label}</span>
@@ -348,12 +348,12 @@ export function DealsPreviewPanel({ deal, isLoading = false, onClose, onOpenWiza
           </div>
 
           {/* Sticky footer CTAs section */}
-          <div className="px-5 py-4 border-t border-[var(--border-subtle)] shrink-0 bg-[var(--background-secondary)] sticky bottom-0 z-10 shadow-inner">
+          <div className="px-5 py-4 border-t border-[var(--border-subtle)] shrink-0 bg-[var(--background-secondary)] sticky bottom-0 z-10">
             <button 
               onClick={() => onOpenWizard(deal)}
-              className="w-full h-10 flex items-center justify-center gap-2 px-4 bg-[var(--background-brand-solid)] text-white font-extrabold rounded-lg text-sm hover:bg-[var(--background-brand-solid-hover)] transition-all shadow-lg shadow-[var(--lilac-100)] cursor-pointer focus:outline-none focus-visible:ring-2 focus-visible:ring-[var(--border-brand)]"
+              className="w-full h-10 flex items-center justify-center gap-2 px-4 bg-[var(--background-brand-solid)] text-white font-extrabold rounded-lg text-sm hover:bg-[var(--background-brand-solid-hover)] transition-all cursor-pointer focus:outline-none focus-visible:ring-2 focus-visible:ring-[var(--border-brand)]"
             >
-              <ExternalLink size={14} />
+              <ExternalLink size={14} strokeWidth={1.5} />
               <span>Open Deal Wizard</span>
             </button>
           </div>

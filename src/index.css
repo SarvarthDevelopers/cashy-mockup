@@ -40,8 +40,8 @@ html, body, #root {
 
 /* Ensure class-based custom scrollbars are styled the same way */
 .slick-scrollbar {
-  overflow-y: auto !important;
-  overflow-y: overlay !important;
+  overflow: auto !important;
+  overflow: overlay !important;
 }
 .slick-scrollbar::-webkit-scrollbar {
   width: 8px;
@@ -60,6 +60,39 @@ html, body, #root {
   background-color: rgba(0, 0, 0, 0.28);
 }
 
-.slick-scrollbar--overlay > * {
-  margin-right: -8px;
+/* Ensure all scrollbars overlay without taking up layout space */
+.overflow-y-auto,
+[class*="overflow-y-auto"] {
+  overflow-y: auto !important;
+  overflow-y: overlay !important;
+}
+
+.overflow-x-auto,
+[class*="overflow-x-auto"] {
+  overflow-x: auto !important;
+  overflow-x: overlay !important;
+}
+
+.overflow-auto,
+[class*="overflow-auto"] {
+  overflow: auto !important;
+  overflow: overlay !important;
+}
+
+.overflow-y-scroll,
+[class*="overflow-y-scroll"] {
+  overflow-y: scroll !important;
+  overflow-y: overlay !important;
+}
+
+.overflow-x-scroll,
+[class*="overflow-x-scroll"] {
+  overflow-x: scroll !important;
+  overflow-x: overlay !important;
+}
+
+.overflow-scroll,
+[class*="overflow-scroll"] {
+  overflow: scroll !important;
+  overflow: overlay !important;
 }

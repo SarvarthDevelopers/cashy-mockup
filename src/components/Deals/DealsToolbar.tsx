@@ -93,7 +93,7 @@ export function DealsToolbar({
           {/* Left: Title + Count Badge */}
           <div className="flex items-center gap-2">
             <h1 className="text-xl font-black text-[var(--text-primary)] leading-none tracking-tight">Deals</h1>
-            <span className="text-[10px] font-black tabular-nums bg-[var(--background-secondary)] text-[var(--text-subtle)] border border-[var(--border-subtle)] px-2.5 py-0.5 rounded-full shadow-sm">
+            <span className="text-[10px] font-black tabular-nums bg-[var(--background-secondary)] text-[var(--text-subtle)] border border-[var(--border-subtle)] px-2.5 py-0.5 rounded-full">
               {totalResults}
             </span>
           </div>
@@ -110,7 +110,7 @@ export function DealsToolbar({
               }`}
             >
               <svg width="12" height="12" viewBox="0 0 16 16" fill="none" className={activeFiltersCount > 0 ? 'text-[var(--text-brand)]' : 'text-[var(--text-subtle)]'}>
-                <path d="M2 4h12M4 8h8M6 12h4" stroke="currentColor" strokeWidth="2" strokeLinecap="round" />
+                <path d="M2 4h12M4 8h8M6 12h4" stroke="currentColor" strokeWidth="1.5" strokeLinecap="round" />
               </svg>
               <span>Filters</span>
               {activeFiltersCount > 0 && (
@@ -124,12 +124,12 @@ export function DealsToolbar({
             <button
               onClick={onExportAll}
               disabled={exportStatus === 'processing'}
-              className="h-9 px-3 bg-[var(--background-primary)] border border-[var(--border-subtle)] text-[var(--text-primary)] font-extrabold rounded-lg text-xs hover:bg-[var(--background-secondary)] transition-all shadow-sm flex items-center gap-1.5 cursor-pointer disabled:opacity-50 disabled:pointer-events-none"
+              className="h-9 px-3 bg-[var(--background-primary)] border border-[var(--border-subtle)] text-[var(--text-primary)] font-extrabold rounded-lg text-xs hover:bg-[var(--background-secondary)] transition-all flex items-center gap-1.5 cursor-pointer disabled:opacity-50 disabled:pointer-events-none"
             >
               {exportStatus === 'processing' ? (
-                <Loader2 size={12} className="animate-spin text-[var(--text-brand)]" />
+                <Loader2 size={12} strokeWidth={1.5} className="animate-spin text-[var(--text-brand)]" />
               ) : (
-                <Download size={12} className="text-[var(--text-subtle)]" />
+                <Download size={12} strokeWidth={1.5} className="text-[var(--text-subtle)]" />
               )}
               <span>Export</span>
             </button>
@@ -140,7 +140,7 @@ export function DealsToolbar({
         <div className="w-full">
           {selectedCount > 0 ? (
             /* Bulk action bar (Full width on mobile) */
-            <div className="flex items-center justify-between w-full px-3 py-1 bg-[var(--background-brand-primary)] border border-[var(--border-brand-subtle)] rounded-lg animate-in fade-in zoom-in-95 duration-200 shadow-sm h-9">
+            <div className="flex items-center justify-between w-full px-3 py-1 bg-[var(--background-brand-primary)] border border-[var(--border-brand-subtle)] rounded-lg animate-in fade-in zoom-in-95 duration-200 h-9">
               <div className="flex items-center gap-2">
                 <span className="text-xs font-black text-[var(--text-brand)]">
                   {selectedCount} selected
@@ -150,7 +150,7 @@ export function DealsToolbar({
               <div className="flex items-center gap-2">
                 {bulkActionStatus === 'processing' ? (
                   <div className="flex items-center gap-1.5">
-                    <Loader2 size={12} className="animate-spin text-[var(--text-brand)]" />
+                    <Loader2 size={12} strokeWidth={1.5} className="animate-spin text-[var(--text-brand)]" />
                     <span className="text-[10px] font-bold text-[var(--text-brand)]">Archiving...</span>
                   </div>
                 ) : bulkActionStatus === 'error' ? (
@@ -160,16 +160,16 @@ export function DealsToolbar({
                     </span>
                     {onRetryBulk && (
                       <button onClick={onRetryBulk} className="p-0.5 hover:bg-red-100 rounded text-[var(--text-error)]">
-                        <RefreshCw size={10} />
+                        <RefreshCw size={10} strokeWidth={1.5} />
                       </button>
                     )}
                   </div>
                 ) : (
                   <button
                     onClick={onBulkArchive}
-                    className="flex items-center gap-1 px-2 py-1 text-[10px] font-black text-white bg-[var(--background-error-solid)] hover:bg-[var(--background-error-solid-hover)] rounded transition-colors shadow-sm focus:outline-none"
+                    className="flex items-center gap-1 px-2 py-1 text-[10px] font-black text-white bg-[var(--background-error-solid)] hover:bg-[var(--background-error-solid-hover)] rounded transition-colors focus:outline-none"
                   >
-                    <Archive size={10} />
+                    <Archive size={10} strokeWidth={1.5} />
                     <span>Archive Selected</span>
                   </button>
                 )}
@@ -179,7 +179,7 @@ export function DealsToolbar({
                   onClick={onClearSelection}
                   className="p-1 hover:bg-[var(--background-secondary)] rounded transition-colors text-[var(--text-subtlest)] hover:text-[var(--text-brand)]"
                 >
-                  <X size={12} />
+                  <X size={12} strokeWidth={1.5} />
                 </button>
               </div>
             </div>
@@ -188,9 +188,9 @@ export function DealsToolbar({
             <div className="relative w-full">
               <span className="absolute left-3 top-1/2 -translate-y-1/2 text-[var(--text-subtlest)] z-10">
                 {isSearching ? (
-                  <Loader2 size={14} className="animate-spin text-[var(--text-brand)]" />
+                  <Loader2 size={14} strokeWidth={1.5} className="animate-spin text-[var(--text-brand)]" />
                 ) : (
-                  <Search size={14} />
+                  <Search size={14} strokeWidth={1.5} />
                 )}
               </span>
               <input
@@ -198,7 +198,7 @@ export function DealsToolbar({
                 value={localSearch}
                 onChange={(e) => handleSearchChange(e.target.value)}
                 placeholder="Search..."
-                className="w-full h-9 pl-9 pr-16 bg-[var(--background-primary)] border border-[var(--border-subtle)] rounded-lg text-xs focus:outline-none focus:border-[var(--border-brand)] focus:ring-2 focus:ring-[var(--border-brand)]/20 transition-all text-[var(--text-primary)] placeholder:text-[var(--text-subtlest)] font-semibold shadow-sm"
+                className="w-full h-9 pl-9 pr-16 bg-[var(--background-primary)] border border-[var(--border-subtle)] rounded-lg text-xs focus:outline-none focus:border-[var(--border-brand)] focus:ring-2 focus:ring-[var(--border-brand)]/20 transition-all text-[var(--text-primary)] placeholder:text-[var(--text-subtlest)] font-semibold"
                 aria-label="Search index fields"
               />
               {localSearch && (
@@ -207,13 +207,13 @@ export function DealsToolbar({
                   className="absolute right-8 top-1/2 -translate-y-1/2 p-0.5 hover:bg-[var(--background-secondary)] rounded transition-colors cursor-pointer"
                   aria-label="Clear search input"
                 >
-                  <X size={12} className="text-[var(--text-subtlest)] hover:text-[var(--text-primary)]" />
+                  <X size={12} strokeWidth={1.5} className="text-[var(--text-subtlest)] hover:text-[var(--text-primary)]" />
                 </button>
               )}
               {/* Tooltip Help icon on mobile */}
               <div className="absolute right-3 top-1/2 -translate-y-1/2 group z-25 flex items-center">
-                <HelpCircle size={12} className="text-[var(--text-subtlest)] cursor-help hover:text-[var(--text-subtle)]" />
-                <div className="absolute bottom-full right-0 mb-2 w-52 hidden group-hover:block bg-[#131518] text-white text-[9px] font-bold p-2.5 rounded-lg shadow-xl border border-[#4c5564] leading-relaxed">
+                <HelpCircle size={12} strokeWidth={1.5} className="text-[var(--text-subtlest)] cursor-help hover:text-[var(--text-subtle)]" />
+                <div className="absolute bottom-full right-0 mb-2 w-52 hidden group-hover:block bg-[#131518] text-white text-[9px] font-bold p-2.5 rounded-lg border border-[#4c5564] leading-relaxed">
                   Search across IDs, customer details, status, and timeline notes.
                 </div>
               </div>
@@ -228,7 +228,7 @@ export function DealsToolbar({
         <div className="flex flex-1 items-center gap-4 min-w-0 flex-nowrap">
           <div className="flex items-center gap-2 shrink-0">
             <h1 className="text-2xl font-black text-[var(--text-primary)] leading-none tracking-tight">Deals</h1>
-            <span className="text-xs font-black tabular-nums bg-[var(--background-secondary)] text-[var(--text-subtle)] border border-[var(--border-subtle)] px-2.5 py-0.5 rounded-full shadow-sm">
+            <span className="text-xs font-black tabular-nums bg-[var(--background-secondary)] text-[var(--text-subtle)] border border-[var(--border-subtle)] px-2.5 py-0.5 rounded-full">
               {totalResults}
             </span>
           </div>
@@ -241,7 +241,7 @@ export function DealsToolbar({
                   {activePills.map((pill, idx) => (
                     <span 
                       key={idx} 
-                      className="inline-flex items-center gap-1.5 pl-2.5 pr-1.5 py-0.5 rounded-full bg-[var(--background-secondary)] border border-[var(--border-subtle)] text-[10px] font-bold text-[var(--text-subtle)] shadow-sm animate-in fade-in duration-200"
+                      className="inline-flex items-center gap-1.5 pl-2.5 pr-1.5 py-0.5 rounded-full bg-[var(--background-secondary)] border border-[var(--border-subtle)] text-[10px] font-bold text-[var(--text-subtle)] animate-in fade-in duration-200"
                     >
                       <span className="text-[9px] text-[var(--text-subtlest)] font-extrabold uppercase shrink-0">{pill.category}:</span>
                       <span className="truncate max-w-[100px]">{pill.value}</span>
@@ -250,7 +250,7 @@ export function DealsToolbar({
                         className="hover:bg-[var(--background-secondary-hover)] rounded-full p-0.5 transition-colors cursor-pointer text-[var(--text-subtlest)] hover:text-[var(--text-primary)] focus:outline-none flex items-center justify-center shrink-0"
                         aria-label={`Remove ${pill.category} filter ${pill.value}`}
                       >
-                        <X size={10} strokeWidth={2.5} />
+                        <X size={10} strokeWidth={1.5} />
                       </button>
                     </span>
                   ))}
@@ -273,15 +273,15 @@ export function DealsToolbar({
               <div className="relative" ref={columnPickerRef}>
                 <button
                   onClick={() => setShowColumnPicker(!showColumnPicker)}
-                  className="flex items-center gap-1.5 px-2.5 py-1.5 text-xs font-extrabold text-[var(--text-subtle)] hover:text-[var(--text-primary)] hover:bg-[var(--background-secondary)] rounded-md transition-colors cursor-pointer border border-[var(--border-subtle)] shadow-sm bg-[var(--background-primary)] focus:outline-none focus-visible:ring-2 focus-visible:ring-[var(--border-brand)]"
+                  className="flex items-center gap-1.5 px-2.5 py-1.5 text-xs font-extrabold text-[var(--text-subtle)] hover:text-[var(--text-primary)] hover:bg-[var(--background-secondary)] rounded-md transition-colors cursor-pointer border border-[var(--border-subtle)] bg-[var(--background-primary)] focus:outline-none focus-visible:ring-2 focus-visible:ring-[var(--border-brand)]"
                   aria-label="Manage column visibility"
                   aria-expanded={showColumnPicker}
                 >
-                  {showColumnPicker ? <EyeOff size={14} /> : <Eye size={14} />}
+                  {showColumnPicker ? <EyeOff size={14} strokeWidth={1.5} /> : <Eye size={14} strokeWidth={1.5} />}
                   <span>Columns</span>
                 </button>
                 {showColumnPicker && (
-                  <div className="absolute right-0 top-8.5 z-50 bg-[var(--background-primary)] border border-[var(--border-subtle)] rounded-lg shadow-xl p-2.5 w-52 max-h-72 overflow-y-auto slick-scrollbar animate-in fade-in zoom-in-95 duration-150">
+                  <div className="absolute right-0 top-8.5 z-50 bg-[var(--background-primary)] border border-[var(--border-subtle)] rounded-lg p-2.5 w-52 max-h-72 overflow-y-auto slick-scrollbar animate-in fade-in zoom-in-95 duration-150">
                     <p className="text-[10px] font-black text-[var(--text-subtlest)] uppercase tracking-wider px-1.5 pb-1.5 border-b border-[var(--border-subtle)] mb-1">Show/Hide Columns</p>
                     {columns.map(col => (
                       <label key={col.key} className="flex items-center gap-2.5 px-1.5 py-1.5 rounded-md hover:bg-[var(--background-secondary)] cursor-pointer transition-colors text-left focus-within:ring-2 focus-within:ring-[var(--border-brand)]/50">
@@ -298,7 +298,7 @@ export function DealsToolbar({
                         >
                           {col.visible && (
                             <svg width="10" height="8" viewBox="0 0 10 8" fill="none">
-                              <path d="M1 4L3.5 6.5L9 1" stroke="white" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round" />
+                              <path d="M1 4L3.5 6.5L9 1" stroke="white" strokeWidth="1.5" strokeLinecap="round" strokeLinejoin="round" />
                             </svg>
                           )}
                         </div>
@@ -313,7 +313,7 @@ export function DealsToolbar({
 
           {/* Inline Bulk action bar — visible when rows selected */}
           {selectedCount > 0 && (
-            <div className="flex items-center gap-2.5 px-3 py-1 bg-[var(--background-brand-primary)] border border-[var(--border-brand-subtle)] rounded-lg animate-in fade-in zoom-in-95 duration-200 shadow-sm shrink-0 h-10">
+            <div className="flex items-center gap-2.5 px-3 py-1 bg-[var(--background-brand-primary)] border border-[var(--border-brand-subtle)] rounded-lg animate-in fade-in zoom-in-95 duration-200 shrink-0 h-10">
               <span className="text-xs font-black text-[var(--text-brand)] shrink-0">
                 {selectedCount} selected
               </span>
@@ -321,7 +321,7 @@ export function DealsToolbar({
               
               {bulkActionStatus === 'processing' ? (
                 <div className="flex items-center gap-2 shrink-0">
-                  <Loader2 size={13} className="animate-spin text-[var(--text-brand)]" />
+                  <Loader2 size={13} strokeWidth={1.5} className="animate-spin text-[var(--text-brand)]" />
                   <span className="text-[11px] font-bold text-[var(--text-brand)]">Archiving...</span>
                 </div>
               ) : bulkActionStatus === 'error' ? (
@@ -334,16 +334,16 @@ export function DealsToolbar({
                       onClick={onRetryBulk}
                       className="p-1 hover:bg-red-100 rounded text-[var(--text-error)] cursor-pointer"
                     >
-                      <RefreshCw size={11} />
+                      <RefreshCw size={11} strokeWidth={1.5} />
                     </button>
                   )}
                 </div>
               ) : (
                 <button
                   onClick={onBulkArchive}
-                  className="flex items-center gap-1.5 px-2.5 py-1 text-xs font-black text-white bg-[var(--background-error-solid)] hover:bg-[var(--background-error-solid-hover)] rounded-md transition-colors shadow-sm cursor-pointer focus:outline-none"
+                  className="flex items-center gap-1.5 px-2.5 py-1 text-xs font-black text-white bg-[var(--background-error-solid)] hover:bg-[var(--background-error-solid-hover)] rounded-md transition-colors cursor-pointer focus:outline-none"
                 >
-                  <Archive size={12} />
+                  <Archive size={12} strokeWidth={1.5} />
                   <span>Archive Selected Deals</span>
                 </button>
               )}
@@ -354,7 +354,7 @@ export function DealsToolbar({
                 className="p-1 hover:bg-[var(--background-secondary)] rounded-md transition-colors cursor-pointer text-[var(--text-subtlest)] hover:text-[var(--text-brand)]"
                 title="Clear selection"
               >
-                <X size={12} />
+                <X size={12} strokeWidth={1.5} />
               </button>
             </div>
           )}
@@ -367,17 +367,17 @@ export function DealsToolbar({
             <button
               onClick={onExportAll}
               disabled={exportStatus === 'processing'}
-              className="h-10 px-4 bg-[var(--background-primary)] border border-[var(--border-subtle)] text-[var(--text-primary)] font-extrabold rounded-lg text-sm hover:bg-[var(--background-secondary)] hover:border-[var(--border-brand-hover)] transition-all shadow-sm flex items-center gap-1.5 cursor-pointer disabled:opacity-50 disabled:pointer-events-none"
+              className="h-10 px-4 bg-[var(--background-primary)] border border-[var(--border-subtle)] text-[var(--text-primary)] font-extrabold rounded-lg text-sm hover:bg-[var(--background-secondary)] hover:border-[var(--border-brand-hover)] transition-all flex items-center gap-1.5 cursor-pointer disabled:opacity-50 disabled:pointer-events-none"
             >
               {exportStatus === 'processing' ? (
-                <Loader2 size={14} className="animate-spin text-[var(--text-brand)]" />
+                <Loader2 size={14} strokeWidth={1.5} className="animate-spin text-[var(--text-brand)]" />
               ) : (
-                <Download size={14} className="text-[var(--text-subtle)]" />
+                <Download size={14} strokeWidth={1.5} className="text-[var(--text-subtle)]" />
               )}
               <span>Export</span>
             </button>
             {/* Help Tooltip */}
-            <div className="absolute bottom-full left-1/2 -translate-x-1/2 mb-2 w-52 hidden group-hover:block bg-[#131518] text-white text-[10px] font-bold p-3 rounded-lg shadow-xl border border-[#4c5564] leading-relaxed z-50 animate-in fade-in duration-150">
+            <div className="absolute bottom-full left-1/2 -translate-x-1/2 mb-2 w-52 hidden group-hover:block bg-[#131518] text-white text-[10px] font-bold p-3 rounded-lg border border-[#4c5564] leading-relaxed z-50 animate-in fade-in duration-150">
               <span className="block text-[9px] text-[var(--text-brand)] uppercase tracking-wider mb-1 font-black">Export Output</span>
               {selectedCount > 0
                 ? `Downloads your selected ${selectedCount} deal${selectedCount > 1 ? 's' : ''} in highly structured CSV spreadsheet format.`
@@ -390,7 +390,7 @@ export function DealsToolbar({
 
       {/* Export status toast notification overlay */}
       {exportStatus !== 'idle' && (
-        <div className={`flex items-center justify-between gap-3 px-4 py-3 border rounded-xl shadow-md animate-in slide-in-from-top-2 duration-200 ${
+        <div className={`flex items-center justify-between gap-3 px-4 py-3 border rounded-xl animate-in slide-in-from-top-2 duration-200 ${
           exportStatus === 'processing' 
             ? 'bg-[var(--background-brand-primary)] border-[var(--border-brand-subtle)] text-[var(--text-brand)]'
             : exportStatus === 'success'
@@ -399,7 +399,7 @@ export function DealsToolbar({
         }`}>
           <div className="flex items-center gap-2.5">
             {exportStatus === 'processing' ? (
-              <Loader2 size={16} className="animate-spin shrink-0" />
+              <Loader2 size={16} strokeWidth={1.5} className="animate-spin shrink-0" />
             ) : (
               <span className="text-lg font-black leading-none">✓</span>
             )}
@@ -418,7 +418,7 @@ export function DealsToolbar({
 
       {/* Unsorted search warning banner banner */}
       {localSearch && (
-        <div className="flex items-center gap-2.5 px-4 py-2.5 bg-[var(--background-secondary)] border border-[var(--border-subtle)] rounded-lg text-xs font-bold text-[var(--text-subtle)] animate-in slide-in-from-top-1 duration-150 shadow-sm shrink-0">
+        <div className="flex items-center gap-2.5 px-4 py-2.5 bg-[var(--background-secondary)] border border-[var(--border-subtle)] rounded-lg text-xs font-bold text-[var(--text-subtle)] animate-in slide-in-from-top-1 duration-150 shrink-0">
           <span className="w-5 h-5 rounded-full bg-[var(--background-brand-solid)]/10 border border-[var(--border-brand-subtle)] text-[var(--text-brand)] font-extrabold flex items-center justify-center text-[10px]">ℹ</span>
           <span>{DEALS_MICROCOPY.search.unsortedWarning}</span>
         </div>

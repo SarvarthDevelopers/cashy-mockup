@@ -1,0 +1,345 @@
+/* ═════════════════════════════════════════════════════════
+   FilterDropdown — Styled after the Cashy Design System
+   Dropdown + Checkbox components (cashy-design-system)
+   ═════════════════════════════════════════════════════════ */
+
+/* ── Root wrapper ── */
+.root {
+    position: relative;
+    display: inline-flex;
+    flex-shrink: 0;
+    font-family: var(--body-font-family, var(--family-sans, 'Inter', sans-serif));
+}
+
+/* ══════════════════════════════════════════════════════════
+   TRIGGER — mirrors Dropdown.module.css .trigger
+   ══════════════════════════════════════════════════════════ */
+.trigger {
+    position: relative;
+    display: flex;
+    align-items: center;
+    justify-content: space-between;
+    gap: var(--space-200, 8px);
+    background-color: var(--background-primary);
+    border: 1px solid var(--border-primary);
+    border-radius: var(--radius-200, 8px);
+    padding: var(--space-200, 8px) var(--space-300, 12px);
+    min-height: 40px;
+    width: 100%;
+    cursor: pointer;
+    box-sizing: border-box;
+    transition: border-color 0.2s ease, box-shadow 0.2s ease, background-color 0.2s ease;
+    outline: none;
+    text-align: left;
+}
+
+/* Hover (not active, not open) */
+.trigger:hover:not(.triggerActive):not(.triggerOpen) {
+    border-color: var(--border-primary-hover);
+}
+
+/* Open state — matches .trigger.isOpen */
+.triggerOpen {
+    border-color: var(--border-focused);
+    box-shadow: 0 0 0 2px var(--background-primary), 0 0 0 4px var(--purple-200, #e2d6fe);
+}
+
+[data-theme="dark"] .triggerOpen {
+    box-shadow: 0 0 0 2px var(--background-primary), 0 0 0 4px var(--purple-800, #4e21b6);
+}
+
+/* Active (has selections) — a subtle brand tint on the trigger */
+.triggerActive {
+    border-color: var(--border-brand);
+    background-color: var(--background-brand-subtlest, var(--brand-50));
+}
+
+.triggerActive:hover:not(.triggerOpen) {
+    border-color: var(--border-brand-hover);
+}
+
+/* Active + Open — keep the open ring, use brand border */
+.triggerActive.triggerOpen {
+    border-color: var(--border-brand);
+    box-shadow: 0 0 0 2px var(--background-primary), 0 0 0 4px var(--purple-200, #e2d6fe);
+}
+
+[data-theme="dark"] .triggerActive.triggerOpen {
+    box-shadow: 0 0 0 2px var(--background-primary), 0 0 0 4px var(--purple-800, #4e21b6);
+}
+
+/* ── Content area (label + badge) ── */
+.triggerContent {
+    display: flex;
+    align-items: center;
+    gap: var(--space-200, 8px);
+    flex: 1;
+    min-width: 0;
+    overflow: hidden;
+}
+
+/* ── Placeholder / value label ── */
+.triggerLabel {
+    font-size: var(--scale-04, 16px);         /* matches .value in design system */
+    font-weight: var(--body-font-weight-regular, 400);
+    color: var(--text-subtlest);              /* placeholder colour */
+    white-space: nowrap;
+    overflow: hidden;
+    text-overflow: ellipsis;
+    line-height: 1.4;
+    flex: 1;
+    min-width: 0;
+}
+
+/* When a selection is active, label goes primary-coloured */
+.triggerLabelActive {
+    color: var(--text-brand);
+    font-weight: var(--weight-medium, 500);
+}
+
+/* ── Count badge ── */
+.badge {
+    display: inline-flex;
+    align-items: center;
+    justify-content: center;
+    min-width: 20px;
+    height: 20px;
+    padding: 0 5px;
+    background-color: var(--background-brand-solid);
+    color: var(--element-white, #ffffff);
+    font-size: var(--scale-01, 11px);
+    font-weight: var(--weight-bold, 700);
+    border-radius: 9999px;
+    letter-spacing: 0.02em;
+    flex-shrink: 0;
+    line-height: 1;
+}
+
+/* ── Chevron icon ── */
+.chevron {
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    width: 20px;
+    height: 20px;
+    flex-shrink: 0;
+    color: var(--text-subtle);               /* matches .icon colour */
+    transition: transform 0.2s ease, color 0.2s ease;
+}
+
+.chevronOpen {
+    transform: rotate(180deg);
+}
+
+.triggerActive .chevron {
+    color: var(--text-brand);
+}
+
+/* ══════════════════════════════════════════════════════════
+   DROPDOWN PANEL — mirrors .dropdownList
+   ══════════════════════════════════════════════════════════ */
+.panel {
+    position: absolute;
+    top: calc(100% + var(--space-100, 4px));
+    left: 0;
+    min-width: 100%;
+    width: max-content;
+    max-width: 280px;
+    background-color: var(--background-primary);
+    border-radius: var(--radius-200, 8px);
+    padding: var(--space-150, 6px);
+    box-shadow:
+        0px 4px 8px 0px rgba(16, 24, 40, 0.10),
+        0px 2px 4px 0px rgba(16, 24, 40, 0.06);
+    z-index: 200;
+    box-sizing: border-box;
+    list-style: none;
+    margin: 0;
+    /* Panel open animation */
+    animation: panelIn 0.15s cubic-bezier(0.16, 1, 0.3, 1) both;
+}
+
+[data-theme="dark"] .panel {
+    box-shadow:
+        0px 4px 8px 0px rgba(0, 0, 0, 0.40),
+        0px 2px 4px 0px rgba(0, 0, 0, 0.20);
+    border: 1px solid var(--border-primary);
+}
+
+@keyframes panelIn {
+    from {
+        opacity: 0;
+        transform: translateY(-4px) scale(0.99);
+    }
+    to {
+        opacity: 1;
+        transform: translateY(0) scale(1);
+    }
+}
+
+/* ── Panel header (title + clear link) ── */
+.panelHeader {
+    display: flex;
+    align-items: center;
+    justify-content: space-between;
+    padding: var(--space-150, 6px) var(--space-300, 12px) var(--space-150, 6px);
+    margin-bottom: 2px;
+    border-bottom: 1px solid var(--border-subtle);
+}
+
+.panelTitle {
+    font-size: var(--body-size-medium, var(--scale-02, 12px));
+    font-weight: var(--weight-medium, 500);
+    color: var(--text-subtlest);
+    text-transform: uppercase;
+    letter-spacing: 0.07em;
+}
+
+.clearBtn {
+    font-size: var(--body-size-medium, var(--scale-02, 12px));
+    font-weight: var(--weight-medium, 500);
+    color: var(--text-brand);
+    background: none;
+    border: none;
+    padding: 2px var(--space-100, 4px);
+    cursor: pointer;
+    border-radius: var(--radius-100, 4px);
+    font-family: inherit;
+    line-height: 1.4;
+    transition: background-color 0.15s ease;
+}
+
+.clearBtn:hover {
+    background-color: var(--background-brand-subtlest, var(--brand-50));
+}
+
+/* ── Option list ── */
+.optionList {
+    list-style: none;
+    margin: var(--space-100, 4px) 0 0;
+    padding: 0;
+    max-height: 240px;
+    overflow-y: auto;
+    scrollbar-width: thin;
+    scrollbar-color: rgba(0, 0, 0, 0.12) transparent;
+    display: flex;
+    flex-direction: column;
+}
+
+.optionList::-webkit-scrollbar {
+    width: 4px;
+}
+.optionList::-webkit-scrollbar-thumb {
+    background-color: rgba(0, 0, 0, 0.12);
+    border-radius: 9999px;
+}
+
+/* ── Individual option row — mirrors .item ── */
+.option {
+    display: flex;
+    align-items: center;
+    gap: var(--space-300, 12px);
+    min-height: 40px;                         /* slightly compact vs 46px for filter context */
+    padding: var(--space-200, 8px) var(--space-300, 12px);
+    background-color: var(--background-primary);
+    border-radius: var(--radius-100, 4px);
+    cursor: pointer;
+    font-family: inherit;
+    font-size: var(--scale-04, 16px);         /* matches .item font-size exactly */
+    font-weight: var(--body-font-weight-regular, 400);
+    color: var(--text-primary);
+    line-height: 1.4;
+    transition: background-color 0.2s ease;
+    box-sizing: border-box;
+    width: 100%;
+    margin: 0;
+    border: none;
+    text-align: left;
+    flex-shrink: 0;
+}
+
+.option:hover {
+    background-color: var(--background-secondary-hover);
+}
+
+.option:focus-visible {
+    outline: 2px solid var(--border-focused);
+    outline-offset: -2px;
+}
+
+/* Checked option row */
+.optionChecked {
+    background-color: var(--background-brand-subtlest, var(--brand-50));
+}
+
+.optionChecked:hover {
+    background-color: var(--background-brand-primary, var(--brand-100));
+}
+
+/* ══════════════════════════════════════════════════════════
+   CHECKBOX — mirrors Checkbox.css
+   ══════════════════════════════════════════════════════════ */
+.checkbox {
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    width: 16px;                              /* small size from design system */
+    height: 16px;
+    border: 1px solid var(--border-subtle);
+    border-radius: var(--radius-100, 4px);
+    background-color: var(--background-primary);
+    color: var(--element-white, #ffffff);
+    flex-shrink: 0;
+    transition: all 0.2s ease-in-out;
+    position: relative;
+}
+
+/* Hover on unchecked */
+.option:hover .checkbox:not(.checkboxChecked) {
+    border-color: var(--border-brand-hover);
+    background-color: var(--background-secondary-hover);
+}
+
+/* Checked state — matches .checkbox__input:checked + .checkbox__control */
+.checkboxChecked {
+    background-color: var(--background-brand-solid);
+    border-color: var(--background-brand-solid);
+}
+
+.option:hover .checkboxChecked {
+    background-color: var(--background-brand-solid-hover);
+    border-color: var(--background-brand-solid-hover);
+}
+
+/* Checkmark icon inside */
+.checkboxIcon {
+    width: 100%;
+    height: 100%;
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    position: absolute;
+    inset: 0;
+    transition: opacity 0.2s cubic-bezier(0.4, 0, 0.2, 1), transform 0.2s cubic-bezier(0.4, 0, 0.2, 1);
+    opacity: 0;
+    transform: scale(0.5);
+}
+
+.checkboxChecked .checkboxIcon {
+    opacity: 1;
+    transform: scale(1);
+}
+
+/* ── Option label ── */
+.optionLabel {
+    flex: 1;
+    min-width: 0;
+    overflow: hidden;
+    text-overflow: ellipsis;
+    white-space: nowrap;
+}
+
+.optionChecked .optionLabel {
+    color: var(--text-brand);
+    font-weight: var(--weight-medium, 500);
+}

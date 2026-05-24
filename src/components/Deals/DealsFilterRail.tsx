@@ -350,7 +350,7 @@ export function DealsFilterRail({ filters, onFiltersChange, deals, collapsed, on
         </div>
 
         {/* Scrollable filter sections */}
-        <div className="flex-1 overflow-y-auto slick-scrollbar">
+        <div className="flex-1 overflow-y-auto overflow-x-hidden slick-scrollbar">
           {/* Company Division */}
           <FilterSection title="Company Division" defaultOpen={true}>
             <MultiCheckboxFilter

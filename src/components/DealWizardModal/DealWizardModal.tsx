@@ -189,6 +189,16 @@ export const DealWizardModal: React.FC<DealWizardModalProps> = ({
             const firstCategory = items[0]?.category || 'car';
             const displayCategory = CATEGORY_DISPLAY_NAMES[firstCategory] || firstCategory;
 
+            // Convert YYYY-MM-DD → "Mon DD" format that the priority system parses
+            let formattedDueDate: string | undefined;
+            if (metadata.dueDate) {
+                const d = new Date(metadata.dueDate + 'T00:00:00');
+                if (!isNaN(d.getTime())) {
+                    const monthNames = ['Jan', 'Feb', 'Mar', 'Apr', 'May', 'Jun', 'Jul', 'Aug', 'Sep', 'Oct', 'Nov', 'Dec'];
+                    formattedDueDate = `${monthNames[d.getMonth()]} ${d.getDate()}`;
+                }
+            }
+
             const newDeal: DealData = {
                 id: Math.floor(100000 + Math.random() * 900000).toString(),
                 countryCode: 'AT',
@@ -199,6 +209,7 @@ export const DealWizardModal: React.FC<DealWizardModalProps> = ({
                 items: items.map(i => i.title || 'Unknown Item'),
                 dealType: dealMode,
                 businessArea: resolvedArea,
+                dueDate: formattedDueDate,
                 wizardData: {
                     customerName: `${customerData.firstName} ${customerData.lastName}`,
                     email: customerData.email,
@@ -835,22 +846,24 @@ export const DealWizardModal: React.FC<DealWizardModalProps> = ({
                             onScroll={handleScroll}
                         >
                             {isCreating ? (
-                                <div className="h-full flex flex-col items-center justify-center">
-                                    <div className="w-full max-w-[500px] px-6 space-y-8 animate-in fade-in zoom-in duration-500">
-                                        <div className="flex flex-col items-center gap-6">
+                                <div className="h-full flex flex-col items-center justify-center px-4 py-10">
+                                    <div className="w-full max-w-sm space-y-10 animate-in fade-in zoom-in duration-500">
+                                        {/* Spinner */}
+                                        <div className="flex flex-col items-center gap-5">
                                             <div className="relative">
-                                                <div className="w-16 h-16 border-4 border-blue-50 rounded-full border-t-[#4649E5] animate-spin" />
+                                                <div className="w-14 h-14 border-4 border-[var(--background-brand-subtlest)] rounded-full border-t-[var(--border-brand)] animate-spin" />
                                                 <div className="absolute inset-0 flex items-center justify-center">
-                                                    <Package className="text-[#4649E5]" size={24} />
+                                                    <Package className="text-[var(--text-brand)]" size={22} />
                                                 </div>
                                             </div>
                                             <div className="text-center">
-                                                <h3 className="text-xl font-bold text-[#17142B] mb-2">Creating Deal...</h3>
-                                                <p className="text-gray-400 text-sm">Please wait while we initialize the records</p>
+                                                <h3 className="text-xl font-bold text-[var(--text-primary)] mb-1">Creating Deal...</h3>
+                                                <p className="text-sm text-[var(--text-subtlest)]">Please wait while we initialise the records</p>
                                             </div>
                                         </div>
-                                        
-                                        <div className="space-y-4">
+
+                                        {/* Steps */}
+                                        <div className="space-y-3">
                                             <SimulationStep active={creationStep >= 1} done={creationStep > 1} text="Saving deal data to database..." />
                                             <SimulationStep active={creationStep >= 2} done={creationStep > 2} text="Generating booking number..." />
                                             <SimulationStep active={creationStep >= 3} done={creationStep > 3} text="Initializing workflow steps..." />
@@ -1458,24 +1471,52 @@ export const DealWizardModal: React.FC<DealWizardModalProps> = ({
 };
 
 
-const SimulationStep = ({ active, done, text }: any) => (
-    <div className={`flex items-center gap-4 transition-all duration-300 ${active ? 'opacity-100' : 'opacity-30'}`}>
-        <div 
-            className={`w-5 h-5 rounded-full border-2 flex items-center justify-center`}
-            style={{ 
-                backgroundColor: done ? 'var(--green-500)' : 'transparent',
-                borderColor: done ? 'var(--green-500)' : active ? 'var(--blue-500)' : 'var(--gray-300)'
+const SimulationStep = ({ active, done, text }: { active: boolean; done: boolean; text: string }) => (
+    <div
+        className="flex items-center gap-3 transition-all duration-300"
+        style={{ opacity: active ? 1 : 0.3 }}
+    >
+        {/* Status indicator */}
+        <div
+            className="w-5 h-5 rounded-full flex items-center justify-center shrink-0 transition-all duration-300"
+            style={{
+                backgroundColor: done
+                    ? 'var(--background-success-solid, #16a34a)'
+                    : active
+                    ? 'transparent'
+                    : 'transparent',
+                border: done
+                    ? '2px solid var(--background-success-solid, #16a34a)'
+                    : active
+                    ? '2px solid var(--border-brand, #4649e5)'
+                    : '2px solid var(--border-subtle, #d1d5db)',
             }}
         >
-            {done && <div className="w-2 h-1 border-b-2 border-r-2 border-white rotate-45 mb-0.5" />}
+            {done ? (
+                /* Simple SVG checkmark — reliable across all browsers */
+                <svg width="9" height="7" viewBox="0 0 9 7" fill="none" aria-hidden="true">
+                    <path d="M1 3.5L3.5 6L8 1" stroke="white" strokeWidth="1.6" strokeLinecap="round" strokeLinejoin="round" />
+                </svg>
+            ) : active ? (
+                /* Active pulse dot */
+                <div className="w-2 h-2 rounded-full animate-pulse" style={{ backgroundColor: 'var(--border-brand, #4649e5)' }} />
+            ) : null}
         </div>
-        <span 
-            className={`text-sm font-medium`}
-            style={{ 
-                color: done ? 'var(--gray-400)' : active ? 'var(--brand-500)' : 'var(--gray-400)',
-                textDecoration: done ? 'line-through' : 'none'
+
+        {/* Label */}
+        <span
+            className="text-sm font-medium transition-all duration-300"
+            style={{
+                color: done
+                    ? 'var(--text-subtlest, #9ca3af)'
+                    : active
+                    ? 'var(--text-primary, #131518)'
+                    : 'var(--text-subtlest, #9ca3af)',
+                textDecoration: done ? 'line-through' : 'none',
             }}
-        >{text}</span>
+        >
+            {text}
+        </span>
     </div>
 );
 

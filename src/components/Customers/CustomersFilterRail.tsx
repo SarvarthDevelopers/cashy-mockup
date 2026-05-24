@@ -184,7 +184,7 @@ export function CustomersFilterRail({ filters, onFiltersChange, customers, colla
         </div>
 
         {/* Scrollable sections */}
-        <div className="flex-1 overflow-y-auto slick-scrollbar">
+        <div className="flex-1 overflow-y-auto overflow-x-hidden slick-scrollbar">
           {/* Customer ID filter */}
           <FilterSection title="Customer ID" defaultOpen={true}>
             <input

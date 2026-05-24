@@ -24,6 +24,10 @@ export interface ColumnHeaderProps extends React.HTMLAttributes<HTMLDivElement> 
      */
     isConfigActive?: boolean;
     /**
+     * If true, the add task form is currently open
+     */
+    isAddActive?: boolean;
+    /**
      * Callback when the config button is clicked
      */
     onConfigClick?: () => void;
@@ -34,7 +38,7 @@ export interface ColumnHeaderProps extends React.HTMLAttributes<HTMLDivElement> 
 }
 
 export const ColumnHeader = forwardRef<HTMLDivElement, ColumnHeaderProps>(
-    ({ title, count = 0, variant = 'admin', isConfigActive = false, onConfigClick, onAddClick, className, ...props }, ref) => {
+    ({ title, count = 0, variant = 'admin', isConfigActive = false, isAddActive = false, onConfigClick, onAddClick, className, ...props }, ref) => {
         return (
             <div ref={ref} className={`${styles.container} ${className || ''}`} {...props}>
                 <div className={styles.header}>
@@ -68,14 +72,20 @@ export const ColumnHeader = forwardRef<HTMLDivElement, ColumnHeaderProps>(
                             </Tooltip>
                         )}
                         
-                        <Tooltip content="Add Task">
+                        <Tooltip content={isAddActive ? "Cancel task" : "Add Task"}>
                             <button
                                 type="button"
-                                className={styles.iconButton}
+                                className={isAddActive ? styles.closeButton : styles.iconButton}
                                 onClick={onAddClick}
-                                aria-label="Add item"
+                                aria-label={isAddActive ? "Cancel task" : "Add item"}
                             >
-                                <PlusIcon width="16" height="16" />
+                                {isAddActive ? (
+                                    <svg width="14" height="14" viewBox="0 0 14 14" fill="none" xmlns="http://www.w3.org/2000/svg">
+                                        <path d="M10.5 3.5L3.5 10.5M3.5 3.5l7 7" stroke="currentColor" strokeWidth="1.5" strokeLinecap="round" strokeLinejoin="round" />
+                                    </svg>
+                                ) : (
+                                    <PlusIcon width="16" height="16" />
+                                )}
                             </button>
                         </Tooltip>
                     </div>

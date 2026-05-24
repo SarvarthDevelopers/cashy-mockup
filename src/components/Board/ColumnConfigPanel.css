@@ -28,8 +28,14 @@
 }
 
 .cashy-column-config__body::-webkit-scrollbar-thumb {
-  background-color: rgba(0, 0, 0, 0.1);
-  border-radius: var(--radius-200, 8px);
+  background-color: rgba(0, 0, 0, 0.15);
+  border-radius: 9999px;
+  border: 2px solid transparent;
+  background-clip: content-box;
+}
+
+.cashy-column-config__body::-webkit-scrollbar-thumb:hover {
+  background-color: rgba(0, 0, 0, 0.28);
 }
 
 .cashy-column-config__title {

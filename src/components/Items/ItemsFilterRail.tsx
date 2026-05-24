@@ -503,7 +503,7 @@ export function ItemsFilterRail({ filters, onFiltersChange, items, collapsed, on
         </div>
 
         {/* Scrollable sections */}
-        <div className="flex-1 overflow-y-auto slick-scrollbar">
+        <div className="flex-1 overflow-y-auto overflow-x-hidden slick-scrollbar">
           {/* Item ID filter */}
           <FilterSection title="Item ID" defaultOpen={true}>
             <input

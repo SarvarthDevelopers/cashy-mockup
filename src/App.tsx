@@ -95,11 +95,25 @@ function App() {
   
   const [dealsByColumn, setDealsByColumn] = useState<Record<string, DealData[]>>(() => {
     const sorted = JSON.parse(JSON.stringify(INITIAL_DEALS)) as Record<string, DealData[]>;
+
+    // Dynamically seed due dates so priorities reflect real time
+    const todayDate = new Date();
+    const tomorrowDate = new Date(todayDate);
+    tomorrowDate.setDate(tomorrowDate.getDate() + 1);
+    const monthNames = ['Jan', 'Feb', 'Mar', 'Apr', 'May', 'Jun', 'Jul', 'Aug', 'Sep', 'Oct', 'Nov', 'Dec'];
+    const fmtDate = (d: Date) => `${monthNames[d.getMonth()]} ${d.getDate()}`;
+    const todayStr = fmtDate(todayDate);
+    const tomorrowStr = fmtDate(tomorrowDate);
+
     for (const colId in sorted) {
       sorted[colId] = sorted[colId].map(deal => {
         const area = getBusinessAreaForDeal(deal.items);
+        let dueDate = deal.dueDate;
+        if (deal.id === '000001') dueDate = todayStr;
+        if (deal.id === '000002') dueDate = tomorrowStr;
         return {
           ...deal,
+          dueDate,
           businessArea: area,
           wizardData: {
             ...deal.wizardData,

@@ -1,4 +1,4 @@
-import React, { useState, useEffect } from 'react';
+import React, { useState, useEffect, useMemo } from 'react';
 import { KanBanBoard } from '../components/Board/KanBanBoard';
 import { KanBanDndProvider } from '../components/Board/KanBanDndProvider';
 import { KanBanColumn } from '../components/Board/KanBanColumn';
@@ -11,6 +11,7 @@ import { useToast } from '../components/Toast/useToast';
 import type { ColumnConfig } from '../components/Board/types';
 import { ColumnConfigPanel } from '../components/Board/ColumnConfigPanel';
 import { ConfirmationModal } from '../components/Modal/ConfirmationModal';
+import { FilterDropdown } from '../components/KanbanFilterBar/FilterDropdown';
 // @ts-expect-error canvas-confetti does not have TypeScript declaration files installed in this project
 import confetti from 'canvas-confetti';
 
@@ -73,6 +74,13 @@ export const LandingPage: React.FC<LandingPageProps> = ({
     const [deleteModalType, setDeleteModalType] = useState<'confirm' | 'warning'>('confirm');
     const { showToast } = useToast();
 
+    // Landing page filter bar state
+    const [searchQuery, setSearchQuery] = useState('');
+    const [companyFilter, setCompanyFilter] = useState<string[]>([]);
+    const [branchFilter, setBranchFilter] = useState<string[]>([]);
+    const [businessAreaFilter, setBusinessAreaFilter] = useState<string[]>([]);
+    const [dealTypeFilter, setDealTypeFilter] = useState<string[]>([]);
+
     const [isLoading, setIsLoading] = useState(true);
     useEffect(() => {
         const timer = setTimeout(() => {
@@ -80,6 +88,76 @@ export const LandingPage: React.FC<LandingPageProps> = ({
         }, 1000);
         return () => clearTimeout(timer);
     }, []);
+
+    // Helper: derive priority level from a due date string
+    const getPriorityFromDueDate = (dueDateStr?: string): { isHigh: boolean; priorityType: string } => {
+        if (!dueDateStr || dueDateStr === 'No Date') return { isHigh: false, priorityType: 'Low' };
+        const today = new Date();
+        today.setHours(0, 0, 0, 0);
+        const tomorrow = new Date(today);
+        tomorrow.setDate(tomorrow.getDate() + 1);
+
+        // Parse strings like "May 25" or "Jan 20"
+        const months: Record<string, number> = {
+            jan: 0, feb: 1, mar: 2, apr: 3, may: 4, jun: 5,
+            jul: 6, aug: 7, sep: 8, oct: 9, nov: 10, dec: 11
+        };
+        const parts = dueDateStr.trim().split(' ');
+        let dueDate: Date | null = null;
+        if (parts.length === 2) {
+            const monthStr = parts[0].toLowerCase().slice(0, 3);
+            const day = parseInt(parts[1], 10);
+            if (monthStr in months && !isNaN(day)) {
+                dueDate = new Date(today.getFullYear(), months[monthStr], day);
+                // Handle year rollover (e.g. Jan dates while in Dec)
+                if (dueDate.getTime() < today.getTime() - 30 * 24 * 60 * 60 * 1000) {
+                    dueDate.setFullYear(today.getFullYear() + 1);
+                }
+            }
+        }
+        if (!dueDate) {
+            const parsed = Date.parse(dueDateStr);
+            if (!isNaN(parsed)) dueDate = new Date(parsed);
+        }
+        if (!dueDate) return { isHigh: false, priorityType: 'Low' };
+
+        const dueTime = dueDate.getTime();
+        if (dueTime <= today.getTime()) return { isHigh: true, priorityType: 'Highest' };
+        if (dueTime <= tomorrow.getTime()) return { isHigh: false, priorityType: 'Medium' };
+        return { isHigh: false, priorityType: 'Low' };
+    };
+
+    // Derive unique filter options from deals
+    const filterOptions = useMemo(() => {
+        const allDeals = Object.values(dealsByColumn).flat();
+        const companies = ['all', ...Array.from(new Set(allDeals.map(d => d.countryCode).filter((c): c is string => !!c)))];
+        const branches = ['all', ...Array.from(new Set(allDeals.map(d => d.branch).filter((b): b is string => !!b)))];
+        const businessAreas = ['all', ...Array.from(new Set(allDeals.map(d => d.businessArea).filter((b): b is string => !!b)))];
+        const dealTypes = ['all', ...Array.from(new Set(allDeals.map(d => d.dealType).filter((t): t is string => !!t)))];
+        return { companies, branches, businessAreas, dealTypes };
+    }, [dealsByColumn]);
+
+    // Filtered deals per column
+    const filteredDealsByColumn = useMemo(() => {
+        const q = searchQuery.toLowerCase().trim();
+        const result: Record<string, DealData[]> = {};
+        for (const colId in dealsByColumn) {
+            result[colId] = dealsByColumn[colId].filter(deal => {
+                if (q) {
+                    const name = `${deal.firstName} ${deal.lastName}`.toLowerCase();
+                    const id = deal.id.toLowerCase();
+                    const items = (deal.items || []).join(' ').toLowerCase();
+                    if (!name.includes(q) && !id.includes(q) && !items.includes(q)) return false;
+                }
+                if (companyFilter.length > 0 && !companyFilter.includes(deal.countryCode || '')) return false;
+                if (branchFilter.length > 0 && !branchFilter.includes(deal.branch || '')) return false;
+                if (businessAreaFilter.length > 0 && !businessAreaFilter.includes(deal.businessArea || '')) return false;
+                if (dealTypeFilter.length > 0 && !dealTypeFilter.includes(deal.dealType || '')) return false;
+                return true;
+            });
+        }
+        return result;
+    }, [dealsByColumn, searchQuery, companyFilter, branchFilter, businessAreaFilter, dealTypeFilter]);
 
     const handleAddColumn = (index: number) => {
         const newId = onAddColumn(index);
@@ -164,6 +242,111 @@ export const LandingPage: React.FC<LandingPageProps> = ({
 
     return (
         <div className="flex flex-col h-full w-full bg-background text-foreground overflow-hidden relative" onClick={onClearColumnsFocus}>
+
+            {/* ── Filter Bar ────────────────────────────────────────────────── */}
+            <div
+                className="flex items-center gap-2.5 shrink-0 px-6 py-3 bg-[var(--background-primary)] border-b border-[var(--border-subtle)]"
+                onClick={e => e.stopPropagation()}
+            >
+                {/* Search — mirrors Input.module.css .inputWrapper + .input */}
+                <div
+                    className="flex items-center min-h-[40px] border border-[var(--border-subtle)] rounded-[var(--radius-200,8px)] bg-[var(--background-primary)] w-[300px] shrink-0 overflow-hidden box-border transition-[border-color,box-shadow] duration-200 focus-within:border-[var(--border-focused)] focus-within:[box-shadow:0_0_0_2px_var(--background-primary),0_0_0_4px_var(--purple-200)] hover:not(:focus-within):border-[var(--border-primary-hover)]"
+                    style={undefined}
+                >
+                    {/* Left icon — mirrors .leftIcon */}
+                    <div className="flex items-center justify-center pl-[12px] pr-[4px] text-[var(--text-subtle)] shrink-0">
+                        <svg width="16" height="16" viewBox="0 0 20 20" fill="none" aria-hidden="true">
+                            <path d="M17.5 17.5L13.875 13.875M15.833 9.167a6.667 6.667 0 1 1-13.333 0 6.667 6.667 0 0 1 13.333 0Z" stroke="currentColor" strokeWidth="1.5" strokeLinecap="round" strokeLinejoin="round" />
+                        </svg>
+                    </div>
+                    {/* Input — mirrors .input */}
+                    <input
+                        id="kanban-search"
+                        type="text"
+                        placeholder="Search deals, customers, items…"
+                        value={searchQuery}
+                        onChange={e => setSearchQuery(e.target.value)}
+                        className="flex-1 border-none bg-transparent py-[var(--space-200,8px)] px-[var(--space-400,16px)] pl-0 text-[length:var(--body-size-large,14px)] text-[var(--text-primary)] w-full outline-none placeholder:text-[length:var(--body-size-medium,12px)] placeholder:text-[var(--text-subtlest)]"
+                    />
+                    {/* Clear button */}
+                    {searchQuery && (
+                        <div className="flex items-center justify-center pl-[4px] pr-[12px] text-[var(--text-subtle)] shrink-0">
+                            <button
+                                type="button"
+                                onClick={() => setSearchQuery('')}
+                                className="flex items-center justify-center w-5 h-5 text-[var(--text-subtlest)] hover:text-[var(--text-primary)] transition-colors border-none bg-transparent p-0 cursor-pointer rounded"
+                                aria-label="Clear search"
+                            >
+                                <svg width="14" height="14" viewBox="0 0 14 14" fill="none"><path d="M10.5 3.5L3.5 10.5M3.5 3.5l7 7" stroke="currentColor" strokeWidth="1.5" strokeLinecap="round" /></svg>
+                            </button>
+                        </div>
+                    )}
+                </div>
+
+                {/* Thin divider */}
+                <div className="h-6 w-px bg-[var(--border-subtle)] shrink-0" aria-hidden="true" />
+
+                {/* Company */}
+                <FilterDropdown
+                    id="kanban-company-filter"
+                    placeholder="Company"
+                    options={filterOptions.companies.filter(c => c !== 'all')}
+                    selected={companyFilter}
+                    onChange={setCompanyFilter}
+                    renderLabel={v => v === 'AT' ? 'Cashy AT' : v === 'DE' ? 'Cashy DE' : v}
+                    minWidth={118}
+                />
+
+                {/* Branch */}
+                <FilterDropdown
+                    id="kanban-branch-filter"
+                    placeholder="Branch"
+                    options={filterOptions.branches.filter(b => b !== 'all')}
+                    selected={branchFilter}
+                    onChange={setBranchFilter}
+                    minWidth={106}
+                />
+
+                {/* Business Area */}
+                <FilterDropdown
+                    id="kanban-business-area-filter"
+                    placeholder="Business Area"
+                    options={filterOptions.businessAreas.filter(b => b !== 'all')}
+                    selected={businessAreaFilter}
+                    onChange={setBusinessAreaFilter}
+                    minWidth={148}
+                />
+
+                {/* Deal Type */}
+                <FilterDropdown
+                    id="kanban-deal-type-filter"
+                    placeholder="Deal Type"
+                    options={filterOptions.dealTypes.filter(d => d !== 'all')}
+                    selected={dealTypeFilter}
+                    onChange={setDealTypeFilter}
+                    minWidth={118}
+                />
+
+                {/* Clear all — only when filters are active */}
+                {(searchQuery || companyFilter.length > 0 || branchFilter.length > 0 || businessAreaFilter.length > 0 || dealTypeFilter.length > 0) && (
+                    <button
+                        type="button"
+                        onClick={() => {
+                            setSearchQuery('');
+                            setCompanyFilter([]);
+                            setBranchFilter([]);
+                            setBusinessAreaFilter([]);
+                            setDealTypeFilter([]);
+                        }}
+                        className="ml-auto shrink-0 flex items-center gap-1.5 text-[13px] font-semibold text-[var(--text-error,#EF4444)] hover:text-[#DC2626] transition-colors border-none bg-transparent cursor-pointer px-2.5 py-1.5 rounded-lg hover:bg-[#FEF2F2]"
+                        aria-label="Clear all filters"
+                    >
+                        <svg width="11" height="11" viewBox="0 0 14 14" fill="none"><path d="M10.5 3.5L3.5 10.5M3.5 3.5l7 7" stroke="currentColor" strokeWidth="2" strokeLinecap="round" /></svg>
+                        Reset
+                    </button>
+                )}
+            </div>
+
             <div className="flex-1 overflow-hidden relative">
                 {isLoading ? (
                     <div className="cashy-kanban-board animate-pulse select-none bg-[var(--background-secondary)]/50">
@@ -210,10 +393,10 @@ export const LandingPage: React.FC<LandingPageProps> = ({
                         ))}
                     </div>
                 ) : (
-                    <KanBanDndProvider onDealDragOver={onDealDragOver} onDealDragEnd={onDealDragEnd} dealsByColumn={dealsByColumn} onDragEndComplete={onDragEndComplete}>
+                    <KanBanDndProvider onDealDragOver={onDealDragOver} onDealDragEnd={onDealDragEnd} dealsByColumn={filteredDealsByColumn} onDragEndComplete={onDragEndComplete}>
                     <KanBanBoard onAddColumn={handleAddColumn} className="animate-in fade-in duration-500">
                     {columns.map((column) => {
-                        const deals = dealsByColumn[column.id] || [];
+                        const deals = filteredDealsByColumn[column.id] || [];
                         const tasks = tasksByColumn[column.id] || [];
 
                         // Show column if it is a custom column, has deals, has tasks, or is being configured/edited
@@ -254,14 +437,23 @@ export const LandingPage: React.FC<LandingPageProps> = ({
                                         count={(deals.length + (tasksByColumn[column.id]?.length || 0))}
                                         variant="admin"
                                         isConfigActive={isConfigActive}
+                                        isAddActive={addingToColumn === column.id}
                                         onConfigClick={() => {
                                             if (isConfigActive) {
                                                 setActiveConfigColumnId(null);
                                             } else {
                                                 setActiveConfigColumnId(column.id);
+                                                setAddingToColumn(null); // close add form when opening config
                                             }
                                         }}
-                                        onAddClick={() => setAddingToColumn(column.id)}
+                                        onAddClick={() => {
+                                            if (addingToColumn === column.id) {
+                                                setAddingToColumn(null); // toggle off
+                                            } else {
+                                                setAddingToColumn(column.id);
+                                                setActiveConfigColumnId(null); // close config when opening add
+                                            }
+                                        }}
                                     />
                                 </div>
 
@@ -319,7 +511,8 @@ export const LandingPage: React.FC<LandingPageProps> = ({
                                         ))}
 
                                         {deals.map(deal => {
-                                            const isHighPriority = deal.flags?.includes('HIGH VALUE');
+                                            const dueDateStr = deal.dueDate || deal.appointmentDate || 'No Date';
+                                            const { isHigh, priorityType } = getPriorityFromDueDate(dueDateStr);
 
                                             return (
                                                 <DraggableDealCard
@@ -328,9 +521,9 @@ export const LandingPage: React.FC<LandingPageProps> = ({
                                                     bookingNo={`#${deal.id}`}
                                                     customerName={`${deal.firstName} ${deal.lastName}`}
                                                     amount={deal.amount || ''}
-                                                    dueDate={deal.dueDate || deal.appointmentDate || 'No Date'}
-                                                    priority={isHighPriority}
-                                                    priorityType={isHighPriority ? "Highest" : "Medium"}
+                                                    dueDate={dueDateStr}
+                                                    priority={isHigh}
+                                                    priorityType={priorityType as "Highest" | "Medium" | "Low"}
                                                     shopLabelCountry={deal.countryCode}
                                                     shopLabelBranch={deal.branch}
                                                     items={deal.items}

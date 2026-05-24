@@ -324,7 +324,6 @@ function App() {
     const newColumn: ColumnConfig = {
       id: newId,
       title: 'New Column',
-      color: '#15B8A7',
       sortBy: 'dueDate',
       sortOrder: 'desc',
       visibleToPartners: true,

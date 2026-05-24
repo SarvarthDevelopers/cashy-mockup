@@ -14,3 +14,4 @@ export * from './Input/Input';
 export * from './TextArea/TextArea';
 export * from './FileUpload/FileUpload';
 export * from './ImageUpload/ImageUpload';
+export * from './Tooltip/Tooltip';

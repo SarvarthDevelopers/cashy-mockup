@@ -80,12 +80,18 @@
 }
 
 .cashy-kanban-column:hover {
-  box-shadow: -1px 0 0 0 var(--border-primary-hover), 1px 0 0 0 var(--border-primary-hover), 0 1px 0 0 var(--border-primary-hover);
+  box-shadow: -1px 0 0 0 var(--border-primary-hover), 
+              1px 0 0 0 var(--border-primary-hover), 
+              0 1px 0 0 var(--border-primary-hover),
+              0 -1px 0 0 var(--border-primary-hover);
 }
 
-/* Focus State strictly for newly injected columns (excluding the top border) */
+/* Focus State strictly for newly injected columns (including the top border) */
 .cashy-kanban-column.cashy-kanban-column--focused {
-  box-shadow: -2px 0 0 0 var(--border-focused, #0052CC), 2px 0 0 0 var(--border-focused, #0052CC), 0 2px 0 0 var(--border-focused, #0052CC);
+  box-shadow: -2px 0 0 0 var(--border-focused, #0052CC), 
+              2px 0 0 0 var(--border-focused, #0052CC), 
+              0 2px 0 0 var(--border-focused, #0052CC),
+              0 -2px 0 0 var(--border-focused, #0052CC);
   transition: none; /* Immediately snap without fading "gradient" interpolation */
 }
 

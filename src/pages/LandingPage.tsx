@@ -132,14 +132,16 @@ export const LandingPage: React.FC<LandingPageProps> = ({
                         return (
                             <BoardColumnWrapper key={column.id} focused={column.focused} style={{ display: 'flex', flexDirection: 'column', height: '100%', width: '100%' }}>
                                 {/* Top color strip */}
-                                <div 
-                                    style={{ 
-                                        height: '6px', 
-                                        backgroundColor: column.color || 'transparent', 
-                                        width: '100%',
-                                        flexShrink: 0
-                                    }} 
-                                />
+                                {column.color && (
+                                    <div 
+                                        style={{ 
+                                            height: '6px', 
+                                            backgroundColor: column.color, 
+                                            width: '100%',
+                                            flexShrink: 0
+                                        }} 
+                                    />
+                                )}
 
                                 <div className="cashy-kanban-column-header">
                                     <ColumnHeader

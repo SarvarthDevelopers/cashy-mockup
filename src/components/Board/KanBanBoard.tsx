@@ -1,6 +1,7 @@
 import React, { Children } from 'react';
 import type { KanBanBoardProps } from './types';
 import { PlusIcon } from '../ColumnHeader/icons/PlusIcon';
+import { Tooltip } from '../Tooltip/Tooltip';
 import './KanBanBoard.css';
 
 /**
@@ -25,16 +26,18 @@ export const KanBanBoard = React.forwardRef<HTMLDivElement, KanBanBoardProps>(({
       {/* Leading Interaction Zone & Pad Spacer */}
       <div className="cashy-kanban-interaction-zone">
         {onAddColumn && (
-          <button 
-            className="cashy-kanban-add-btn" 
-            onClick={(e) => {
-                e.stopPropagation();
-                onAddColumn(0);
-            }}
-            aria-label="Add Column Left"
-          >
-            <PlusIcon />
-          </button>
+          <Tooltip content="Add column" side="bottom">
+            <button 
+              className="cashy-kanban-add-btn" 
+              onClick={(e) => {
+                  e.stopPropagation();
+                  onAddColumn(0);
+              }}
+              aria-label="Add Column Left"
+            >
+              <PlusIcon />
+            </button>
+          </Tooltip>
         )}
       </div>
 
@@ -51,16 +54,18 @@ export const KanBanBoard = React.forwardRef<HTMLDivElement, KanBanBoardProps>(({
           {/* Trailing Interaction Zone */}
           <div className="cashy-kanban-interaction-zone">
             {onAddColumn && (
-              <button 
-                className="cashy-kanban-add-btn" 
-                onClick={(e) => {
-                    e.stopPropagation();
-                    onAddColumn(index + 1);
-                }}
-                aria-label="Add Column Right"
-              >
-                <PlusIcon />
-              </button>
+              <Tooltip content="Add column" side="bottom">
+                <button 
+                  className="cashy-kanban-add-btn" 
+                  onClick={(e) => {
+                      e.stopPropagation();
+                      onAddColumn(index + 1);
+                  }}
+                  aria-label="Add Column Right"
+                >
+                  <PlusIcon />
+                </button>
+              </Tooltip>
             )}
           </div>
         </React.Fragment>

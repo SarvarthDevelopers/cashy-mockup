@@ -329,7 +329,7 @@ export const FieldItem: React.FC<FieldItemProps> = ({
     const typeLabel = getFieldTypeLabel(field.fieldType.type);
     const type = field.fieldType.type;
     
-    let info = '';
+    let info: string;
     switch (type) {
       case 'text':
       case 'textarea':

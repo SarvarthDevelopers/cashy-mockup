@@ -190,14 +190,22 @@ function generateCustomer(company: 'CASHY_AUT' | 'CASHY_DE', index: number): Dea
   return { firstName, lastName, phone, email };
 }
 
+interface RawItem {
+  title: string;
+  variant: string;
+  category: string;
+  marketValue: number;
+  requestedPayout: number;
+}
+
 function getItemsForCategory(businessArea: Deal['businessArea']): DealItem[] {
-  let selectedItems: typeof CAR_ITEMS = [];
+  const selectedItems: RawItem[] = [];
 
   switch (businessArea) {
     case 'Automotive': {
       const carItem = randomChoice(CAR_ITEMS);
       const marketValue = randomInt(8000, 120000);
-      selectedItems = [{ ...carItem, marketValue, requestedPayout: 0 } as any];
+      selectedItems.push({ ...carItem, marketValue, requestedPayout: 0 });
       break;
     }
     case 'Electronics': {
@@ -205,14 +213,14 @@ function getItemsForCategory(businessArea: Deal['businessArea']): DealItem[] {
       for (let i = 0; i < count; i++) {
         const item = randomChoice(ELECTRONICS_ITEMS);
         const marketValue = randomInt(50, 3000);
-        selectedItems.push({ ...item, marketValue, requestedPayout: 0 } as any);
+        selectedItems.push({ ...item, marketValue, requestedPayout: 0 });
       }
       break;
     }
     case 'Luxury': {
       const item = randomChoice(LUXURY_ITEMS);
       const marketValue = randomInt(2000, 80000);
-      selectedItems.push({ ...item, marketValue, requestedPayout: 0 } as any);
+      selectedItems.push({ ...item, marketValue, requestedPayout: 0 });
       break;
     }
     case 'Mixed': {
@@ -223,13 +231,13 @@ function getItemsForCategory(businessArea: Deal['businessArea']): DealItem[] {
         const pool = randomChoice(pools);
         const item = randomChoice(pool);
         const marketValue = pool === LUXURY_ITEMS ? randomInt(2000, 15000) : randomInt(200, 2000);
-      selectedItems.push({ ...item, marketValue, requestedPayout: 0 } as any);
+      selectedItems.push({ ...item, marketValue, requestedPayout: 0 });
       }
       break;
     }
   }
 
-  const items: DealItem[] = selectedItems.map((item: any) => {
+  const items: DealItem[] = selectedItems.map((item) => {
     const ltvRange = businessArea === 'Automotive' ? [0.5, 0.7] :
       businessArea === 'Electronics' ? [0.4, 0.6] :
         businessArea === 'Luxury' ? [0.3, 0.5] : [0.35, 0.55];
@@ -367,7 +375,7 @@ export function generateMockDeals(count = 100): Deal[] {
     const shop = randomChoice(shopsMap[branch]);
 
     // Mode: 90% deal (Pawn), 10% custom_deal (Purchase)
-    let mode: Deal['mode'] = Math.random() < 0.90 ? 'deal' : 'custom_deal';
+    const mode: Deal['mode'] = Math.random() < 0.90 ? 'deal' : 'custom_deal';
 
     // Status distribution
     let status: Deal['status'];

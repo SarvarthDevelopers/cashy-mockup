@@ -1,7 +1,6 @@
 import React, { useState } from 'react';
 import './Tabs.css';
 import { TabsContext } from './TabsContext';
-
 export interface TabsProps extends React.HTMLAttributes<HTMLDivElement> {
     /**
      * Controlled value of the active tab
@@ -58,15 +57,15 @@ export const Tabs = React.forwardRef<HTMLDivElement, TabsProps>(({
     // If no default and no value, nothing is selected.
 
     const tabValues = React.Children.toArray(children)
-        .filter(React.isValidElement)
-        .map(child => (child as any).props.value as string);
+        .filter((child): child is React.ReactElement => React.isValidElement(child))
+        .map(child => (child.props as { value?: string }).value as string);
 
     const renderChildren = () => {
         if (variant !== 'stepper') return children;
 
-        const childrenArray = React.Children.toArray(children).filter(React.isValidElement);
+        const childrenArray = React.Children.toArray(children).filter((child): child is React.ReactElement => React.isValidElement(child));
         return childrenArray.map((child, index) => (
-            <React.Fragment key={(child as any).props.value || index}>
+            <React.Fragment key={(child.props as { value?: string }).value || index}>
                 {child}
                 {index < childrenArray.length - 1 && (
                     <div className="tab__stepper-separator" aria-hidden="true">

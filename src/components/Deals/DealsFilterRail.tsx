@@ -3,45 +3,11 @@ import { X, Calendar } from 'lucide-react';
 import type { Deal } from '../../data/mockDeals';
 import { SHOP_METADATA } from '../../data/mockDeals';
 
-export interface FilterState {
-  company: string[];
-  branch: string[];
-  shop: string[];
-  businessArea: string[];
-  mode: string[];
-  status: string[];
-  labels: string[];
-  assignedTo: string[];
-  pickupType: string[];
-  hasMissingDocs: 'all' | 'yes' | 'no';
-  isExtension: 'all' | 'yes' | 'no';
-  createdDateFrom: string;
-  createdDateTo: string;
-  dueDateFrom: string;
-  dueDateTo: string;
-  minSuggestedPayout: string;
-  maxSuggestedPayout: string;
-}
+import { INITIAL_FILTERS } from './dealsFilterConstants';
+import type { FilterState } from './dealsFilterConstants';
 
-export const INITIAL_FILTERS: FilterState = {
-  company: [],
-  branch: [],
-  shop: [],
-  businessArea: [],
-  mode: [],
-  status: [],
-  labels: [],
-  assignedTo: [],
-  pickupType: [],
-  hasMissingDocs: 'all',
-  isExtension: 'all',
-  createdDateFrom: '',
-  createdDateTo: '',
-  dueDateFrom: '',
-  dueDateTo: '',
-  minSuggestedPayout: '',
-  maxSuggestedPayout: '',
-};
+export { INITIAL_FILTERS };
+export type { FilterState };
 
 interface DealsFilterRailProps {
   filters: FilterState;
@@ -111,7 +77,7 @@ function MultiCheckboxFilter({
   const getCounts = (opt: string) => {
     return deals.filter(d => {
       const val = d[filterKey];
-      if (Array.isArray(val)) return (val as any[]).includes(opt);
+      if (Array.isArray(val)) return (val as string[]).includes(opt);
       return val === opt;
     }).length;
   };

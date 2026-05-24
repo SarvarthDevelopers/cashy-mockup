@@ -187,7 +187,7 @@ export const WizardBuilderCatalog: React.FC<WizardBuilderCatalogProps> = ({
     const matchesSearch = w.name.toLowerCase().includes(searchTerm.toLowerCase()) || 
                          w.category.toLowerCase().includes(searchTerm.toLowerCase());
     const matchesCategory = filterCategory === '' || w.category === filterCategory;
-    const matchesShop = filterShop === '' || (w as any).shop === filterShop || (filterShop === 'Global');
+    const matchesShop = filterShop === '' || (w as WizardConfig & { shop?: string }).shop === filterShop || (filterShop === 'Global');
 
     return matchesSearch && matchesCategory && matchesShop;
   });

@@ -1,7 +1,7 @@
 import React, { useState } from 'react';
 import { useNavigate } from 'react-router';
 import { ArrowLeft, Save, RefreshCw } from 'lucide-react';
-import { useToast } from '../components/Toast/ToastContext';
+import { useToast } from '../components/Toast/useToast';
 import {
   getBusinessAreaMappings,
   saveBusinessAreaMappings,

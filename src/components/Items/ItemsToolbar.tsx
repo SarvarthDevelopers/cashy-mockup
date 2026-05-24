@@ -2,30 +2,6 @@ import { useState, useEffect, useRef } from 'react';
 import { Search, Download, Archive, X, HelpCircle, Loader2, RefreshCw, Eye, EyeOff } from 'lucide-react';
 import type { ColumnDef } from './ItemsTable';
 
-export const ITEMS_MICROCOPY = {
-  search: {
-    placeholder: "Search by ID, title, variant, category, business area, deal ID...",
-    emptyHint: "No items found. Refine your query or reset active filters.",
-    unsortedWarning: "Search results are unsorted — refine query or use filters."
-  },
-  sorting: {
-    unsupportedTooltip: "Multi-column sorting on this field is not indexed. Using default sort instead."
-  },
-  bulk: {
-    progress: "Processing bulk action...",
-    success: "Successfully processed bulk action.",
-    partialError: "Some operations failed. Inline retries are available."
-  },
-  export: {
-    started: "Export job started.",
-    estimatedTime: "Estimated completion time: 45 seconds.",
-    fallback: "Live CSV stream unavailable. Exporting current page instead."
-  },
-  preview: {
-    openWizard: "Open Deal Wizard"
-  }
-};
-
 interface ItemsToolbarProps {
   searchQuery: string;
   onSearchChange: (query: string) => void;
@@ -71,6 +47,12 @@ export function ItemsToolbar({
   const [isSearching, setIsSearching] = useState(false);
   const [showColumnPicker, setShowColumnPicker] = useState(false);
   const columnPickerRef = useRef<HTMLDivElement>(null);
+  // Previous-prop tracking: sync localSearch when searchQuery changes externally (e.g., cleared)
+  const [prevSearchQuery, setPrevSearchQuery] = useState(searchQuery);
+  if (searchQuery !== prevSearchQuery) {
+    setPrevSearchQuery(searchQuery);
+    if (localSearch !== searchQuery) setLocalSearch(searchQuery);
+  }
 
   useEffect(() => {
     const handler = (e: MouseEvent) => {
@@ -83,18 +65,18 @@ export function ItemsToolbar({
   }, [showColumnPicker]);
 
   useEffect(() => {
-    setLocalSearch(searchQuery);
-  }, [searchQuery]);
-
-  useEffect(() => {
     if (localSearch === searchQuery) return;
-    setIsSearching(true);
     const delay = setTimeout(() => {
       onSearchChange(localSearch);
       setIsSearching(false);
     }, 300);
     return () => clearTimeout(delay);
   }, [localSearch, onSearchChange, searchQuery]);
+
+  const handleSearchChange = (value: string) => {
+    setLocalSearch(value);
+    setIsSearching(value !== searchQuery);
+  };
 
   return (
     <div className="flex flex-col gap-3 w-full" role="toolbar" aria-label="Items toolbar controls">
@@ -201,7 +183,7 @@ export function ItemsToolbar({
               <input
                 type="text"
                 value={localSearch}
-                onChange={(e) => setLocalSearch(e.target.value)}
+                onChange={(e) => handleSearchChange(e.target.value)}
                 placeholder="Search..."
                 className="w-full h-9 pl-9 pr-16 bg-[var(--background-primary)] border border-[var(--border-subtle)] rounded-lg text-xs focus:outline-none focus:border-[var(--border-brand)] focus:ring-2 focus:ring-[var(--border-brand)]/20 transition-all text-[var(--text-primary)] placeholder:text-[var(--text-subtlest)] font-semibold shadow-sm"
                 aria-label="Search index fields"

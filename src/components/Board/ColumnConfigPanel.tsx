@@ -98,7 +98,7 @@ export const ColumnConfigPanel: React.FC<ColumnConfigPanelProps> = ({
             label="Sort cards by"
             options={sortOptions}
             value={column.sortBy || 'dueDate'}
-            onChange={(val) => handleFieldChange('sortBy', val as any)}
+            onChange={(val) => handleFieldChange('sortBy', val as ColumnConfig['sortBy'])}
           />
         </div>
 
@@ -107,7 +107,7 @@ export const ColumnConfigPanel: React.FC<ColumnConfigPanelProps> = ({
             label="Sorting order"
             options={orderOptions}
             value={column.sortOrder || 'desc'}
-            onChange={(val) => handleFieldChange('sortOrder', val as any)}
+            onChange={(val) => handleFieldChange('sortOrder', val as ColumnConfig['sortOrder'])}
           />
         </div>
         <hr className="cashy-column-config__divider" />

@@ -51,7 +51,18 @@ export const CategoriesDealCard = ({
 
     setMaxDisplay(prev => prev !== itemsToDisplay ? itemsToDisplay : prev);
     
-  }, [categories, containerRef.current?.clientWidth]); 
+  }, [categories]);
+
+  // Re-run measurement when the container resizes
+  useLayoutEffect(() => {
+    const el = containerRef.current;
+    if (!el) return;
+    const observer = new ResizeObserver(() => {
+      setMaxDisplay(categories.length); // reset to trigger re-measure on next layout effect
+    });
+    observer.observe(el);
+    return () => observer.disconnect();
+  }, [categories.length]);
 
   const hiddenCount = categories.length - maxDisplay;
   const isMultiple = categories.length > maxDisplay;

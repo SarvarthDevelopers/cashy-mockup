@@ -56,7 +56,18 @@ export const ItemsDealCard = ({
     if (itemsToDisplay === 0 && items.length > 0) itemsToDisplay = 1;
 
     setMaxDisplay(prev => prev !== itemsToDisplay ? itemsToDisplay : prev);
-  }, [items, containerRef.current?.clientWidth]);
+  }, [items]);
+
+  // Re-run measurement when the container resizes
+  useLayoutEffect(() => {
+    const el = containerRef.current;
+    if (!el) return;
+    const observer = new ResizeObserver(() => {
+      setMaxDisplay(items.length); // reset to trigger re-measure on next layout effect
+    });
+    observer.observe(el);
+    return () => observer.disconnect();
+  }, [items.length]);
 
   if (!items || items.length === 0) return null;
 

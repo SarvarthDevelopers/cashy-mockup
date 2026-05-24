@@ -1,4 +1,33 @@
 // All deal cards data for the Home Board
+// ------------------------------------------------------------
+/**
+ * `DealData` is the central data contract used throughout the Cashy Hub
+ * application. It represents the full payload of a deal, containing all
+ * fields required by the Kanban board, the filter sidebar, and the Deal
+ * Wizard modal. Because many UI components depend on this shape, any
+ * modification to the interface has wide‑impact, which is why the Graphify
+ * analysis identified it as a *god node* (high betweenness centrality).
+ *
+ * The interface is deliberately exhaustive – it includes fields used only
+ * by specific features (e.g., `wizardData` for the modal). When a component
+ * needs only a subset of the data, a lighter view‑model (`DealBoardItem`)
+ * should be used instead. This keeps component coupling low while preserving
+ * a single source of truth.
+ */
+export interface WizardDisplayData {
+  customerName: string;
+  email: string;
+  phone: string;
+  branch: string;
+  company: string;
+  businessArea: string;
+  categoryPath: string;
+  dealDuration?: string;
+  payoutType: string;
+  amount?: string;
+  item: string;
+}
+
 export interface DealData {
   id: string;
   countryCode: string;
@@ -13,8 +42,42 @@ export interface DealData {
   businessArea?: string;
   flags?: string[];
   specialNote?: string;
-  wizardData: any;
+  wizardData: WizardDisplayData;
 }
+
+/**
+ * Minimal representation of a deal for board‑level display. Contains only
+ * the fields required by `KanBanBoard` and its child components. Using this
+ * type reduces the amount of data each component must be aware of.
+ */
+export interface DealBoardItem {
+  id: string;
+  firstName: string;
+  lastName: string;
+  amount?: string;
+  branch: string;
+  businessArea?: string;
+  flags?: string[];
+}
+
+/**
+ * Alias for the full deal payload used by the Deal Wizard.
+ */
+export type DealWizardPayload = DealData;
+
+/**
+ * Helper to convert a full `DealData` object into the lightweight
+ * `DealBoardItem` representation.
+ */
+export const toBoardItem = (deal: DealData): DealBoardItem => ({
+  id: deal.id,
+  firstName: deal.firstName,
+  lastName: deal.lastName,
+  amount: deal.amount,
+  branch: deal.branch,
+  businessArea: deal.businessArea,
+  flags: deal.flags,
+});
 
 export type ColumnId = 
   | 'car-inbox'

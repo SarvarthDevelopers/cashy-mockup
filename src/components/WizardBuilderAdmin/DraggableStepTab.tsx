@@ -1,4 +1,4 @@
-import { useRef } from 'react';
+import { useRef, useEffect } from 'react';
 import { useDrag, useDrop } from 'react-dnd';
 import svgPaths from "../../imports/svg-4o201vrq4p";
 import type { Step } from './DealWizardBuilder';
@@ -42,7 +42,9 @@ export function DraggableStepTab({ step, index, isActive, onClick, onReorder }: 
     },
   });
 
-  drag(drop(ref));
+  useEffect(() => {
+    drag(drop(ref));
+  }, [drag, drop]);
 
   return (
     <div ref={ref} className="shrink-0" style={{ opacity: isDragging ? 0.5 : 1 }}>

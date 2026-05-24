@@ -1,26 +1,11 @@
-import { useState, useMemo, useEffect } from 'react';
+import { useState, useMemo } from 'react';
 import { X } from 'lucide-react';
 import type { FlatItem } from './ItemsTable';
+import { INITIAL_FILTERS } from './itemsFilterConstants';
+import type { FilterState } from './itemsFilterConstants';
 
-export interface FilterState {
-  itemId: string;
-  categoryPaths: string[];
-  businessAreas: string[];
-  dealId: string;
-  dealStatuses: string[];
-  hasImages: 'all' | 'yes' | 'no';
-  hasDocuments: 'all' | 'yes' | 'no';
-}
-
-export const INITIAL_FILTERS: FilterState = {
-  itemId: '',
-  categoryPaths: [],
-  businessAreas: [],
-  dealId: '',
-  dealStatuses: [],
-  hasImages: 'all',
-  hasDocuments: 'all',
-};
+export { INITIAL_FILTERS };
+export type { FilterState };
 
 interface ItemsFilterRailProps {
   filters: FilterState;
@@ -357,18 +342,19 @@ export function ItemsFilterRail({ filters, onFiltersChange, items, collapsed, on
     return buildCategoryTree(categories);
   }, [items]);
 
-  // Expand categories by default when they load
-  useEffect(() => {
+  // Derive initial expanded paths synchronously from categoryTree
+  // When categoryTree changes, we update expandedPaths by comparing to previous tree
+  const [prevCategoryTree, setPrevCategoryTree] = useState(categoryTree);
+  if (categoryTree !== prevCategoryTree) {
+    setPrevCategoryTree(categoryTree);
     const initialExpanded: Record<string, boolean> = {};
     const recurse = (node: CategoryNode) => {
-      if (node.fullPath) {
-        initialExpanded[node.fullPath] = true;
-      }
+      if (node.fullPath) initialExpanded[node.fullPath] = true;
       Object.values(node.children).forEach(recurse);
     };
     recurse(categoryTree);
     setExpandedPaths(initialExpanded);
-  }, [categoryTree]);
+  }
 
   // Compute total category mapping counts
   const categoryCountMap = useMemo(() => {

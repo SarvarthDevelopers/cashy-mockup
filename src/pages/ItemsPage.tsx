@@ -116,8 +116,8 @@ function applySort(items: FlatItem[], sortConfigs: SortConfig[]): FlatItem[] {
   sorted.sort((a, b) => {
     for (const config of sortConfigs) {
       const { key, direction } = config;
-      let aVal: any;
-      let bVal: any;
+      let aVal: number | string;
+      let bVal: number | string;
 
       switch (key) {
         case 'itemId':
@@ -170,7 +170,7 @@ function applySort(items: FlatItem[], sortConfigs: SortConfig[]): FlatItem[] {
 
       if (aVal === bVal) continue;
 
-      const cmp = typeof aVal === 'number'
+      const cmp = (typeof aVal === 'number' && typeof bVal === 'number')
         ? aVal - bVal
         : String(aVal).localeCompare(String(bVal));
 
@@ -357,9 +357,14 @@ export function ItemsPage({ onSelectDeal }: ItemsPageProps) {
   }, [selectedRows, allItems, filteredItems, triggerSimulatedExport]);
 
   // Simulated bulk action
-  const executeBulkAction = useCallback((_actionType: string) => {
+  const executeBulkAction = useCallback((actionType: string) => {
     setBulkActionStatus('processing');
     setBulkErrorMessage('');
+    
+    // Check action type for future support
+    if (actionType !== 'archive') {
+      // noop
+    }
 
     let progress = 0;
     const interval = setInterval(() => {

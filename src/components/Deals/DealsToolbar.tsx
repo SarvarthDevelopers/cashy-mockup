@@ -52,6 +52,12 @@ export function DealsToolbar({
   const [isSearching, setIsSearching] = useState(false);
   const [showColumnPicker, setShowColumnPicker] = useState(false);
   const columnPickerRef = useRef<HTMLDivElement>(null);
+  // Previous-prop tracking: sync localSearch when searchQuery changes externally
+  const [prevSearchQuery, setPrevSearchQuery] = useState(searchQuery);
+  if (searchQuery !== prevSearchQuery) {
+    setPrevSearchQuery(searchQuery);
+    if (localSearch !== searchQuery) setLocalSearch(searchQuery);
+  }
 
   useEffect(() => {
     const handler = (e: MouseEvent) => {
@@ -64,18 +70,18 @@ export function DealsToolbar({
   }, [showColumnPicker]);
 
   useEffect(() => {
-    setLocalSearch(searchQuery);
-  }, [searchQuery]);
-
-  useEffect(() => {
     if (localSearch === searchQuery) return;
-    setIsSearching(true);
     const delay = setTimeout(() => {
       onSearchChange(localSearch);
       setIsSearching(false);
     }, 300);
     return () => clearTimeout(delay);
   }, [localSearch, onSearchChange, searchQuery]);
+
+  const handleSearchChange = (value: string) => {
+    setLocalSearch(value);
+    setIsSearching(value !== searchQuery);
+  };
 
   return (
     <div className="flex flex-col gap-3 w-full" role="toolbar" aria-label="Deals toolbar controls">
@@ -190,7 +196,7 @@ export function DealsToolbar({
               <input
                 type="text"
                 value={localSearch}
-                onChange={(e) => setLocalSearch(e.target.value)}
+                onChange={(e) => handleSearchChange(e.target.value)}
                 placeholder="Search..."
                 className="w-full h-9 pl-9 pr-16 bg-[var(--background-primary)] border border-[var(--border-subtle)] rounded-lg text-xs focus:outline-none focus:border-[var(--border-brand)] focus:ring-2 focus:ring-[var(--border-brand)]/20 transition-all text-[var(--text-primary)] placeholder:text-[var(--text-subtlest)] font-semibold shadow-sm"
                 aria-label="Search index fields"

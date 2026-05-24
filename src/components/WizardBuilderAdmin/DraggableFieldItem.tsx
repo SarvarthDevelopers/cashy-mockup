@@ -1,4 +1,4 @@
-import { useRef } from 'react';
+import { useRef, useEffect } from 'react';
 import { useDrag, useDrop } from 'react-dnd';
 import type { Field } from './DealWizardBuilder';
 import { FieldItem } from './FieldItem';
@@ -45,7 +45,9 @@ export function DraggableFieldItem({ field, index, onRemove, onUpdate, onReorder
     },
   });
 
-  preview(drop(ref));
+  useEffect(() => {
+    preview(drop(ref));
+  }, [preview, drop]);
 
   return (
     <div ref={ref} className="w-full" style={{ opacity: isDragging ? 0.5 : 1 }}>

@@ -23,10 +23,8 @@ export function InlineEdit({
     if (isEditing) {
       inputRef.current?.focus();
       inputRef.current?.select();
-    } else {
-      setTempValue(value);
     }
-  }, [isEditing, value]);
+  }, [isEditing]);
 
   const handleSave = () => {
     if (tempValue.trim() !== '' && tempValue !== value) {

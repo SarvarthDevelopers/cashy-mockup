@@ -35,15 +35,11 @@ export default meta;
 type Story = StoryObj<typeof Pagination>;
 
 // Helper to make stories interactive
-import { useState, useEffect } from 'react';
+import { useState } from 'react';
 import type { PaginationProps } from './Pagination';
 
 const InteractivePagination = (args: PaginationProps) => {
     const [page, setPage] = useState(args.currentPage);
-
-    useEffect(() => {
-        setPage(args.currentPage);
-    }, [args.currentPage]);
 
     const handlePageChange = (p: number) => {
         setPage(p);
@@ -53,6 +49,11 @@ const InteractivePagination = (args: PaginationProps) => {
     return <Pagination {...args} currentPage={page} onPageChange={handlePageChange} />;
 };
 
+// Wrapper that resets state when the storybook control changes currentPage
+const StoryWrapper = (args: PaginationProps) => (
+    <InteractivePagination key={args.currentPage} {...args} />
+);
+
 export const Simple: Story = {
     args: {
         currentPage: 1,
@@ -60,7 +61,7 @@ export const Simple: Story = {
         variant: 'simple',
         onPageChange: fn(),
     },
-    render: (args) => <InteractivePagination {...args} />,
+    render: (args) => <StoryWrapper {...args} />,
 };
 
 export const Entries: Story = {
@@ -73,7 +74,7 @@ export const Entries: Story = {
         onPageChange: fn(),
         onItemsPerPageChange: fn(),
     },
-    render: (args) => <InteractivePagination {...args} />,
+    render: (args) => <StoryWrapper {...args} />,
 };
 
 export const Count: Story = {
@@ -85,7 +86,7 @@ export const Count: Story = {
         onPageChange: fn(),
         onItemsPerPageChange: fn(),
     },
-    render: (args) => <InteractivePagination {...args} />,
+    render: (args) => <StoryWrapper {...args} />,
 };
 
 export const ManyPages: Story = {
@@ -95,7 +96,7 @@ export const ManyPages: Story = {
         variant: 'simple',
         onPageChange: fn(),
     },
-    render: (args) => <InteractivePagination {...args} />,
+    render: (args) => <StoryWrapper {...args} />,
 };
 
 export const StartRange: Story = {
@@ -105,7 +106,7 @@ export const StartRange: Story = {
         variant: 'simple',
         onPageChange: fn(),
     },
-    render: (args) => <InteractivePagination {...args} />,
+    render: (args) => <StoryWrapper {...args} />,
 };
 
 export const EndRange: Story = {
@@ -115,5 +116,5 @@ export const EndRange: Story = {
         variant: 'simple',
         onPageChange: fn(),
     },
-    render: (args) => <InteractivePagination {...args} />,
+    render: (args) => <StoryWrapper {...args} />,
 };

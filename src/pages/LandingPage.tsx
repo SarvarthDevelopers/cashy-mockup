@@ -7,7 +7,7 @@ import { DraggableDealCard } from '../components/Card/DraggableDealCard';
 import type { DealData } from '../data/mockData';
 import { TaskCardLarge, type TaskPriority } from '../components/TaskCard/TaskCardLarge';
 import { TaskCreateCardLarge } from '../components/TaskCard/TaskCreateCardLarge';
-import { useToast } from '../components/Toast/ToastContext';
+import { useToast } from '../components/Toast/useToast';
 import type { ColumnConfig } from '../components/Board/types';
 import { ColumnConfigPanel } from '../components/Board/ColumnConfigPanel';
 import { ConfirmationModal } from '../components/Modal/ConfirmationModal';

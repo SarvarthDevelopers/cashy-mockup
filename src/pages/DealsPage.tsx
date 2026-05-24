@@ -85,8 +85,8 @@ function applySort(deals: Deal[], sortConfigs: SortConfig[]): Deal[] {
   sorted.sort((a, b) => {
     for (const config of sortConfigs) {
       const { key, direction } = config;
-      let aVal: any;
-      let bVal: any;
+      let aVal: number | string;
+      let bVal: number | string;
 
       switch (key) {
         case 'dealId': 
@@ -143,7 +143,7 @@ function applySort(deals: Deal[], sortConfigs: SortConfig[]): Deal[] {
 
       if (aVal === bVal) continue;
 
-      const cmp = typeof aVal === 'number'
+      const cmp = (typeof aVal === 'number' && typeof bVal === 'number')
         ? aVal - bVal
         : String(aVal).localeCompare(String(bVal));
 

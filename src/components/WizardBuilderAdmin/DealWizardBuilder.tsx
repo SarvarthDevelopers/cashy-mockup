@@ -72,7 +72,7 @@ export function DealWizardBuilder({ wizardConfig, onBack, onSave, onDelete }: De
       id: f.id,
       fieldType: {
         id: f.type,
-        type: f.type as any,
+        type: f.type as FieldType['type'],
         label: f.type.charAt(0).toUpperCase() + f.type.slice(1),
         icon: f.type
       },
@@ -95,7 +95,7 @@ export function DealWizardBuilder({ wizardConfig, onBack, onSave, onDelete }: De
       updatedAt: new Date().toLocaleDateString('en-US', { month: 'short', day: 'numeric', year: 'numeric' }),
       fields: wizardState.fields.map(f => ({
         id: f.id,
-        type: f.fieldType.type as any,
+        type: f.fieldType.type as WizardConfig['fields'][number]['type'],
         label: f.label,
         placeholder: f.placeholder,
         stepId: f.stepId,

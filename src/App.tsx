@@ -58,8 +58,8 @@ const sortDealsForColumn = (deals: DealData[], sortBy: string, sortOrder: 'asc' 
   if (sortBy === 'manual') return deals;
   
   return [...deals].sort((a, b) => {
-    let valA: any = null;
-    let valB: any = null;
+    let valA: number | string;
+    let valB: number | string;
     
     if (sortBy === 'dueDate') {
       const dateA = parseDealDate(a.dueDate || a.appointmentDate);

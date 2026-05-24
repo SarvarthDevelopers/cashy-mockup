@@ -6,7 +6,7 @@ import { DraggableStepTab } from './DraggableStepTab';
 import { Breadcrumb } from './Breadcrumb';
 import { InlineEdit } from './InlineEdit';
 
-import { useToast } from '../Toast/ToastContext';
+import { useToast } from '../Toast/useToast';
 
 interface MainContentProps {
   wizardState: WizardState;

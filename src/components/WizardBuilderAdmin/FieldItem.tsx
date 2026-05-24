@@ -8,7 +8,7 @@ interface FieldItemProps {
   onUpdate: (fieldId: string, updates: Partial<Field>) => void;
   isSelected?: boolean;
   onSelect?: () => void;
-  dragHandleRef?: (node: any) => any;
+  dragHandleRef?: (node: HTMLElement | null) => void;
 }
 
 // ─── SVG Icons ───────────────────────────────────────────────────────────────
@@ -210,7 +210,7 @@ export function FieldItem({ field, onRemove, onUpdate, isSelected, onSelect, dra
 
   const getSubtitle = () => {
     const type = field.fieldType.type;
-    let info = '';
+    let info: string;
     switch (type) {
       case 'dropdown':
       case 'checkbox':

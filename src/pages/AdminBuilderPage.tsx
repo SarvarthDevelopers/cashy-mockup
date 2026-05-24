@@ -1,8 +1,8 @@
-import React, { useState, useEffect } from 'react';
+import React, { useState, useMemo } from 'react';
 import { useParams, useNavigate } from 'react-router';
 import { DealWizardBuilder } from '../components/WizardBuilderAdmin/DealWizardBuilder';
 import { WizardBuilderCatalog } from '../components/WizardBuilderAdmin/WizardBuilderCatalog';
-import { useToast } from '../components/Toast/ToastContext';
+import { useToast } from '../components/Toast/useToast';
 import { MOCK_WIZARDS } from '../data/wizardData';
 import type { WizardConfig } from '../data/wizardData';
 
@@ -13,17 +13,9 @@ export const WizardBuilderPage: React.FC = () => {
         const saved = localStorage.getItem('cashy_wizards_v2');
         return saved ? JSON.parse(saved) : MOCK_WIZARDS;
     });
-    const [selectedWizard, setSelectedWizard] = useState<WizardConfig | null>(null);
-
-    useEffect(() => {
-        if (id) {
-            const wizard = wizards.find(w => w.id === id);
-            if (wizard) {
-                setSelectedWizard(wizard);
-            }
-        } else {
-            setSelectedWizard(null);
-        }
+    const selectedWizard = useMemo(() => {
+        if (!id) return null;
+        return wizards.find(w => w.id === id) ?? null;
     }, [id, wizards]);
 
     const { showToast } = useToast();

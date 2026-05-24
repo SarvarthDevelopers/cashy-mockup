@@ -53,19 +53,7 @@ interface ItemsTableProps {
   onColumnsChange: React.Dispatch<React.SetStateAction<ColumnDef[]>>;
 }
 
-export const DEFAULT_COLUMNS: ColumnDef[] = [
-  { key: 'itemId', label: 'Item ID', width: 90, minWidth: 80, visible: true, sortable: true },
-  { key: 'title', label: 'Title', width: 140, minWidth: 100, visible: true, sortable: true },
-  { key: 'category', label: 'Category Path', width: 160, minWidth: 120, visible: true, sortable: true },
-  { key: 'businessArea', label: 'Business Area', width: 110, minWidth: 90, visible: true, sortable: true },
-  { key: 'variant', label: 'Variant', width: 130, minWidth: 100, visible: true, sortable: true },
-  { key: 'marketValue', label: 'Market Value', width: 100, minWidth: 80, visible: true, sortable: true },
-  { key: 'payout', label: 'Payout', width: 95, minWidth: 70, visible: true, sortable: true },
-  { key: 'dealId', label: 'Deal ID', width: 90, minWidth: 80, visible: true, sortable: true },
-  { key: 'dealStatus', label: 'Deal Status', width: 125, minWidth: 95, visible: true, sortable: true },
-  { key: 'hasImages', label: 'Images', width: 70, minWidth: 60, visible: true, sortable: true },
-  { key: 'hasDocuments', label: 'Docs', width: 70, minWidth: 60, visible: true, sortable: true },
-];
+export { DEFAULT_COLUMNS } from './itemsTableColumns';
 
 function formatEur(value: number): string {
   return new Intl.NumberFormat('de-DE', { style: 'currency', currency: 'EUR', minimumFractionDigits: 0, maximumFractionDigits: 0 }).format(value);
@@ -140,20 +128,26 @@ export function ItemsTable({
 
   const [localSearch, setLocalSearch] = useState(searchQuery);
   const [isSearching, setIsSearching] = useState(false);
-
-  useEffect(() => {
-    setLocalSearch(searchQuery);
-  }, [searchQuery]);
+  // Previous-prop tracking: when searchQuery changes externally (e.g., cleared), sync localSearch
+  const [prevSearchQuery, setPrevSearchQuery] = useState(searchQuery);
+  if (searchQuery !== prevSearchQuery) {
+    setPrevSearchQuery(searchQuery);
+    if (localSearch !== searchQuery) setLocalSearch(searchQuery);
+  }
 
   useEffect(() => {
     if (localSearch === searchQuery) return;
-    setIsSearching(true);
     const delay = setTimeout(() => {
       onSearchChange(localSearch);
       setIsSearching(false);
     }, 300);
     return () => clearTimeout(delay);
   }, [localSearch, onSearchChange, searchQuery]);
+
+  const handleLocalSearchChange = (value: string) => {
+    setLocalSearch(value);
+    setIsSearching(value !== searchQuery);
+  };
 
   const handleResizeStart = useCallback((e: React.MouseEvent, colKey: string) => {
     e.preventDefault();
@@ -346,7 +340,7 @@ export function ItemsTable({
             <input
               type="text"
               value={localSearch}
-              onChange={(e) => setLocalSearch(e.target.value)}
+              onChange={(e) => handleLocalSearchChange(e.target.value)}
               placeholder="Search items by ID, title, variant, category, deal ID..."
               className="w-full h-10 pl-10 pr-16 bg-[var(--background-primary)] border border-[var(--border-subtle)] rounded-lg text-sm focus:outline-none focus:border-[var(--border-brand)] focus:ring-2 focus:ring-[var(--border-brand)]/20 transition-all text-[var(--text-primary)] placeholder:text-[var(--text-subtlest)] font-medium shadow-sm"
               aria-label="Search index fields"

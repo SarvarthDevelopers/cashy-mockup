@@ -38,19 +38,7 @@ interface DealsTableProps {
   onColumnsChange: React.Dispatch<React.SetStateAction<ColumnDef[]>>;
 }
 
-export const DEFAULT_COLUMNS: ColumnDef[] = [
-  { key: 'dealId', label: 'Deal ID', width: 100, minWidth: 80, visible: true, sortable: true },
-  { key: 'customer', label: 'Customer', width: 140, minWidth: 110, visible: true, sortable: true },
-  { key: 'primaryItem', label: 'Primary Item', width: 150, minWidth: 120, visible: true, sortable: true },
-  { key: 'payout', label: 'Payout', width: 100, minWidth: 80, visible: true, sortable: true },
-  { key: 'businessArea', label: 'Business Area', width: 100, minWidth: 80, visible: true, sortable: true },
-  { key: 'durationDays', label: 'Duration', width: 80, minWidth: 60, visible: true, sortable: true },
-  { key: 'createdAt', label: 'Created', width: 100, minWidth: 80, visible: true, sortable: true },
-  { key: 'status', label: 'Status', width: 125, minWidth: 90, visible: false, sortable: true },
-  { key: 'company', label: 'Company', width: 70, minWidth: 60, visible: false, sortable: true },
-  { key: 'branch', label: 'Branch / Shop', width: 140, minWidth: 120, visible: true, sortable: true },
-  { key: 'pickupType', label: 'Pickup', width: 100, minWidth: 80, visible: false, sortable: true },
-];
+export { DEFAULT_COLUMNS } from './dealsTableColumns';
 
 function formatEur(value: number): string {
   return new Intl.NumberFormat('de-DE', { style: 'currency', currency: 'EUR', minimumFractionDigits: 0, maximumFractionDigits: 0 }).format(value);
@@ -137,20 +125,26 @@ export function DealsTable({
   // Local debounced search state for desktop search
   const [localSearch, setLocalSearch] = useState(searchQuery);
   const [isSearching, setIsSearching] = useState(false);
-
-  useEffect(() => {
-    setLocalSearch(searchQuery);
-  }, [searchQuery]);
+  // Previous-prop tracking: sync localSearch when searchQuery changes externally
+  const [prevSearchQuery, setPrevSearchQuery] = useState(searchQuery);
+  if (searchQuery !== prevSearchQuery) {
+    setPrevSearchQuery(searchQuery);
+    if (localSearch !== searchQuery) setLocalSearch(searchQuery);
+  }
 
   useEffect(() => {
     if (localSearch === searchQuery) return;
-    setIsSearching(true);
     const delay = setTimeout(() => {
       onSearchChange(localSearch);
       setIsSearching(false);
     }, 300);
     return () => clearTimeout(delay);
   }, [localSearch, onSearchChange, searchQuery]);
+
+  const handleLocalSearchChange = (value: string) => {
+    setLocalSearch(value);
+    setIsSearching(value !== searchQuery);
+  };
 
   const handleResizeStart = useCallback((e: React.MouseEvent, colKey: string) => {
     e.preventDefault();
@@ -185,7 +179,7 @@ export function DealsTable({
       document.removeEventListener('mousemove', handleMouseMove);
       document.removeEventListener('mouseup', handleMouseUp);
     };
-  }, [resizingCol, resizeStart, columns]);
+  }, [resizingCol, resizeStart, columns, setColumns]);
 
   // Handle Sort with Server Index constraints & Client Fallbacks
   const handleSortClick = (key: string, e: React.MouseEvent) => {
@@ -306,7 +300,7 @@ export function DealsTable({
             )}
           </div>
         );
-      case 'payout':
+      case 'payout': {
         const isVerified = [
           'VERIFIED',
           'PAYED_AND_STORED',
@@ -326,6 +320,7 @@ export function DealsTable({
             {formatEur(deal.suggestedPayout)}
           </span>
         );
+      }
       case 'durationDays':
         return <span className="text-[13px] text-[var(--text-subtle)] font-normal">{deal.durationDays} days</span>;
       case 'dueDate':
@@ -359,7 +354,7 @@ export function DealsTable({
             <input
               type="text"
               value={localSearch}
-              onChange={(e) => setLocalSearch(e.target.value)}
+              onChange={(e) => handleLocalSearchChange(e.target.value)}
               placeholder={DEALS_MICROCOPY.search.placeholder}
               className="w-full h-10 pl-10 pr-16 bg-[var(--background-primary)] border border-[var(--border-subtle)] rounded-lg text-sm focus:outline-none focus:border-[var(--border-brand)] focus:ring-2 focus:ring-[var(--border-brand)]/20 transition-all text-[var(--text-primary)] placeholder:text-[var(--text-subtlest)] font-medium shadow-sm"
               aria-label="Search index fields"

@@ -46,9 +46,21 @@ export const DealCardLarge = React.forwardRef<HTMLDivElement, DealCardLargeProps
   const stateClass = state !== "Default" ? `deal-card--${state.toLowerCase()}` : "";
 
   let displayDate = dueDate;
-  if (!isNaN(Number(dueDate)) && dueDate.length > 8) {
+  if (dueDate) {
+    if (/^\d{4}-\d{2}-\d{2}$/.test(dueDate)) {
+      const [year, month, day] = dueDate.split('-').map(Number);
+      const date = new Date(year, month - 1, day);
+      displayDate = date.toLocaleDateString("en-US", { month: "short", day: "numeric" });
+    } else if (!isNaN(Number(dueDate)) && dueDate.length > 8) {
       const date = new Date(Number(dueDate));
-      displayDate = `Due ${date.toLocaleDateString("en-US", { month: "short", day: "numeric" })}`;
+      displayDate = date.toLocaleDateString("en-US", { month: "short", day: "numeric" });
+    } else {
+      const timestamp = Date.parse(dueDate);
+      if (!isNaN(timestamp) && (dueDate.includes('T') || dueDate.includes('-'))) {
+        const date = new Date(timestamp);
+        displayDate = date.toLocaleDateString("en-US", { month: "short", day: "numeric" });
+      }
+    }
   }
 
   return (

@@ -166,30 +166,47 @@ export const LandingPage: React.FC<LandingPageProps> = ({
         <div className="flex flex-col h-full w-full bg-background text-foreground overflow-hidden relative" onClick={onClearColumnsFocus}>
             <div className="flex-1 overflow-hidden relative">
                 {isLoading ? (
-                    <div className="cashy-kanban-board animate-pulse flex gap-6 p-6 h-full overflow-hidden select-none bg-[var(--background-secondary)]/50">
+                    <div className="cashy-kanban-board animate-pulse select-none bg-[var(--background-secondary)]/50">
+                        <div className="cashy-kanban-interaction-zone" />
                         {[1, 2, 3, 4].map(idx => (
-                            <div key={idx} className="cashy-kanban-column w-[300px] min-w-[300px] h-full flex flex-col gap-4 p-4 bg-white border border-[var(--border-subtle)] rounded-2xl shadow-sm shrink-0">
-                                <div className="flex items-center justify-between pb-2 border-b border-gray-100">
-                                    <div className="h-5 w-24 bg-gray-200 rounded-md" />
-                                    <div className="h-5 w-5 bg-gray-200 rounded-full" />
-                                </div>
-                                <div className="flex flex-col gap-3 flex-grow overflow-hidden mt-2">
-                                    {[1, 2].map(cardIdx => (
-                                        <div key={cardIdx} className="p-4 bg-gray-50 border border-gray-100 rounded-xl flex flex-col gap-3">
-                                            <div className="flex items-center justify-between">
-                                                <div className="h-4 w-12 bg-gray-200 rounded" />
-                                                <div className="h-3 w-8 bg-gray-200 rounded" />
-                                            </div>
-                                            <div className="h-5 w-4/5 bg-gray-200 rounded" />
-                                            <div className="h-3.5 w-3/5 bg-gray-200 rounded" />
-                                            <div className="flex gap-1.5 mt-2">
-                                                <div className="h-4 w-14 bg-gray-200 rounded-full" />
-                                                <div className="h-4 w-12 bg-gray-200 rounded-full" />
+                            <React.Fragment key={idx}>
+                                <div className="cashy-kanban-column">
+                                    <div className="cashy-kanban-column-header">
+                                        <div className="flex items-center justify-between">
+                                            <div className="h-5 w-28 bg-gray-200 rounded-md" />
+                                            <div className="flex items-center gap-1.5">
+                                                <div className="h-8 w-8 bg-gray-100 rounded-lg" />
+                                                <div className="h-8 w-8 bg-gray-100 rounded-lg" />
                                             </div>
                                         </div>
-                                    ))}
+                                    </div>
+                                    <div className="cashy-kanban-column-body">
+                                        {[1, 2].map(cardIdx => (
+                                            <div key={cardIdx} className="task-card">
+                                                <div className="task-card__row task-card__row--header">
+                                                    <div className="task-card__meta">
+                                                        <div className="h-3.5 w-16 bg-gray-200 rounded" />
+                                                        <span aria-hidden="true">·</span>
+                                                        <div className="h-3.5 w-10 bg-gray-200 rounded" />
+                                                    </div>
+                                                    <div className="h-4 w-4 bg-gray-200 rounded-full" />
+                                                </div>
+                                                <div className="task-card__row task-card__row--title">
+                                                    <div className="h-4 w-5/6 bg-gray-200 rounded" />
+                                                </div>
+                                                <div className="task-card__row task-card__row--description">
+                                                    <div className="h-3.5 w-4/6 bg-gray-100 rounded" />
+                                                </div>
+                                                <div className="flex gap-1.5 mt-1">
+                                                    <div className="h-4 w-12 bg-gray-100 rounded-full" />
+                                                    <div className="h-4 w-10 bg-gray-100 rounded-full" />
+                                                </div>
+                                            </div>
+                                        ))}
+                                    </div>
                                 </div>
-                            </div>
+                                <div className="cashy-kanban-interaction-zone" />
+                            </React.Fragment>
                         ))}
                     </div>
                 ) : (
@@ -253,6 +270,7 @@ export const LandingPage: React.FC<LandingPageProps> = ({
                                         column={column}
                                         onChange={onUpdateColumn}
                                         onClose={() => setActiveConfigColumnId(null)}
+                                        disableDelete={column.id === columns[0]?.id}
                                         onDelete={() => {
                                             const deals = dealsByColumn[column.id] || [];
                                             setColumnToDelete(column);

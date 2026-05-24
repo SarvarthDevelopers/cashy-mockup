@@ -5,6 +5,7 @@ import { Dropdown } from '../Dropdown/Dropdown';
 import { Toggle } from '../Toggle/Toggle';
 import { Checkbox } from '../Checkbox/Checkbox';
 import { Button } from '../Button/Button';
+import { Tooltip } from '../Tooltip/Tooltip';
 import type { ColumnConfig } from './types';
 import './ColumnConfigPanel.css';
 
@@ -13,6 +14,7 @@ export interface ColumnConfigPanelProps {
   onChange: (updatedColumn: ColumnConfig) => void;
   onClose: () => void;
   onDelete: () => void;
+  disableDelete?: boolean;
 }
 
 const TrashIcon = () => (
@@ -31,7 +33,8 @@ export const ColumnConfigPanel: React.FC<ColumnConfigPanelProps> = ({
   column,
   onChange,
   onClose,
-  onDelete
+  onDelete,
+  disableDelete = false
 }) => {
   const handleFieldChange = <K extends keyof ColumnConfig>(key: K, value: ColumnConfig[K]) => {
     onChange({
@@ -145,15 +148,32 @@ export const ColumnConfigPanel: React.FC<ColumnConfigPanelProps> = ({
 
       {/* Sticky Footer */}
       <div className="cashy-column-config__footer">
-        <Button
-          variant="danger-subtle"
-          onClick={onDelete}
-          className="cashy-column-config__delete-btn"
-          aria-label="Delete Column"
-        >
-          <TrashIcon />
-          Delete Column
-        </Button>
+        {disableDelete ? (
+          <Tooltip content="First column cannot be deleted" side="top">
+            <span style={{ flex: 1, display: 'inline-flex' }}>
+              <Button
+                variant="danger-subtle"
+                className="cashy-column-config__delete-btn"
+                aria-label="Delete Column"
+                disabled
+                style={{ flex: 1, width: '100%', opacity: 0.5, cursor: 'not-allowed', pointerEvents: 'none' }}
+              >
+                <TrashIcon />
+                Delete Column
+              </Button>
+            </span>
+          </Tooltip>
+        ) : (
+          <Button
+            variant="danger-subtle"
+            onClick={onDelete}
+            className="cashy-column-config__delete-btn"
+            aria-label="Delete Column"
+          >
+            <TrashIcon />
+            Delete Column
+          </Button>
+        )}
         <Button
           variant="primary"
           onClick={onClose}

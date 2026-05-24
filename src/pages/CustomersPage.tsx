@@ -147,7 +147,7 @@ export function CustomersPage({ onSelectDeal }: CustomersPageProps) {
   const [currentPage, setCurrentPage] = useState(1);
 
   // Sidebar visibility
-  const [filterCollapsed, setFilterCollapsed] = useState(true);
+  const [filterCollapsed, setFilterCollapsed] = useState(false);
 
   // Bulk actions status
   const [bulkActionStatus, setBulkActionStatus] = useState<'idle' | 'processing' | 'success' | 'error'>('idle');
@@ -163,6 +163,18 @@ export function CustomersPage({ onSelectDeal }: CustomersPageProps) {
       setIsLoading(false);
     }, 450);
     return () => clearTimeout(timer);
+  }, []);
+
+  // Mobile layout responsiveness
+  useEffect(() => {
+    const handleMobileResize = () => {
+      if (window.innerWidth < 768) {
+        setFilterCollapsed(true);
+      }
+    };
+    handleMobileResize();
+    window.addEventListener('resize', handleMobileResize);
+    return () => window.removeEventListener('resize', handleMobileResize);
   }, []);
 
   const handleSearchChange = useCallback((query: string) => {

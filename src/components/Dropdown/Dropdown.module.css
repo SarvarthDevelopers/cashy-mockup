@@ -4,7 +4,7 @@
     gap: var(--space-100); /* 4px */
     font-family: var(--body-font-family);
     width: 100%;
-    position: relative;
+    /* No position: relative needed — listbox is now in a portal */
 }
 
 .label {
@@ -19,7 +19,7 @@
     display: flex;
     align-items: center;
     justify-content: space-between;
-    gap: var(--space-400); /* Adds distance between text and chevron */
+    gap: var(--space-400);
     background-color: var(--background-primary);
     border: 1px solid var(--border-primary);
     border-radius: var(--radius-200); /* 8px */
@@ -46,13 +46,6 @@
 [data-theme="dark"] .trigger.isOpen:not(.error),
 [data-theme="dark"] .trigger:focus-visible:not(.error) {
     box-shadow: 0 0 0 2px var(--background-primary), 0 0 0 4px var(--purple-800);
-}
-
-@media (prefers-color-scheme: disabled-dark) {
-    .trigger.isOpen:not(.error),
-    .trigger:focus-visible:not(.error) {
-        box-shadow: 0 0 0 2px var(--background-primary), 0 0 0 4px var(--purple-800);
-    }
 }
 
 .trigger.error {
@@ -102,36 +95,35 @@
     flex-shrink: 0;
 }
 
-/* Dropdown List Wrapper */
+/* ── Dropdown List (portal-rendered, not absolutely positioned) ── */
 .dropdownList {
-    position: absolute;
-    top: calc(100% + var(--space-100));
-    left: 0;
-    width: 100%;
+    /* Width is set inline from JS (triggerWidth) */
     max-height: 250px;
     overflow-y: auto;
     background-color: var(--background-primary);
+    border: 1px solid var(--border-primary);
     border-radius: var(--radius-200);
     padding: var(--space-150); /* 6px */
-    box-shadow: 0px 4px 8px 0px rgba(16,24,40,0.1), 0px 2px 4px 0px rgba(16,24,40,0.06);
-    z-index: 10;
+    box-shadow: 0px 8px 16px 0px rgba(16,24,40,0.12), 0px 2px 4px 0px rgba(16,24,40,0.06);
+    /* Ensure it always floats above everything */
+    z-index: 9999;
     display: flex;
     flex-direction: column;
     box-sizing: border-box;
     /* Reset ul defaults */
     list-style: none;
     margin: 0;
+    outline: none;
 }
 
 [data-theme="dark"] .dropdownList {
-    box-shadow: 0px 4px 8px 0px rgba(0,0,0,0.4), 0px 2px 4px 0px rgba(0,0,0,0.2);
-    border: 1px solid var(--border-primary);
+    box-shadow: 0px 8px 16px 0px rgba(0,0,0,0.4), 0px 2px 4px 0px rgba(0,0,0,0.2);
 }
 
 .item {
     display: flex;
     align-items: center;
-    min-height: 46px;
+    min-height: 40px;
     padding: var(--space-200) var(--space-300); /* 8px 12px */
     background-color: var(--background-primary);
     border-radius: var(--radius-100); /* 4px */
@@ -141,13 +133,12 @@
     font-weight: var(--body-font-weight-regular);
     color: var(--text-primary);
     line-height: 1.4;
-    transition: background-color 0.2s ease;
+    transition: background-color 0.15s ease;
     box-sizing: border-box;
     width: 100%;
     list-style: none;
     text-align: left;
     flex-shrink: 0;
-    /* Reset list-item default margin/padding */
     margin: 0;
     outline: none;
 }
@@ -163,9 +154,8 @@
 
 .item.selected {
     background-color: var(--background-secondary-hover);
+    font-weight: var(--weight-medium);
 }
-
-
 
 /* Helper & Error Texts */
 .helperText {

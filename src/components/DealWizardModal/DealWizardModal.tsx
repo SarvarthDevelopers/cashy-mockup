@@ -23,8 +23,13 @@ import { DatePicker } from '../DatePicker/DatePicker';
 
 const parseDateString = (str: string): Date | null => {
   if (!str) return null;
+  // Only handle YYYY-MM-DD format; other formats (like 'Jan 27') are not parseable here
+  if (!/^\d{4}-\d{2}-\d{2}$/.test(str)) return null;
   const [year, month, day] = str.split('-').map(Number);
-  return new Date(year, month - 1, day);
+  const d = new Date(year, month - 1, day);
+  // Verify the date is valid (guards against e.g. Feb 31)
+  if (isNaN(d.getTime())) return null;
+  return d;
 };
 
 const formatDateString = (date: Date | null): string => {
@@ -886,7 +891,7 @@ export const DealWizardModal: React.FC<DealWizardModalProps> = ({
                                     </div>
                                 </div>
                             ) : (
-                                <div className="w-full max-w-full 2xl:max-w-[800px] mx-auto space-y-12 pt-4 md:pt-8 pb-32 md:pb-20 px-4 md:px-8">
+                                <div className="w-full max-w-full mx-auto space-y-12 pt-4 md:pt-8 pb-32 md:pb-20 px-4 md:px-8">
                                     {/* --- Section 1: Basic Info --- */}
                                     <div 
                                         id="section-step1" 
@@ -1109,63 +1114,61 @@ export const DealWizardModal: React.FC<DealWizardModalProps> = ({
                                         </div>
                                     </div>
 
-                                    {/* --- Deal Metadata & Transport --- */}
-                                    <div className="grid grid-cols-1 md:grid-cols-2 gap-6">
-                                        <div className="bg-white rounded-2xl border border-[var(--border-subtlest)] shadow-sm overflow-hidden transition-all duration-300 hover:shadow-md flex flex-col">
-                                            <div className="px-6 md:px-8 py-4 md:py-5 border-b border-[var(--border-subtlest)] bg-[var(--background-secondary)]/40 flex items-center justify-between shrink-0">
-                                                <h3 className="text-[11px] font-bold text-[var(--text-subtle)] uppercase tracking-wider m-0">Deal Metadata</h3>
-                                            </div>
-                                            <div className="p-6 md:p-8 flex-1">
-                                                <div className="grid grid-cols-1 md:grid-cols-2 gap-6 md:gap-8">
-                                                    <Dropdown 
-                                                        label="Company" 
-                                                        options={[{ label: 'CASHY_AUT', value: 'CASHY_AUT' }, { label: 'CASHY_GER', value: 'CASHY_GER' }]}
-                                                        value={metadata.company}
-                                                        onChange={(val) => setMetadata({...metadata, company: val})}
-                                                    />
-                                                    <Dropdown 
-                                                        label="Branch" 
-                                                        options={[{ label: 'Vienna Main', value: 'Vienna Main' }, { label: 'Graz South', value: 'Graz South' }]}
-                                                        value={metadata.branch}
-                                                        onChange={(val) => setMetadata({...metadata, branch: val})}
-                                                    />
-                                                    <Input 
-                                                        label="Duration (Days)" 
-                                                        type="number" 
-                                                        value={metadata.duration}
-                                                        onChange={(e) => setMetadata({...metadata, duration: e.target.value})}
-                                                    />
-                                                    <DatePicker 
-                                                        label="Due Date (for staff)" 
-                                                        value={metadata.dueDate ? parseDateString(metadata.dueDate) : null}
-                                                        onChange={(date) => setMetadata({ ...metadata, dueDate: date ? formatDateString(date) : '' })}
-                                                        placeholder="Select due date"
-                                                    />
-                                                </div>
+                                    {/* --- Deal Metadata --- */}
+                                    <div className="bg-white rounded-2xl border border-[var(--border-subtlest)] shadow-sm overflow-hidden transition-all duration-300 hover:shadow-md">
+                                        <div className="px-6 md:px-8 py-4 md:py-5 border-b border-[var(--border-subtlest)] bg-[var(--background-secondary)]/40 flex items-center justify-between">
+                                            <h3 className="text-[11px] font-bold text-[var(--text-subtle)] uppercase tracking-wider m-0">Deal Metadata</h3>
+                                        </div>
+                                        <div className="p-6 md:p-8">
+                                            <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-4 gap-6 md:gap-8">
+                                                <Dropdown 
+                                                    label="Company" 
+                                                    options={[{ label: 'CASHY_AUT', value: 'CASHY_AUT' }, { label: 'CASHY_GER', value: 'CASHY_GER' }]}
+                                                    value={metadata.company}
+                                                    onChange={(val) => setMetadata({...metadata, company: val})}
+                                                />
+                                                <Dropdown 
+                                                    label="Branch" 
+                                                    options={[{ label: 'Vienna Main', value: 'Vienna Main' }, { label: 'Graz South', value: 'Graz South' }]}
+                                                    value={metadata.branch}
+                                                    onChange={(val) => setMetadata({...metadata, branch: val})}
+                                                />
+                                                <Input 
+                                                    label="Duration (Days)" 
+                                                    type="number" 
+                                                    value={metadata.duration}
+                                                    onChange={(e) => setMetadata({...metadata, duration: e.target.value})}
+                                                />
+                                                <DatePicker 
+                                                    label="Due Date (for staff)" 
+                                                    value={metadata.dueDate ? parseDateString(metadata.dueDate) : null}
+                                                    onChange={(date) => setMetadata({ ...metadata, dueDate: date ? formatDateString(date) : '' })}
+                                                    placeholder="Select due date"
+                                                />
                                             </div>
                                         </div>
+                                    </div>
 
-                                        <div className="bg-white rounded-2xl border border-[var(--border-subtlest)] shadow-sm overflow-hidden transition-all duration-300 hover:shadow-md flex flex-col">
-                                            <div className="px-6 md:px-8 py-4 md:py-5 border-b border-[var(--border-subtlest)] bg-[var(--background-secondary)]/40 flex items-center justify-between shrink-0">
-                                                <h3 className="text-[11px] font-bold text-[var(--text-subtle)] uppercase tracking-wider m-0">Transport & Payout</h3>
+                                    {/* --- Transport & Payout --- */}
+                                    <div className="bg-white rounded-2xl border border-[var(--border-subtlest)] shadow-sm overflow-hidden transition-all duration-300 hover:shadow-md">
+                                        <div className="px-6 md:px-8 py-4 md:py-5 border-b border-[var(--border-subtlest)] bg-[var(--background-secondary)]/40 flex items-center justify-between">
+                                            <h3 className="text-[11px] font-bold text-[var(--text-subtle)] uppercase tracking-wider m-0">Transport & Payout</h3>
+                                        </div>
+                                        <div className="p-6 md:p-8">
+                                            <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-4 gap-6 md:gap-8">
+                                                <Dropdown 
+                                                    label="Transport Method" 
+                                                    options={[{ label: 'Pickup: SHOP', value: 'Pickup: SHOP' }, { label: 'Courier', value: 'Courier' }]}
+                                                />
+                                                <Dropdown 
+                                                    label="Payout Method" 
+                                                    options={[{ label: 'Cash', value: 'Cash' }, { label: 'Bank Transfer', value: 'Bank Transfer' }, { label: 'PayPal', value: 'PayPal' }]}
+                                                    value={metadata.payoutMethod}
+                                                    onChange={(val) => setMetadata({...metadata, payoutMethod: val})}
+                                                />
                                             </div>
-                                            <div className="p-6 md:p-8 flex-1 flex flex-col justify-between">
-                                                <div className="grid grid-cols-1 md:grid-cols-2 gap-6 md:gap-8">
-                                                    <Dropdown 
-                                                        label="Transport Method" 
-                                                        options={[{ label: 'Pickup: SHOP', value: 'Pickup: SHOP' }, { label: 'Courier', value: 'Courier' }]}
-                                                    />
-                                                    <Dropdown 
-                                                        label="Payout Method" 
-                                                        options={[{ label: 'Cash', value: 'Cash' }, { label: 'Bank Transfer', value: 'Bank Transfer' }, { label: 'PayPal', value: 'PayPal' }]}
-                                                        value={metadata.payoutMethod}
-                                                        onChange={(val) => setMetadata({...metadata, payoutMethod: val})}
-                                                    />
-                                                </div>
-                                                <div className="flex-1 min-h-[40px]" />
-                                                <div className="flex items-center gap-2 text-gray-400 text-[11px] font-medium italic">
-                                                    <AlertCircle size={14} /> Payout methods vary by country.
-                                                </div>
+                                            <div className="flex items-center gap-2 text-gray-400 text-[11px] font-medium italic mt-6">
+                                                <AlertCircle size={14} /> Payout methods vary by country.
                                             </div>
                                         </div>
                                     </div>

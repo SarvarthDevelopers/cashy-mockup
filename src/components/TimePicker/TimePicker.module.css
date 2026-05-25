@@ -13,6 +13,13 @@
     line-height: 1.4;
 }
 
+.triggerWrapper {
+    position: relative;
+    width: 100%;
+    display: flex;
+    align-items: center;
+}
+
 .trigger {
     display: flex;
     align-items: center;
@@ -96,6 +103,10 @@
 }
 
 .clearButton {
+    position: absolute;
+    right: 32px;
+    top: 50%;
+    transform: translateY(-50%);
     display: flex;
     align-items: center;
     justify-content: center;
@@ -109,6 +120,7 @@
     color: var(--text-subtlest) !important;
     cursor: pointer;
     transition: color 0.15s ease, background-color 0.15s ease;
+    z-index: 1;
 }
 
 .clearButton:hover {

@@ -1,4 +1,5 @@
 import React, { forwardRef, useState, useRef, useEffect, useCallback, useId } from 'react';
+import { createPortal } from 'react-dom';
 import styles from './Dropdown.module.css';
 
 export interface DropdownOption {
@@ -23,10 +24,10 @@ export const Dropdown = forwardRef<HTMLButtonElement, DropdownProps>(
     ({ options, value, defaultValue, onChange, placeholder = 'Select an option', label, error, errorMessage, helperText, disabled, className, ...props }, ref) => {
         const [isOpen, setIsOpen] = useState(false);
         const [internalValue, setInternalValue] = useState(defaultValue);
-        // Index of the currently keyboard-focused option (-1 = none)
         const [focusedIndex, setFocusedIndex] = useState(-1);
+        const [menuStyle, setMenuStyle] = useState<React.CSSProperties>({});
 
-        const containerRef = useRef<HTMLDivElement>(null);
+        const triggerRef = useRef<HTMLButtonElement | null>(null);
         const listboxRef = useRef<HTMLUListElement>(null);
         const optionRefs = useRef<Array<HTMLLIElement | null>>([]);
 
@@ -39,55 +40,100 @@ export const Dropdown = forwardRef<HTMLButtonElement, DropdownProps>(
         const helperId = helperText ? `${buttonId}-helper` : undefined;
         const errorId = errorMessage ? `${buttonId}-error` : undefined;
         const describedBy = [helperId, errorId].filter(Boolean).join(' ') || undefined;
-        // Announce the active option to the trigger's aria-activedescendant
         const activeDescendant = isOpen && focusedIndex >= 0
             ? `${buttonId}-option-${focusedIndex}`
             : undefined;
 
         const selectedOption = options.find((opt) => opt.value === currentValue);
 
-        // --- Open / close helpers ----------------------------------------
+        // --- Position the portal listbox under the trigger ---
+        const calcMenuStyle = useCallback((): React.CSSProperties => {
+            if (!triggerRef.current) return {};
+            const rect = triggerRef.current.getBoundingClientRect();
+            return {
+                position: 'fixed',
+                top: rect.bottom + 4,
+                left: rect.left,
+                width: rect.width,
+                zIndex: 9999,
+            };
+        }, []);
+
+        // --- Open / close helpers ---
 
         const openMenu = useCallback(() => {
             if (disabled) return;
+            setMenuStyle(calcMenuStyle());
             const selectedIdx = options.findIndex((o) => o.value === currentValue);
             setFocusedIndex(selectedIdx >= 0 ? selectedIdx : 0);
             setIsOpen(true);
-        }, [disabled, options, currentValue]);
+        }, [disabled, options, currentValue, calcMenuStyle]);
 
         const closeMenu = useCallback(() => {
             setIsOpen(false);
             setFocusedIndex(-1);
+            triggerRef.current?.focus();
         }, []);
 
-        // Focus the highlighted option whenever focusedIndex changes while open
+        // Focus listbox after it mounts
+        useEffect(() => {
+            if (isOpen) {
+                // Small defer so the portal is painted before focus
+                const id = requestAnimationFrame(() => {
+                    listboxRef.current?.focus();
+                });
+                return () => cancelAnimationFrame(id);
+            }
+        }, [isOpen]);
+
+        // Scroll focused option into view
         useEffect(() => {
             if (isOpen && focusedIndex >= 0) {
                 optionRefs.current[focusedIndex]?.scrollIntoView({ block: 'nearest' });
             }
         }, [isOpen, focusedIndex]);
 
-        // Close on outside click
+        // Close on outside pointer down
         useEffect(() => {
             if (!isOpen) return;
             const handlePointerDown = (e: MouseEvent) => {
-                if (containerRef.current && !containerRef.current.contains(e.target as Node)) {
-                    closeMenu();
+                const list = listboxRef.current;
+                const trigger = triggerRef.current;
+                if (
+                    list && !list.contains(e.target as Node) &&
+                    trigger && !trigger.contains(e.target as Node)
+                ) {
+                    setIsOpen(false);
+                    setFocusedIndex(-1);
                 }
             };
             document.addEventListener('mousedown', handlePointerDown);
             return () => document.removeEventListener('mousedown', handlePointerDown);
-        }, [isOpen, closeMenu]);
+        }, [isOpen]);
 
-        // --- Selection ---------------------------------------------------
+        // Close on scroll or resize (reposition would be complex; just close)
+        useEffect(() => {
+            if (!isOpen) return;
+            const close = () => { setIsOpen(false); setFocusedIndex(-1); };
+            window.addEventListener('scroll', close, { capture: true, passive: true });
+            window.addEventListener('resize', close, { passive: true });
+            return () => {
+                window.removeEventListener('scroll', close, { capture: true });
+                window.removeEventListener('resize', close);
+            };
+        }, [isOpen]);
+
+        // --- Selection ---
 
         const selectOption = useCallback((optionValue: string) => {
             if (!isControlled) setInternalValue(optionValue);
             onChange?.(optionValue);
-            closeMenu();
-        }, [isControlled, onChange, closeMenu]);
+            setIsOpen(false);
+            setFocusedIndex(-1);
+            triggerRef.current?.focus();
+        }, [isControlled, onChange]);
 
-        // --- Keyboard navigation on the trigger button -------------------
+        // --- Keyboard: trigger ---
 
         const handleTriggerKeyDown = useCallback((e: React.KeyboardEvent<HTMLButtonElement>) => {
             switch (e.key) {
@@ -99,7 +145,7 @@ export const Dropdown = forwardRef<HTMLButtonElement, DropdownProps>(
                     break;
                 case 'ArrowUp':
                     e.preventDefault();
-                    // Open with last option focused
+                    setMenuStyle(calcMenuStyle());
                     setFocusedIndex(options.length - 1);
                     setIsOpen(true);
                     break;
@@ -107,9 +153,9 @@ export const Dropdown = forwardRef<HTMLButtonElement, DropdownProps>(
                     closeMenu();
                     break;
             }
-        }, [openMenu, closeMenu, options.length]);
+        }, [openMenu, closeMenu, options.length, calcMenuStyle]);
 
-        // --- Keyboard navigation inside the listbox ----------------------
+        // --- Keyboard: listbox ---
 
         const handleListKeyDown = useCallback((e: React.KeyboardEvent<HTMLUListElement>) => {
             switch (e.key) {
@@ -139,22 +185,29 @@ export const Dropdown = forwardRef<HTMLButtonElement, DropdownProps>(
                     closeMenu();
                     break;
                 case 'Tab':
-                    closeMenu();
+                    setIsOpen(false);
+                    setFocusedIndex(-1);
                     break;
             }
         }, [options, focusedIndex, selectOption, closeMenu]);
 
+        // Merge forwarded ref with internal triggerRef
+        const setTriggerRef = useCallback((el: HTMLButtonElement | null) => {
+            triggerRef.current = el;
+            if (typeof ref === 'function') ref(el);
+            else if (ref) (ref as React.MutableRefObject<HTMLButtonElement | null>).current = el;
+        }, [ref]);
+
         return (
-            <div className={`${styles.container} ${className ?? ''}`} ref={containerRef}>
+            <div className={`${styles.container} ${className ?? ''}`}>
                 {label && (
                     <label htmlFor={buttonId} className={styles.label}>
                         {label}
                     </label>
                 )}
 
-                {/* ── Trigger ─────────────────────────────────────────────── */}
                 <button
-                    ref={ref}
+                    ref={setTriggerRef}
                     id={buttonId}
                     type="button"
                     className={`
@@ -194,8 +247,7 @@ export const Dropdown = forwardRef<HTMLButtonElement, DropdownProps>(
                     </div>
                 </button>
 
-                {/* ── Listbox ─────────────────────────────────────────────── */}
-                {isOpen && (
+                {isOpen && createPortal(
                     <ul
                         ref={listboxRef}
                         id={listboxId}
@@ -203,9 +255,8 @@ export const Dropdown = forwardRef<HTMLButtonElement, DropdownProps>(
                         role="listbox"
                         aria-label={label ?? placeholder}
                         tabIndex={-1}
+                        style={menuStyle}
                         onKeyDown={handleListKeyDown}
-                        // Keep keyboard focus on the ul so arrow-key events fire here
-                        autoFocus
                     >
                         {options.map((option, index) => {
                             const isSelected = option.value === currentValue;
@@ -220,14 +271,13 @@ export const Dropdown = forwardRef<HTMLButtonElement, DropdownProps>(
                                     className={`${styles.item} ${isSelected ? styles.selected : ''} ${isFocused ? styles.focused : ''}`}
                                     onClick={() => selectOption(option.value)}
                                     onMouseEnter={() => setFocusedIndex(index)}
-                                    // li is not interactive natively — pointer events handle selection,
-                                    // keyboard events are handled on the parent ul.
                                 >
                                     {option.label}
                                 </li>
                             );
                         })}
-                    </ul>
+                    </ul>,
+                    document.body
                 )}
 
                 {errorMessage && <span id={errorId} className={styles.errorMessage}>{errorMessage}</span>}

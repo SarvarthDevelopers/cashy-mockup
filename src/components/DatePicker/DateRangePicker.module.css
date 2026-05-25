@@ -1,0 +1,404 @@
+.container {
+    display: flex;
+    flex-direction: column;
+    gap: var(--space-100);
+    font-family: var(--family-sans);
+    width: 100%;
+}
+
+.label {
+    font-size: var(--scale-02); /* 12px */
+    font-weight: var(--weight-medium);
+    color: var(--text-subtle);
+    line-height: 1.4;
+}
+
+.trigger {
+    display: flex;
+    align-items: center;
+    justify-content: space-between;
+    background-color: var(--background-primary) !important;
+    border: 1px solid var(--border-primary) !important;
+    border-radius: var(--radius-200) !important;
+    padding: 0 var(--space-300) !important; /* 0 12px */
+    font-size: var(--scale-03) !important; /* 14px */
+    font-weight: var(--weight-regular) !important;
+    color: var(--text-primary) !important;
+    width: 100%;
+    height: 36px;
+    cursor: pointer;
+    box-sizing: border-box !important;
+    transition: border-color 0.15s ease, box-shadow 0.15s ease;
+    outline: none;
+}
+
+.trigger:hover:not(.disabled):not(.error) {
+    border-color: var(--border-primary-hover) !important;
+}
+
+.trigger.isOpen {
+    border-color: var(--border-focused) !important;
+    box-shadow: 0px 0px 0px 2px var(--border-focused) !important;
+}
+
+.trigger.disabled {
+    background-color: var(--background-disabled) !important;
+    border-color: var(--border-disabled) !important;
+    color: var(--text-disabled) !important;
+    cursor: not-allowed;
+}
+
+.trigger.error {
+    border-color: var(--border-error) !important;
+}
+
+.leftSection {
+    display: flex;
+    align-items: center;
+    gap: var(--space-200); /* 8px */
+    overflow: hidden;
+}
+
+.rightSection {
+    display: flex;
+    align-items: center;
+    gap: var(--space-150); /* 6px */
+    flex-shrink: 0;
+}
+
+.value {
+    overflow: hidden;
+    text-overflow: ellipsis;
+    white-space: nowrap;
+    color: var(--text-primary);
+}
+
+.value.placeholder {
+    color: var(--text-subtlest);
+}
+
+.icon {
+    display: flex;
+    align-items: center;
+    color: var(--text-subtlest);
+    flex-shrink: 0;
+}
+
+.trigger.disabled .icon {
+    color: var(--text-disabled);
+}
+
+.chevronIcon {
+    display: flex;
+    align-items: center;
+    color: var(--text-subtlest);
+    flex-shrink: 0;
+}
+
+.clearButton {
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    background: transparent !important;
+    border: none !important;
+    padding: 0 !important;
+    margin: 0 !important;
+    width: 18px;
+    height: 18px;
+    border-radius: var(--radius-100) !important;
+    color: var(--text-subtlest) !important;
+    cursor: pointer;
+    transition: color 0.15s ease, background-color 0.15s ease;
+}
+
+.clearButton:hover {
+    background-color: var(--background-hover) !important;
+    color: var(--text-primary) !important;
+}
+
+/* --- Popover & Layout --- */
+.popoverContent {
+    background-color: var(--background-primary);
+    border: 1px solid var(--border-primary);
+    border-radius: var(--radius-200);
+    box-shadow: 0px 10px 15px -3px rgba(0, 0, 0, 0.05), 0px 4px 6px -2px rgba(0, 0, 0, 0.02);
+    z-index: 1000;
+    max-width: calc(100vw - 32px);
+    animation: slideUpAndFade 0.15s cubic-bezier(0.16, 1, 0.3, 1);
+    box-sizing: border-box;
+    overflow: hidden;
+}
+
+.pickerPanel {
+    display: flex;
+    flex-direction: row;
+}
+
+.sidebar {
+    display: flex;
+    flex-direction: column;
+    gap: var(--space-050); /* 2px */
+    width: 140px;
+    padding: var(--space-200); /* 8px */
+    box-sizing: border-box;
+}
+
+.sidebarButton {
+    display: block;
+    width: 100%;
+    text-align: left;
+    background: transparent !important;
+    border: none !important;
+    padding: var(--space-150) var(--space-200) !important; /* 6px 8px */
+    font-family: var(--family-sans);
+    font-size: var(--scale-02); /* 12px */
+    font-weight: var(--weight-medium);
+    color: var(--text-subtle) !important;
+    border-radius: var(--radius-100) !important;
+    cursor: pointer;
+    box-sizing: border-box !important;
+    transition: background-color 0.15s ease, color 0.15s ease;
+}
+
+.sidebarButton:hover {
+    background-color: var(--background-hover) !important;
+    color: var(--text-primary) !important;
+}
+
+.verticalDivider {
+    width: 1px;
+    background-color: var(--border-primary);
+    align-self: stretch;
+}
+
+.calendarsContainer {
+    display: flex;
+    flex-direction: row;
+    gap: var(--space-300); /* 12px */
+    padding: var(--space-300); /* 12px */
+}
+
+.calendarDivider {
+    width: 1px;
+    background-color: var(--border-primary);
+    align-self: stretch;
+}
+
+.calendar {
+    display: flex;
+    flex-direction: column;
+    width: 224px; /* 32px * 7 days */
+}
+
+.header {
+    display: flex;
+    align-items: center;
+    justify-content: space-between;
+    height: 28px;
+    margin-bottom: var(--space-250);
+}
+
+.navButton {
+    display: inline-flex !important;
+    align-items: center !important;
+    justify-content: center !important;
+    width: 26px !important;
+    height: 26px !important;
+    padding: 0 !important;
+    margin: 0 !important;
+    border-radius: 6px !important;
+    border: 1px solid var(--border-primary) !important;
+    background-color: var(--background-primary) !important;
+    color: var(--text-subtle) !important;
+    cursor: pointer;
+    box-sizing: border-box !important;
+    transition: background-color 0.15s ease, color 0.15s ease;
+}
+
+.navButton:hover {
+    background-color: var(--background-hover) !important;
+    color: var(--text-primary) !important;
+    border-color: var(--border-primary-hover) !important;
+}
+
+.ghostNavButton {
+    width: 26px;
+    height: 26px;
+}
+
+.monthLabel {
+    font-size: var(--scale-02); /* 12px */
+    font-weight: var(--weight-semi-bold);
+    color: var(--text-primary);
+}
+
+.body {
+    display: flex;
+    flex-direction: column;
+    gap: 4px;
+}
+
+.weekdays {
+    display: grid;
+    grid-template-columns: repeat(7, 1fr);
+    justify-items: center;
+    margin-bottom: var(--space-050);
+}
+
+.weekday {
+    width: 32px;
+    text-align: center;
+    font-size: var(--scale-02); /* 12px */
+    font-weight: var(--weight-medium);
+    color: var(--text-subtlest);
+}
+
+.daysGrid {
+    display: grid;
+    grid-template-columns: repeat(7, 1fr);
+    justify-items: center;
+    row-gap: 2px;
+}
+
+.dayCell {
+    display: flex !important;
+    align-items: center !important;
+    justify-content: center !important;
+    width: 32px !important;
+    height: 32px !important;
+    padding: 0 !important;
+    margin: 0 !important;
+    font-family: var(--family-sans) !important;
+    font-size: var(--scale-02) !important; /* 12px */
+    font-weight: var(--weight-regular) !important;
+    border-radius: 0 !important; /* Default cell is square for range connections */
+    border: none !important;
+    background: transparent !important;
+    color: var(--text-primary) !important;
+    cursor: pointer;
+    box-sizing: border-box !important;
+    transition: background-color 0.1s ease, color 0.1s ease;
+    outline: none;
+}
+
+.dayCell:hover:not(.selectedStart):not(.selectedEnd):not(.inRange):not(.disabledCell) {
+    background-color: var(--background-hover) !important;
+    border-radius: var(--radius-100) !important;
+}
+
+/* Range specific states */
+.dayCell.selectedStart {
+    background-color: var(--background-brand-solid) !important;
+    color: var(--text-white) !important;
+    font-weight: var(--weight-medium) !important;
+    border-top-left-radius: var(--radius-100) !important;
+    border-bottom-left-radius: var(--radius-100) !important;
+}
+
+/* If selecting only a single day, or range ends on same day, keep it fully rounded */
+.dayCell.selectedStart:not(.inRange) {
+    border-radius: var(--radius-100) !important;
+}
+
+.dayCell.selectedEnd {
+    background-color: var(--background-brand-solid) !important;
+    color: var(--text-white) !important;
+    font-weight: var(--weight-medium) !important;
+    border-top-right-radius: var(--radius-100) !important;
+    border-bottom-right-radius: var(--radius-100) !important;
+}
+
+.dayCell.inRange {
+    background-color: var(--background-brand-subtle) !important;
+    color: var(--text-brand) !important;
+    border-radius: 0 !important;
+}
+
+.dayCell.outOfMonth {
+    color: var(--text-disabled) !important;
+}
+
+.dayCell.today:not(.selectedStart):not(.selectedEnd):not(.inRange) {
+    background-color: var(--background-brand-subtlest) !important;
+    color: var(--text-brand) !important;
+    font-weight: var(--weight-semi-bold) !important;
+    border-radius: var(--radius-100) !important;
+}
+
+.dayCell.disabledCell {
+    color: var(--text-disabled) !important;
+    cursor: not-allowed;
+    text-decoration: line-through;
+    opacity: 0.5;
+}
+
+.helperText {
+    font-size: var(--scale-02);
+    color: var(--text-subtlest);
+    margin-top: var(--space-050);
+}
+
+.errorMessage {
+    font-size: var(--scale-02);
+    color: var(--text-error);
+    margin-top: var(--space-050);
+}
+
+@keyframes slideUpAndFade {
+    from {
+        opacity: 0;
+        transform: translateY(2px);
+    }
+    to {
+        opacity: 1;
+        transform: translateY(0);
+    }
+}
+
+.nextMonthMobileOnly {
+    display: none !important;
+}
+
+.prevMonthMobileOnly {
+    display: none !important;
+}
+
+@media (max-width: 640px) {
+    .pickerPanel {
+        flex-direction: column;
+    }
+    .sidebar {
+        width: 100%;
+        flex-direction: row;
+        flex-wrap: wrap;
+        gap: 6px;
+        border-bottom: 1px solid var(--border-primary);
+    }
+    .sidebarButton {
+        width: auto;
+        flex: 1 1 calc(33.33% - 6px);
+        text-align: center;
+        padding: 6px 4px !important;
+        font-size: 11px;
+    }
+    .verticalDivider {
+        display: none;
+    }
+    .calendarsContainer {
+        flex-direction: column;
+        padding: var(--space-200);
+        gap: var(--space-200);
+    }
+    .calendarDivider {
+        display: none;
+    }
+    .calendarsContainer .calendar:last-child {
+        display: none;
+    }
+    .nextMonthMobileOnly {
+        display: inline-flex !important;
+    }
+    .ghostNavButton {
+        display: none !important;
+    }
+}

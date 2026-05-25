@@ -19,6 +19,21 @@ import type { DealData } from '../../data/mockData';
 import { MOCK_WIZARDS, GLOBAL_STEPS } from '../../data/wizardData';
 import { getBusinessAreaForDeal, getCategoryFromItemTitle, CATEGORY_DISPLAY_NAMES } from '../../data/businessAreaMapping';
 import { CategoryTreeDropdown } from '../CategoryTree/CategoryTreeDropdown';
+import { DatePicker } from '../DatePicker/DatePicker';
+
+const parseDateString = (str: string): Date | null => {
+  if (!str) return null;
+  const [year, month, day] = str.split('-').map(Number);
+  return new Date(year, month - 1, day);
+};
+
+const formatDateString = (date: Date | null): string => {
+  if (!date) return '';
+  const yyyy = date.getFullYear();
+  const mm = String(date.getMonth() + 1).padStart(2, '0');
+  const dd = String(date.getDate()).padStart(2, '0');
+  return `${yyyy}-${mm}-${dd}`;
+};
 
 const CAR_DATA: Record<string, string[]> = {
     'Volkswagen': ['Golf', 'Tiguan', 'Passat', 'Polo', 'ID.4'],
@@ -1120,11 +1135,11 @@ export const DealWizardModal: React.FC<DealWizardModalProps> = ({
                                                         value={metadata.duration}
                                                         onChange={(e) => setMetadata({...metadata, duration: e.target.value})}
                                                     />
-                                                    <Input 
+                                                    <DatePicker 
                                                         label="Due Date (for staff)" 
-                                                        type="date"
-                                                        value={metadata.dueDate}
-                                                        onChange={(e) => setMetadata({ ...metadata, dueDate: e.target.value })}
+                                                        value={metadata.dueDate ? parseDateString(metadata.dueDate) : null}
+                                                        onChange={(date) => setMetadata({ ...metadata, dueDate: date ? formatDateString(date) : '' })}
+                                                        placeholder="Select due date"
                                                     />
                                                 </div>
                                             </div>

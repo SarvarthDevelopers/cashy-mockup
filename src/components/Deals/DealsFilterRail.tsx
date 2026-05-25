@@ -1,11 +1,12 @@
 import { useState, useMemo } from 'react';
-import { X, Calendar, ChevronRight, ChevronDown, Search } from 'lucide-react';
+import { X, ChevronRight, ChevronDown, Search } from 'lucide-react';
 import type { Deal } from '../../data/mockDeals';
 import { SHOP_METADATA } from '../../data/mockDeals';
 import { getBusinessAreas, ALL_EXISTING_CATEGORIES, buildCategoryTree, getDescendants, type CategoryNode } from '../../data/businessAreaMapping';
 
 import { INITIAL_FILTERS } from './dealsFilterConstants';
 import type { FilterState } from './dealsFilterConstants';
+import { DateRangePicker } from '../DatePicker/DateRangePicker';
 
 export { INITIAL_FILTERS };
 export type { FilterState };
@@ -308,7 +309,33 @@ function MultiCheckboxFilter({
 
 
 
+const parseDateString = (str: string): Date | null => {
+  if (!str) return null;
+  const [year, month, day] = str.split('-').map(Number);
+  return new Date(year, month - 1, day);
+};
+
+const formatDateString = (date: Date | null): string => {
+  if (!date) return '';
+  const yyyy = date.getFullYear();
+  const mm = String(date.getMonth() + 1).padStart(2, '0');
+  const dd = String(date.getDate()).padStart(2, '0');
+  return `${yyyy}-${mm}-${dd}`;
+};
+
 export function DealsFilterRail({ filters, onFiltersChange, deals, collapsed, onToggleCollapse }: DealsFilterRailProps) {
+  const rangeValue = useMemo(() => ({
+    from: parseDateString(filters.createdDateFrom || ''),
+    to: parseDateString(filters.createdDateTo || '')
+  }), [filters.createdDateFrom, filters.createdDateTo]);
+
+  const handleRangeChange = (range: { from: Date | null; to: Date | null }) => {
+    onFiltersChange({
+      ...filters,
+      createdDateFrom: formatDateString(range.from),
+      createdDateTo: formatDateString(range.to)
+    });
+  };
   const updateFilter = <K extends keyof FilterState>(key: K, value: FilterState[K]) => {
     onFiltersChange({ ...filters, [key]: value });
   };
@@ -649,27 +676,13 @@ export function DealsFilterRail({ filters, onFiltersChange, deals, collapsed, on
 
           {/* Created Date */}
           <FilterSection title="Created Date" defaultOpen={false}>
-            <div className="flex flex-col gap-1.5 w-full">
-              <div className="relative w-full">
-                <Calendar size={11} strokeWidth={1.5} className="absolute left-2.5 top-1/2 -translate-y-1/2 text-[var(--text-subtlest)] pointer-events-none" />
-                <input
-                  type="date"
-                  value={filters.createdDateFrom}
-                  onChange={(e) => updateFilter('createdDateFrom', e.target.value)}
-                  className="w-full h-[40px] pl-7 pr-2 text-xs bg-[var(--background-secondary)] border border-[var(--border-subtle)] rounded-[6px] focus:outline-none focus:border-[var(--border-brand)] hover:bg-[var(--background-secondary-hover)] focus:bg-[var(--background-primary)] text-[var(--text-primary)] transition-all font-semibold"
-                  aria-label="Created Date From"
-                />
-              </div>
-              <div className="relative w-full">
-                <Calendar size={11} strokeWidth={1.5} className="absolute left-2.5 top-1/2 -translate-y-1/2 text-[var(--text-subtlest)] pointer-events-none" />
-                <input
-                  type="date"
-                  value={filters.createdDateTo}
-                  onChange={(e) => updateFilter('createdDateTo', e.target.value)}
-                  className="w-full h-[40px] pl-7 pr-2 text-xs bg-[var(--background-secondary)] border border-[var(--border-subtle)] rounded-[6px] focus:outline-none focus:border-[var(--border-brand)] hover:bg-[var(--background-secondary-hover)] focus:bg-[var(--background-primary)] text-[var(--text-primary)] transition-all font-semibold"
-                  aria-label="Created Date To"
-                />
-              </div>
+            <div className="w-full">
+              <DateRangePicker
+                value={rangeValue}
+                onChange={handleRangeChange}
+                placeholder="Select date range"
+                className="w-full"
+              />
             </div>
           </FilterSection>
         </div>

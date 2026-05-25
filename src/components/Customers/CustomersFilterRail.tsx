@@ -1,8 +1,9 @@
-import { useState } from 'react';
+import { useState, useMemo } from 'react';
 import { X } from 'lucide-react';
 import { INITIAL_FILTERS } from './customersFilterConstants';
 import type { FilterState } from './customersFilterConstants';
 import type { Customer } from '../../data/mockCustomers';
+import { DateRangePicker } from '../DatePicker/DateRangePicker';
 
 interface CustomersFilterRailProps {
   filters: FilterState;
@@ -138,7 +139,33 @@ function MultiCheckboxFilter({
   );
 }
 
+const parseDateString = (str: string): Date | null => {
+  if (!str) return null;
+  const [year, month, day] = str.split('-').map(Number);
+  return new Date(year, month - 1, day);
+};
+
+const formatDateString = (date: Date | null): string => {
+  if (!date) return '';
+  const yyyy = date.getFullYear();
+  const mm = String(date.getMonth() + 1).padStart(2, '0');
+  const dd = String(date.getDate()).padStart(2, '0');
+  return `${yyyy}-${mm}-${dd}`;
+};
+
 export function CustomersFilterRail({ filters, onFiltersChange, customers, collapsed, onToggleCollapse }: CustomersFilterRailProps) {
+  const rangeValue = useMemo(() => ({
+    from: parseDateString(filters.createdDateFrom || ''),
+    to: parseDateString(filters.createdDateTo || '')
+  }), [filters.createdDateFrom, filters.createdDateTo]);
+
+  const handleRangeChange = (range: { from: Date | null; to: Date | null }) => {
+    onFiltersChange({
+      ...filters,
+      createdDateFrom: formatDateString(range.from),
+      createdDateTo: formatDateString(range.to)
+    });
+  };
   const updateFilter = <K extends keyof FilterState>(key: K, value: FilterState[K]) => {
     onFiltersChange({ ...filters, [key]: value });
   };
@@ -273,25 +300,13 @@ export function CustomersFilterRail({ filters, onFiltersChange, customers, colla
 
           {/* Created Date range */}
           <FilterSection title="Created Date" defaultOpen={false}>
-            <div className="flex flex-col gap-2">
-              <div>
-                <span className="text-[10px] font-bold text-[var(--text-subtlest)] uppercase tracking-wider mb-1 block">From</span>
-                <input
-                  type="date"
-                  value={filters.createdDateFrom}
-                  onChange={(e) => updateFilter('createdDateFrom', e.target.value)}
-                  className="w-full h-10 px-3 text-xs bg-[var(--background-secondary)] border border-[var(--border-subtle)] rounded-md focus:outline-none focus:border-[var(--border-brand)] text-[var(--text-primary)] font-semibold"
-                />
-              </div>
-              <div>
-                <span className="text-[10px] font-bold text-[var(--text-subtlest)] uppercase tracking-wider mb-1 block">To</span>
-                <input
-                  type="date"
-                  value={filters.createdDateTo}
-                  onChange={(e) => updateFilter('createdDateTo', e.target.value)}
-                  className="w-full h-10 px-3 text-xs bg-[var(--background-secondary)] border border-[var(--border-subtle)] rounded-md focus:outline-none focus:border-[var(--border-brand)] text-[var(--text-primary)] font-semibold"
-                />
-              </div>
+            <div className="w-full">
+              <DateRangePicker
+                value={rangeValue}
+                onChange={handleRangeChange}
+                placeholder="Select date range"
+                className="w-full"
+              />
             </div>
           </FilterSection>
         </div>

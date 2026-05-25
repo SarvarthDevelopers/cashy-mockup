@@ -19,6 +19,7 @@ import { TextArea } from '../components/TextArea/TextArea';
 import { FileUpload } from '../components/FileUpload/FileUpload';
 import { Tooltip } from '../components/Tooltip/Tooltip';
 import { ConfirmationModal } from '../components/Modal/ConfirmationModal';
+import { DateRangePicker } from '../components/DatePicker/DateRangePicker';
 
 // Types
 interface LedgerEntry {
@@ -95,11 +96,35 @@ const MANUAL_REFERENCE_OPTIONS = [
   { label: 'Other revenue', value: 'Other revenue' },
 ];
 
+const parseDateString = (str: string): Date | null => {
+  if (!str) return null;
+  const [year, month, day] = str.split('-').map(Number);
+  return new Date(year, month - 1, day);
+};
+
+const formatDateString = (date: Date | null): string => {
+  if (!date) return '';
+  const yyyy = date.getFullYear();
+  const mm = String(date.getMonth() + 1).padStart(2, '0');
+  const dd = String(date.getDate()).padStart(2, '0');
+  return `${yyyy}-${mm}-${dd}`;
+};
+
 export function CashbookDashboard() {
   const [selectedShop, setSelectedShop] = useState('vienna');
   const [selectedType, setSelectedType] = useState('BANK');
   const [startDate, setStartDate] = useState('');
   const [endDate, setEndDate] = useState('');
+
+  const rangeValue = useMemo(() => ({
+    from: parseDateString(startDate),
+    to: parseDateString(endDate)
+  }), [startDate, endDate]);
+
+  const handleRangeChange = (range: { from: Date | null; to: Date | null }) => {
+    setStartDate(formatDateString(range.from));
+    setEndDate(formatDateString(range.to));
+  };
   const [activeTab, setActiveTab] = useState('ledger');
   const [searchQuery, setSearchQuery] = useState('');
   
@@ -348,35 +373,15 @@ export function CashbookDashboard() {
             />
           </div>
 
-          {/* Date Range Inputs */}
-          <div className="flex items-center gap-2">
-            <div className="flex flex-col gap-1">
-              <span className="text-[10px] font-black text-[var(--text-subtlest)] uppercase tracking-wider pl-1">Date From</span>
-              <input
-                type="date"
-                value={startDate}
-                onChange={(e) => setStartDate(e.target.value)}
-                className="h-10 px-3 bg-[var(--background-secondary)] border border-[var(--border-subtle)] rounded-lg text-xs font-semibold text-[var(--text-primary)] focus:outline-none focus:border-[var(--border-brand)] hover:bg-[var(--background-secondary-hover)] focus:bg-[var(--background-primary)] transition-all"
-              />
-            </div>
-            <div className="flex flex-col gap-1">
-              <span className="text-[10px] font-black text-[var(--text-subtlest)] uppercase tracking-wider pl-1">Date To</span>
-              <input
-                type="date"
-                value={endDate}
-                onChange={(e) => setEndDate(e.target.value)}
-                className="h-10 px-3 bg-[var(--background-secondary)] border border-[var(--border-subtle)] rounded-lg text-xs font-semibold text-[var(--text-primary)] focus:outline-none focus:border-[var(--border-brand)] hover:bg-[var(--background-secondary-hover)] focus:bg-[var(--background-primary)] transition-all"
-              />
-            </div>
-            {(startDate || endDate) && (
-              <button
-                type="button"
-                onClick={() => { setStartDate(''); setEndDate(''); }}
-                className="self-end h-10 px-2.5 bg-transparent text-[var(--text-error)] hover:bg-[var(--background-secondary)] rounded-lg text-xs font-extrabold border border-transparent transition-all shrink-0 cursor-pointer"
-              >
-                Clear
-              </button>
-            )}
+          {/* Date Range Picker */}
+          <div className="flex flex-col gap-1 w-64">
+            <span className="text-[10px] font-black text-[var(--text-subtlest)] uppercase tracking-wider pl-1">Date Range</span>
+            <DateRangePicker
+              value={rangeValue}
+              onChange={handleRangeChange}
+              placeholder="Select date range"
+              className="w-full"
+            />
           </div>
         </div>
 

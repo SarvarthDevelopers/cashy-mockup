@@ -342,7 +342,7 @@ export const LandingPage: React.FC<LandingPageProps> = ({
                         aria-label="Clear all filters"
                     >
                         <svg width="11" height="11" viewBox="0 0 14 14" fill="none"><path d="M10.5 3.5L3.5 10.5M3.5 3.5l7 7" stroke="currentColor" strokeWidth="2" strokeLinecap="round" /></svg>
-                        Reset
+                        Clear Filters
                     </button>
                 )}
             </div>

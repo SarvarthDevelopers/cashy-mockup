@@ -70,7 +70,7 @@ export const FilterDropdown: React.FC<FilterDropdownProps> = ({
     const triggerText = hasSelection
         ? selected.length === 1
             ? (renderLabel ? renderLabel(selected[0]) : selected[0])
-            : `${selected.length} selected`
+            : 'Selected'
         : placeholder;
 
     return (
@@ -94,16 +94,16 @@ export const FilterDropdown: React.FC<FilterDropdownProps> = ({
             >
                 {/* Content area — text + badge */}
                 <div className={styles.triggerContent}>
-                    <span className={`${styles.triggerLabel} ${hasSelection ? styles.triggerLabelActive : ''}`}>
-                        {triggerText}
-                    </span>
-
                     {/* Count badge — only when multiple are selected */}
                     {selected.length > 1 && (
                         <span className={styles.badge} aria-label={`${selected.length} selected`}>
                             {selected.length}
                         </span>
                     )}
+
+                    <span className={`${styles.triggerLabel} ${hasSelection ? styles.triggerLabelActive : ''}`}>
+                        {triggerText}
+                    </span>
                 </div>
 
                 {/* Chevron icon — mirrors .icon */}

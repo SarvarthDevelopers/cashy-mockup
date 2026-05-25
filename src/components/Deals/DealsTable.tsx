@@ -542,23 +542,14 @@ export function DealsTable({
       </div>
 
       {/* Pagination Footer */}
-      <div className="flex items-center justify-between px-4 py-3 shrink-0 select-none border-t border-[var(--border-subtle)] bg-[var(--background-secondary)]/30">
-        <div className="flex items-center gap-2">
-          <span className="text-xs text-[var(--text-subtlest)] font-bold">
-            Showing {Math.min((currentPage - 1) * pageSize + 1, deals.length)}–{Math.min(currentPage * pageSize, deals.length)} of {deals.length}
-          </span>
-          {selectedRows.size > 0 && (
-            <span className="text-xs text-[var(--text-brand)] font-extrabold bg-[var(--background-brand-primary)] px-2 py-0.5 rounded-full animate-in zoom-in-95 duration-100">
-              {selectedRows.size} selected
-            </span>
-          )}
-        </div>
-        <div className="flex items-center gap-2.5">
+      <div className="flex flex-col md:flex-row items-center justify-between gap-3 md:gap-0 px-4 py-3 shrink-0 select-none border-t border-[var(--border-subtle)] bg-[var(--background-secondary)]/30">
+        {/* Pagination controls group */}
+        <div className="flex flex-col sm:flex-row items-center justify-center gap-3 w-full md:w-auto order-1 md:order-2">
           {/* Page size selector */}
           <select
             value={pageSize}
             onChange={(e) => { onPageSizeChange(Number(e.target.value)); onPageChange(1); }}
-            className="h-8 px-2.5 text-xs bg-[var(--background-primary)] border border-[var(--border-subtle)] rounded-lg text-[var(--text-subtle)] focus:outline-none focus:border-[var(--border-brand)] cursor-pointer transition-all font-bold"
+            className="w-full sm:w-auto h-10 md:h-8 px-2.5 text-xs bg-[var(--background-primary)] border border-[var(--border-subtle)] rounded-lg text-[var(--text-subtle)] focus:outline-none focus:border-[var(--border-brand)] cursor-pointer transition-all font-bold text-center"
           >
             <option value={25}>25 / page</option>
             <option value={50}>50 / page</option>
@@ -566,11 +557,11 @@ export function DealsTable({
           </select>
 
           {/* Page navigation */}
-          <div className="flex items-center gap-1">
+          <div className="flex items-center justify-center gap-1 w-full sm:w-auto">
             <button
               onClick={() => onPageChange(Math.max(1, currentPage - 1))}
               disabled={currentPage === 1}
-              className="px-2.5 py-1.5 text-xs font-bold text-[var(--text-subtle)] hover:bg-[var(--background-secondary)] rounded-lg transition-colors disabled:opacity-40 disabled:pointer-events-none cursor-pointer border border-[var(--border-subtle)] bg-[var(--background-primary)] focus:outline-none focus-visible:ring-2 focus-visible:ring-[var(--border-brand)]"
+              className="flex-1 sm:flex-none min-w-[40px] min-h-[40px] md:min-w-0 md:min-h-0 md:px-2.5 md:py-1.5 text-xs font-bold text-[var(--text-subtle)] hover:bg-[var(--background-secondary)] rounded-lg transition-colors disabled:opacity-40 disabled:pointer-events-none cursor-pointer border border-[var(--border-subtle)] bg-[var(--background-primary)] focus:outline-none focus-visible:ring-2 focus-visible:ring-[var(--border-brand)] flex items-center justify-center"
             >
               ←
             </button>
@@ -581,7 +572,7 @@ export function DealsTable({
               <button
                 key={page}
                 onClick={() => onPageChange(page)}
-                className={`px-2.5 py-1.5 text-xs font-bold rounded-lg transition-all cursor-pointer border focus:outline-none focus-visible:ring-2 focus-visible:ring-[var(--border-brand)] ${
+                className={`flex-1 sm:flex-none min-w-[40px] min-h-[40px] md:min-w-0 md:min-h-0 md:px-2.5 md:py-1.5 text-xs font-bold rounded-lg transition-all cursor-pointer border focus:outline-none focus-visible:ring-2 focus-visible:ring-[var(--border-brand)] flex items-center justify-center ${
                   page === currentPage
                     ? 'bg-[var(--background-brand-solid)] border-[var(--border-brand)] text-white font-extrabold'
                     : 'text-[var(--text-subtle)] border-[var(--border-subtle)] bg-[var(--background-primary)] hover:bg-[var(--background-secondary)]'
@@ -593,11 +584,23 @@ export function DealsTable({
             <button
               onClick={() => onPageChange(Math.min(totalPages, currentPage + 1))}
               disabled={currentPage === totalPages}
-              className="px-2.5 py-1.5 text-xs font-bold text-[var(--text-subtle)] hover:bg-[var(--background-secondary)] rounded-lg transition-colors disabled:opacity-40 disabled:pointer-events-none cursor-pointer border border-[var(--border-subtle)] bg-[var(--background-primary)] focus:outline-none focus-visible:ring-2 focus-visible:ring-[var(--border-brand)]"
+              className="flex-1 sm:flex-none min-w-[40px] min-h-[40px] md:min-w-0 md:min-h-0 md:px-2.5 md:py-1.5 text-xs font-bold text-[var(--text-subtle)] hover:bg-[var(--background-secondary)] rounded-lg transition-colors disabled:opacity-40 disabled:pointer-events-none cursor-pointer border border-[var(--border-subtle)] bg-[var(--background-primary)] focus:outline-none focus-visible:ring-2 focus-visible:ring-[var(--border-brand)] flex items-center justify-center"
             >
               →
             </button>
           </div>
+        </div>
+
+        {/* Info Group (Showing text + selected count) */}
+        <div className="flex items-center justify-center gap-2 order-2 md:order-1 w-full md:w-auto">
+          <span className="text-[var(--body-size-small)] md:text-xs text-[var(--text-subtlest)] font-bold">
+            Showing {Math.min((currentPage - 1) * pageSize + 1, deals.length)}–{Math.min(currentPage * pageSize, deals.length)} of {deals.length}
+          </span>
+          {selectedRows.size > 0 && (
+            <span className="text-[var(--body-size-small)] md:text-xs text-[var(--text-brand)] font-extrabold bg-[var(--background-brand-primary)] px-2 py-0.5 rounded-full animate-in zoom-in-95 duration-100">
+              {selectedRows.size} selected
+            </span>
+          )}
         </div>
       </div>
     </div>

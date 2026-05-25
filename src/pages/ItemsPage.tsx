@@ -435,7 +435,7 @@ export function ItemsPage({ onSelectDeal }: ItemsPageProps) {
           {/* Main Grid Viewport Skeleton */}
           <div className="flex gap-4 flex-1 min-h-0 relative">
             {/* Sidebar Filter Rail Skeleton */}
-            <div className="w-64 bg-white border border-[var(--border-subtle)] rounded-2xl p-4 flex flex-col gap-6 shrink-0 h-full">
+            <div className="w-[280px] bg-white border border-[var(--border-subtle)] rounded-2xl p-4 flex flex-col gap-6 shrink-0 h-full">
               <div className="h-5 w-28 bg-gray-100 rounded" />
               {[1, 2, 3, 4].map(idx => (
                 <div className="flex flex-col gap-2" key={idx}>

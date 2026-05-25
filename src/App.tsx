@@ -6,7 +6,7 @@ import { WizardBuilderPage } from './pages/AdminBuilderPage';
 import { DealsPage } from './pages/DealsPage';
 import { ItemsPage } from './pages/ItemsPage';
 import { CustomersPage } from './pages/CustomersPage';
-import { BusinessAreasPage } from './pages/BusinessAreasPage';
+import { OrgSettingsPage } from './pages/OrgSettingsPage';
 import { Header } from './components/Header/Header';
 import { DealWizardModal } from './components/DealWizardModal/DealWizardModal';
 import { ToastProvider } from './components/Toast/ToastContext';
@@ -438,7 +438,7 @@ function App() {
             <Route path="/deals" element={<DealsPage onSelectDeal={handleSelectDeal} />} />
             <Route path="/items" element={<ItemsPage onSelectDeal={handleSelectDeal} />} />
             <Route path="/customers" element={<CustomersPage onSelectDeal={handleSelectDeal} />} />
-            <Route path="/settings/business-areas" element={<BusinessAreasPage />} />
+            <Route path="/settings/org" element={<OrgSettingsPage />} />
             <Route path="/wizard-builder" element={<WizardBuilderPage />} />
             <Route path="/wizard-builder/builder/:id" element={<WizardBuilderPage />} />
             <Route path="*" element={<LandingPage onSelectDeal={handleSelectDeal} selectedDealId={selectedDeal?.id} dealsByColumn={dealsByColumn} columns={columns} onUpdateColumn={handleUpdateColumn} onDeleteColumn={handleDeleteColumn} onAddColumn={handleAddColumn} onClearColumnsFocus={handleClearColumnsFocus} onDealDragOver={handleDealDragOver} onDealDragEnd={handleDealDragEnd} onArchiveDeal={handleArchiveDeal} onDragEndComplete={handleDragEndComplete} />} />

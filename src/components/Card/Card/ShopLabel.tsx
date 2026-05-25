@@ -1,9 +1,11 @@
+import { useState, useEffect } from "react";
 import "./Card.css";
+import { getBranchColors, type PastelColor } from "../../../data/branchColorMapping";
 
 export type ShopLabelProps = {
   className?: string;
   branch?: string;
-  color?: "Green" | "Lime" | "Rose" | "Pink" | "Blue" | "Turquoise";
+  color?: PastelColor;
   country?: string;
 };
 
@@ -25,7 +27,18 @@ export const ShopLabel = ({
   color,
   country = "AT",
 }: ShopLabelProps) => {
-  const actualColor = color || getColorForBranch(branch);
+  const [configuredColors, setConfiguredColors] = useState<Record<string, PastelColor>>(() => getBranchColors());
+
+  useEffect(() => {
+    const handleUpdate = (e: CustomEvent<Record<string, PastelColor>>) => {
+      setConfiguredColors(e.detail || getBranchColors());
+    };
+    window.addEventListener('cashy_branch_colors_updated', handleUpdate as EventListener);
+    return () => window.removeEventListener('cashy_branch_colors_updated', handleUpdate as EventListener);
+  }, []);
+
+  const configColor = configuredColors[branch];
+  const actualColor = color || configColor || getColorForBranch(branch);
   const colorClass = `shop-label--${actualColor.toLowerCase()}`;
 
   return (

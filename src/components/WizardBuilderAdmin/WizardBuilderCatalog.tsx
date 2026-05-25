@@ -1,96 +1,235 @@
 import React, { useState } from 'react';
+import { Search, X, Filter } from 'lucide-react';
 import type { WizardConfig } from '../../data/wizardData';
 import { ConfirmationModal } from './ConfirmationModal';
+
+interface FilterSectionProps {
+  title: string;
+  children: React.ReactNode;
+  defaultOpen?: boolean;
+}
+
+function FilterSection({ title, children, defaultOpen = true }: FilterSectionProps) {
+  const [open, setOpen] = useState(defaultOpen);
+  return (
+    <div className="content-stretch flex flex-col gap-0 items-start relative shrink-0 w-full last:border-b-0 border-b border-[var(--border-subtle)]" data-name="Section">
+      <button
+          onClick={() => setOpen(!open)}
+          className="bg-[var(--background-primary)] relative shrink-0 w-full cursor-pointer hover:bg-[var(--background-secondary)] transition-colors focus:outline-none focus-visible:ring-2 focus-visible:ring-[var(--border-brand)] text-left"
+          data-name="Section Header"
+          aria-expanded={open}
+      >
+        <div className="flex flex-row items-center size-full">
+          <div className="content-stretch flex gap-[8px] items-center py-[16px] pl-[16px] pr-[16px] relative w-full">
+            <div className="content-stretch flex gap-[12px] items-center relative shrink-0" data-name="Title">
+              <div className="relative shrink-0 size-[24px] flex items-center justify-center text-[var(--text-primary)]">
+                {open ? (
+                  <svg width="14" height="8" viewBox="0 0 14 8" fill="none" xmlns="http://www.w3.org/2000/svg">
+                    <path d="M1 1L7 7L13 1" stroke="currentColor" strokeWidth="1.5" strokeLinecap="round" strokeLinejoin="round"/>
+                  </svg>
+                ) : (
+                  <svg width="8" height="14" viewBox="0 0 8 14" fill="none" xmlns="http://www.w3.org/2000/svg">
+                    <path d="M1 1L7 7L1 13" stroke="currentColor" strokeWidth="1.5" strokeLinecap="round" strokeLinejoin="round"/>
+                  </svg>
+                )}
+              </div>
+              <div className="flex flex-col font-['Inter',sans-serif] font-bold justify-center leading-[0] not-italic relative shrink-0 text-[var(--text-primary)] text-[15px] whitespace-nowrap">
+                <p className="leading-[1.4]">{title}</p>
+              </div>
+            </div>
+          </div>
+        </div>
+      </button>
+      {open && children && (
+        <div className="relative shrink-0 w-full pb-[16px] pl-[16px] pr-[16px]">
+          <div className="content-stretch flex flex-col gap-[6px] items-stretch relative w-full">
+            {children}
+          </div>
+        </div>
+      )}
+    </div>
+  );
+}
+
+interface MultiCheckboxFilterProps {
+  options: string[];
+  selected: string[];
+  onChange: (val: string[]) => void;
+  wizards: WizardConfig[];
+  filterKey: 'category' | 'shop';
+}
+
+function MultiCheckboxFilter({
+  options,
+  selected,
+  onChange,
+  wizards,
+  filterKey,
+}: MultiCheckboxFilterProps) {
+  const getCounts = (opt: string) => {
+    return wizards.filter(w => {
+      const val = (w as unknown as Record<string, unknown>)[filterKey] || (filterKey === 'shop' ? 'Global' : '');
+      return val === opt;
+    }).length;
+  };
+
+  return (
+    <div className="flex flex-col gap-[6px] w-full" role="group">
+      {options.map(opt => {
+        const checked = selected.includes(opt);
+        const count = getCounts(opt);
+        const handleKeyDown = (e: React.KeyboardEvent) => {
+          if (e.key === ' ' || e.key === 'Enter') {
+            e.preventDefault();
+            if (checked) onChange(selected.filter(s => s !== opt));
+            else onChange([...selected, opt]);
+          }
+        };
+
+        return (
+          <button
+            key={opt}
+            onClick={() => {
+              if (checked) {
+                onChange(selected.filter(s => s !== opt));
+              } else {
+                onChange([...selected, opt]);
+              }
+            }}
+            onKeyDown={handleKeyDown}
+            className={`w-full h-[40px] relative rounded-[6px] shrink-0 border transition-all cursor-pointer flex flex-row items-center justify-between px-[12px] py-[8px] focus:outline-none focus-visible:ring-2 focus-visible:ring-[var(--border-brand)] ${
+              checked
+                ? 'bg-[var(--background-brand-subtle)] border-[var(--border-brand)] hover:bg-[var(--background-brand-subtle-hover)]'
+                : 'bg-[var(--background-secondary)] border-[var(--border-subtle)] hover:bg-[var(--background-secondary-hover)] hover:border-[var(--border-brand-hover)]'
+            }`}
+          >
+            <div className="flex items-center gap-[10px]">
+              {/* Checkbox Indicator */}
+              <div className={`w-4 h-4 rounded-[4px] border flex items-center justify-center shrink-0 transition-all ${
+                checked 
+                  ? 'bg-[var(--background-brand-solid)] border-[var(--border-brand)] text-white' 
+                  : 'border-[var(--border-subtle)] bg-[var(--background-primary)]'
+              }`}>
+                {checked && (
+                  <svg width="10" height="8" viewBox="0 0 10 8" fill="none">
+                    <path d="M1 4L3.5 6.5L9 1" stroke="white" strokeWidth="1.5" strokeLinecap="round" strokeLinejoin="round" />
+                  </svg>
+                )}
+              </div>
+              <span className={`text-[13px] font-medium transition-colors text-left ${
+                checked ? 'text-[var(--text-brand)] font-semibold' : 'text-[var(--text-primary)]'
+              }`}>{opt}</span>
+            </div>
+            
+            {/* Record Count Badge */}
+            <span className={`text-[10px] font-bold tabular-nums px-1.5 py-0.5 rounded-md border transition-all ${
+              checked 
+                ? 'bg-[var(--background-primary)] border-[var(--border-brand-subtle)] text-[var(--text-brand)]' 
+                : 'bg-[var(--background-primary)] border-[var(--border-subtle)] text-[var(--text-subtlest)]'
+            }`}>{count}</span>
+          </button>
+        );
+      })}
+    </div>
+  );
+}
 
 interface CatalogSidebarProps {
   searchTerm: string;
   showClear: boolean;
   onSearch: (term: string) => void;
-  onCategoryChange: (category: string) => void;
-  onShopChange: (shop: string) => void;
+  selectedCategories: string[];
+  onCategoriesChange: (categories: string[]) => void;
+  selectedShops: string[];
+  onShopsChange: (shops: string[]) => void;
   onClear: () => void;
   onCreateNew: () => void;
+  wizards: WizardConfig[];
 }
 
 const CatalogSidebar: React.FC<CatalogSidebarProps> = ({ 
   searchTerm, 
   showClear,
   onSearch, 
-  onCategoryChange, 
-  onShopChange, 
+  selectedCategories, 
+  onCategoriesChange, 
+  selectedShops, 
+  onShopsChange, 
   onClear,
-  onCreateNew 
+  onCreateNew,
+  wizards
 }) => {
   return (
-    <div className="w-[280px] shrink-0 flex flex-col gap-8">
-      <div className="flex flex-col gap-4">
-        <div className="relative">
-          <input
-            type="text"
-            placeholder="Search..."
-            value={searchTerm}
-            onChange={(e) => onSearch(e.target.value)}
-            className="w-full h-11 bg-[var(--background-primary)] border border-[var(--border-subtle)] rounded-lg pl-10 pr-4 text-sm focus:outline-none focus:border-[var(--border-brand)] transition-all"
+    <div className="w-[280px] shrink-0 bg-[var(--background-primary)] border border-[var(--border-subtle)] rounded-[8px] flex flex-col overflow-hidden shadow-sm h-fit">
+      {/* Header */}
+      <div className="flex items-center justify-between px-4 py-3.5 border-b border-[var(--border-subtle)] bg-[var(--background-secondary)] shrink-0">
+        <div className="flex items-center gap-2.5">
+          <Filter size={16} className="text-[var(--text-primary)]" />
+          <span className="text-sm font-extrabold text-[var(--text-primary)]">Filters</span>
+        </div>
+      </div>
+
+      {/* Scrollable filters */}
+      <div className="flex-grow overflow-y-auto slick-scrollbar">
+        {/* Search Section */}
+        <FilterSection title="Search Wizards" defaultOpen={true}>
+          <div className="relative w-full">
+            <span className="absolute left-2.5 top-1/2 -translate-y-1/2 text-[var(--text-subtlest)]">
+              <Search size={14} />
+            </span>
+            <input
+              type="text"
+              placeholder="Search name or category..."
+              value={searchTerm}
+              onChange={(e) => onSearch(e.target.value)}
+              className="w-full h-10 pl-9 pr-8 text-xs bg-[var(--background-secondary)] border border-[var(--border-subtle)] rounded-[6px] focus:outline-none focus:border-[var(--border-brand)] hover:bg-[var(--background-secondary-hover)] focus:bg-[var(--background-primary)] text-[var(--text-primary)] transition-all font-semibold"
+            />
+            {searchTerm && (
+              <button
+                type="button"
+                onClick={() => onSearch('')}
+                className="absolute right-2.5 top-1/2 -translate-y-1/2 text-[var(--text-subtlest)] hover:text-[var(--text-primary)] border-none bg-transparent cursor-pointer flex items-center justify-center"
+              >
+                <X size={14} />
+              </button>
+            )}
+          </div>
+        </FilterSection>
+
+        {/* Categories Section */}
+        <FilterSection title="Categories" defaultOpen={true}>
+          <MultiCheckboxFilter
+            options={['Car', 'Watches', 'General Electronics', 'Luxury']}
+            selected={selectedCategories}
+            onChange={onCategoriesChange}
+            wizards={wizards}
+            filterKey="category"
           />
-          <div className="absolute left-3 top-1/2 -translate-y-1/2 text-[var(--text-subtlest)]">
-             <svg width="18" height="18" viewBox="0 0 18 18" fill="none">
-               <circle cx="8" cy="8" r="6" stroke="currentColor" strokeWidth="1.5" />
-               <path d="M13 13L16 16" stroke="currentColor" strokeWidth="1.5" strokeLinecap="round" />
-             </svg>
-          </div>
-        </div>
+        </FilterSection>
 
-        <div className="flex flex-col gap-2">
-          <div className="relative">
-            <select 
-              id="category-filter"
-              onChange={(e) => onCategoryChange(e.target.value)}
-              className="w-full h-11 bg-[var(--background-primary)] border border-[var(--border-subtle)] rounded-lg px-4 text-sm appearance-none focus:outline-none focus:border-[var(--border-brand)] transition-all"
-            >
-              <option value="">All Categories</option>
-              <option value="Car">Car</option>
-              <option value="Watches">Watches</option>
-              <option value="General Electronics">General Electronics</option>
-              <option value="Luxury">Luxury</option>
-            </select>
-            <div className="absolute right-4 top-1/2 -translate-y-1/2 pointer-events-none text-[var(--text-subtlest)]">
-               <svg width="10" height="6" viewBox="0 0 10 6" fill="none">
-                 <path d="M1 1L5 5L9 1" stroke="currentColor" strokeWidth="1.5" strokeLinecap="round" strokeLinejoin="round" />
-               </svg>
-            </div>
-          </div>
-          
-          <div className="relative">
-            <select 
-              id="shop-filter"
-              onChange={(e) => onShopChange(e.target.value)}
-              className="w-full h-11 bg-[var(--background-primary)] border border-[var(--border-subtle)] rounded-lg px-4 text-sm appearance-none focus:outline-none focus:border-[var(--border-brand)] transition-all"
-            >
-              <option value="">All Shops / Branches</option>
-              <option value="Global">Global</option>
-              <option value="Downtown Branch">Downtown Branch</option>
-              <option value="Uptown Branch">Uptown Branch</option>
-            </select>
-            <div className="absolute right-4 top-1/2 -translate-y-1/2 pointer-events-none text-[var(--text-subtlest)]">
-               <svg width="10" height="6" viewBox="0 0 10 6" fill="none">
-                 <path d="M1 1L5 5L9 1" stroke="currentColor" strokeWidth="1.5" strokeLinecap="round" strokeLinejoin="round" />
-               </svg>
-            </div>
-          </div>
-        </div>
+        {/* Shops & Branches Section */}
+        <FilterSection title="Shops & Branches" defaultOpen={true}>
+          <MultiCheckboxFilter
+            options={['Global', 'Downtown Branch', 'Uptown Branch']}
+            selected={selectedShops}
+            onChange={onShopsChange}
+            wizards={wizards}
+            filterKey="shop"
+          />
+        </FilterSection>
+      </div>
 
+      {/* Footer Area */}
+      <div className="p-4 border-t border-[var(--border-subtle)] bg-[var(--background-secondary)] flex flex-col gap-3 shrink-0">
         {showClear && (
           <button 
             onClick={onClear}
-            className="text-xs font-bold text-gray-400 hover:text-[#17142b] transition-colors flex items-center gap-1.5 px-1 animate-in fade-in slide-in-from-top-1"
+            className="h-10 text-xs font-bold text-[var(--text-subtle)] bg-[var(--background-primary)] border border-[var(--border-subtle)] rounded-lg hover:bg-[var(--background-secondary-hover)] transition-all cursor-pointer flex items-center justify-center gap-1.5"
           >
-            <svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2.5" strokeLinecap="round" strokeLinejoin="round"><path d="M18 6L6 18M6 6l12 12"/></svg>
+            <X size={14} />
             Clear all filters
           </button>
         )}
-      </div>
-
-      <div className="mt-auto pt-8 border-t border-[var(--border-subtle)] flex flex-col gap-4">
         <button 
           onClick={onCreateNew}
           className="h-11 bg-[var(--background-brand-solid)] text-[var(--text-white)] rounded-lg flex items-center justify-center gap-2 font-bold text-sm hover:bg-[var(--background-brand-solid-hover)] transition-colors shadow-lg shadow-[var(--lilac-100)]"
@@ -104,7 +243,7 @@ const CatalogSidebar: React.FC<CatalogSidebarProps> = ({
               window.location.reload();
             }
           }}
-          className="text-[10px] font-bold text-[var(--text-subtlest)] hover:text-[var(--text-error)] uppercase tracking-widest transition-colors text-center"
+          className="text-[10px] font-bold text-[var(--text-subtlest)] hover:text-[var(--text-error)] uppercase tracking-widest transition-colors text-center mt-1"
         >
           Reset Catalog to Defaults
         </button>
@@ -175,8 +314,8 @@ export const WizardBuilderCatalog: React.FC<WizardBuilderCatalogProps> = ({
   onDeactivateWizards
 }) => {
   const [searchTerm, setSearchTerm] = useState('');
-  const [filterCategory, setFilterCategory] = useState('');
-  const [filterShop, setFilterShop] = useState('');
+  const [filterCategories, setFilterCategories] = useState<string[]>([]);
+  const [filterShops, setFilterShops] = useState<string[]>([]);
   const [selectedIds, setSelectedIds] = useState<Set<string>>(new Set());
   
   // Modal states
@@ -186,8 +325,11 @@ export const WizardBuilderCatalog: React.FC<WizardBuilderCatalogProps> = ({
   const filteredWizards = wizards.filter(w => {
     const matchesSearch = w.name.toLowerCase().includes(searchTerm.toLowerCase()) || 
                          w.category.toLowerCase().includes(searchTerm.toLowerCase());
-    const matchesCategory = filterCategory === '' || w.category === filterCategory;
-    const matchesShop = filterShop === '' || (w as WizardConfig & { shop?: string }).shop === filterShop || (filterShop === 'Global');
+    const matchesCategory = filterCategories.length === 0 || filterCategories.includes(w.category);
+    const matchesShop = filterShops.length === 0 || filterShops.some(shop => {
+      const wShop = (w as unknown as Record<string, unknown>).shop || 'Global';
+      return wShop === shop;
+    });
 
     return matchesSearch && matchesCategory && matchesShop;
   });
@@ -209,12 +351,8 @@ export const WizardBuilderCatalog: React.FC<WizardBuilderCatalogProps> = ({
 
   const clearFilters = () => {
     setSearchTerm('');
-    setFilterCategory('');
-    setFilterShop('');
-    const catSelect = document.getElementById('category-filter') as HTMLSelectElement;
-    const shopSelect = document.getElementById('shop-filter') as HTMLSelectElement;
-    if (catSelect) catSelect.value = '';
-    if (shopSelect) shopSelect.value = '';
+    setFilterCategories([]);
+    setFilterShops([]);
   };
 
   const allSelected = filteredWizards.length > 0 && filteredWizards.every(w => selectedIds.has(w.id));
@@ -240,15 +378,18 @@ export const WizardBuilderCatalog: React.FC<WizardBuilderCatalogProps> = ({
         <p className="text-[var(--text-subtle)] text-sm">Manage wizard templates for different categories and branches</p>
       </div>
 
-      <div className="flex gap-12 items-start">
+      <div className="flex gap-4 items-start">
         <CatalogSidebar 
           searchTerm={searchTerm}
-          showClear={searchTerm !== '' || filterCategory !== '' || filterShop !== ''}
+          showClear={searchTerm !== '' || filterCategories.length > 0 || filterShops.length > 0}
           onSearch={setSearchTerm} 
-          onCategoryChange={setFilterCategory}
-          onShopChange={setFilterShop}
+          selectedCategories={filterCategories}
+          onCategoriesChange={setFilterCategories}
+          selectedShops={filterShops}
+          onShopsChange={setFilterShops}
           onClear={clearFilters}
-          onCreateNew={onCreateNew} 
+          onCreateNew={onCreateNew}
+          wizards={wizards}
         />
 
         <div className="flex-1 flex flex-col gap-4">

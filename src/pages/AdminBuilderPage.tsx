@@ -162,7 +162,7 @@ export const WizardBuilderPage: React.FC = () => {
 
     if (!selectedWizard) {
         return (
-            <div className="h-full w-full animate-in fade-in duration-500">
+            <div className="h-full w-full">
                 <WizardBuilderCatalog 
                     wizards={wizards}
                     onEditWizard={handleEditWizard} 
@@ -175,7 +175,7 @@ export const WizardBuilderPage: React.FC = () => {
     }
 
     return (
-        <div className="h-full w-full relative animate-in fade-in duration-500">
+        <div className="h-full w-full relative">
             <DealWizardBuilder 
                 wizardConfig={selectedWizard} 
                 onBack={handleBack}

@@ -264,6 +264,8 @@
   color: var(--utility-blue-blue-600);
 }
 .shop-label--turquoise { background-color: var(--utility-turquoise-turquoise-100, #cffafe); }
+.shop-label--orange { background-color: #ffedd5; color: #c2410c; }
+.shop-label--purple { background-color: #f3e8ff; color: #6b21a8; }
 
 
 .shop-label-text {

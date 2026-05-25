@@ -1,6 +1,6 @@
 import { useState, useRef, useEffect } from 'react';
 import { useNavigate, useLocation } from 'react-router';
-import { Menu, X, Settings, Layers } from 'lucide-react';
+import { Menu, X, Settings, Building } from 'lucide-react';
 import svgPaths from "../../imports/svg-4o201vrq4p";
 
 interface HeaderProps {
@@ -35,7 +35,7 @@ export function Header({ onCreateDealClick, currentPage }: HeaderProps) {
     if (location.pathname === '/deals') return 'deals';
     if (location.pathname === '/items') return 'items';
     if (location.pathname === '/customers') return 'customers';
-    if (location.pathname === '/settings/business-areas') return 'business-areas';
+    if (location.pathname === '/settings/org') return 'org-settings';
     return '';
   };
   const activePage = getActivePage();
@@ -51,8 +51,8 @@ export function Header({ onCreateDealClick, currentPage }: HeaderProps) {
       case 'items':
         navigate('/items');
         break;
-      case 'business-areas':
-        navigate('/settings/business-areas');
+      case 'org-settings':
+        navigate('/settings/org');
         break;
       case 'customers':
         navigate('/customers');
@@ -179,17 +179,17 @@ export function Header({ onCreateDealClick, currentPage }: HeaderProps) {
                     </button>
                     <button
                       onClick={() => {
-                        handleNavClick('business-areas');
+                        handleNavClick('org-settings');
                         setIsSettingsOpen(false);
                       }}
                       className={`w-full text-left px-3 py-2 text-sm font-sans flex items-center gap-2 hover:bg-gray-50 hover:text-gray-900 transition-colors border-none bg-transparent cursor-pointer ${
-                        activePage === 'business-areas'
+                        activePage === 'org-settings'
                           ? 'text-[#4649e5] font-semibold'
                           : 'text-gray-700'
                       }`}
                     >
-                      <Layers className="size-4" />
-                      <span>Business Areas</span>
+                      <Building className="size-4" />
+                      <span>Org Settings</span>
                     </button>
                   </div>
                 )}
@@ -305,17 +305,17 @@ export function Header({ onCreateDealClick, currentPage }: HeaderProps) {
             </button>
             <button
               onClick={() => {
-                handleNavClick('business-areas');
+                handleNavClick('org-settings');
                 setIsMobileMenuOpen(false);
               }}
               className={`w-full flex items-center gap-3 p-3 rounded-xl transition-all text-left border-none bg-transparent cursor-pointer ${
-                activePage === 'business-areas'
+                activePage === 'org-settings'
                   ? 'bg-[#4649e5]/25 text-white font-bold'
                   : 'hover:bg-white/5 text-[#fbfcfc]/70 hover:text-[#fbfcfc]'
               }`}
             >
-              <Layers className="size-4" />
-              <span className="text-sm font-semibold">Business Areas</span>
+              <Building className="size-4" />
+              <span className="text-sm font-semibold">Org Settings</span>
             </button>
           </div>
         </div>

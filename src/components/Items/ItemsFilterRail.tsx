@@ -1,5 +1,5 @@
 import { useState, useMemo } from 'react';
-import { X, Search } from 'lucide-react';
+import { X, Search, ChevronRight, ChevronDown } from 'lucide-react';
 import type { FlatItem } from './ItemsTable';
 import { INITIAL_FILTERS } from './itemsFilterConstants';
 import type { FilterState } from './itemsFilterConstants';
@@ -119,52 +119,57 @@ const CategoryTreeNode: React.FC<CategoryTreeNodeProps> = ({
       {node.fullPath && (
         <div 
           onClick={handleRowClick}
-          className="flex items-center justify-between py-1 px-1.5 hover:bg-[var(--background-secondary)] rounded-md transition-colors cursor-pointer text-left w-full h-8"
-          style={{ paddingLeft: `${level * 12 + 6}px` }}
+          className={`flex items-center justify-between py-1 px-2 hover:bg-[var(--background-secondary-hover)] rounded-[6px] transition-all cursor-pointer text-left w-full h-[36px] ${
+            isChecked ? 'bg-[var(--background-brand-subtle)]/30 hover:bg-[var(--background-brand-subtle-hover)]/30' : ''
+          }`}
+          style={{ paddingLeft: `${level * 16 + 4}px` }}
         >
-          <div className="flex items-center gap-2 min-w-0">
+          <div className="flex items-center gap-1.5 min-w-0">
             {/* Expand indicator */}
-            <div className="w-3.5 h-3.5 flex items-center justify-center shrink-0 text-[var(--text-subtlest)]">
+            <button
+              type="button"
+              onClick={(e) => {
+                e.stopPropagation();
+                onToggleExpand(node.fullPath);
+              }}
+              className="w-3.5 h-3.5 flex items-center justify-center shrink-0 text-[var(--text-subtlest)] hover:text-[var(--text-primary)] bg-transparent border-none p-0 cursor-pointer"
+            >
               {!isLeaf && (
-                isExpanded ? (
-                  <svg width="8" height="5" viewBox="0 0 10 6" fill="none">
-                    <path d="M1 1L5 5L9 1" stroke="currentColor" strokeWidth="1.5" strokeLinecap="round" strokeLinejoin="round"/>
-                  </svg>
-                ) : (
-                  <svg width="5" height="8" viewBox="0 0 6 10" fill="none">
-                    <path d="M1 1L5 5L1 9" stroke="currentColor" strokeWidth="1.5" strokeLinecap="round" strokeLinejoin="round"/>
-                  </svg>
-                )
+                isExpanded ? <ChevronDown size={12} strokeWidth={2} /> : <ChevronRight size={12} strokeWidth={2} />
               )}
-            </div>
+            </button>
 
             {/* Checkbox */}
             <div 
               onClick={handleCheckboxClick}
-              className={`w-3.5 h-3.5 rounded border flex items-center justify-center shrink-0 transition-colors cursor-pointer ${
+              className={`w-4 h-4 rounded-[4px] border flex items-center justify-center shrink-0 transition-all cursor-pointer ${
                 isChecked 
                   ? 'bg-[var(--background-brand-solid)] border-[var(--border-brand)] text-white' 
                   : isIndeterminate
                     ? 'bg-[var(--background-brand-primary)] border-[var(--border-brand)] text-[var(--text-brand)]'
-                    : 'border-[var(--border-subtle)] bg-[var(--background-primary)]'
+                    : 'border-[var(--border-subtle)] bg-[var(--background-primary)] hover:border-[var(--border-brand-hover)]'
               }`}
             >
               {isChecked && (
-                <svg width="8" height="6" viewBox="0 0 10 8" fill="none">
+                <svg width="10" height="8" viewBox="0 0 10 8" fill="none">
                   <path d="M1 4L3.5 6.5L9 1" stroke="white" strokeWidth="1.5" strokeLinecap="round" strokeLinejoin="round" />
                 </svg>
               )}
               {isIndeterminate && (
-                <div className="w-1.5 h-0.5 bg-[var(--text-brand)] rounded" />
+                <div className="w-1.5 h-0.5 bg-[var(--text-brand)] rounded shrink-0" />
               )}
             </div>
 
-            <span className={`text-xs truncate ${isChecked ? 'text-[var(--text-brand)] font-bold' : 'text-[var(--text-primary)] font-medium'}`}>
+            <span className={`text-[13px] truncate transition-colors ${
+              isChecked 
+                ? 'text-[var(--text-brand)] font-semibold' 
+                : 'text-[var(--text-primary)] font-medium'
+            }`}>
               {displayName}
             </span>
           </div>
 
-          <span className={`text-[9px] font-bold tabular-nums px-1 py-0.2 rounded border ${
+          <span className={`text-[10px] font-bold tabular-nums px-1.5 py-0.5 rounded-md border transition-colors shrink-0 ${
             isChecked 
               ? 'bg-[var(--background-primary)] border-[var(--border-brand-subtle)] text-[var(--text-brand)]' 
               : 'bg-[var(--background-primary)] border-[var(--border-subtle)] text-[var(--text-subtlest)]'
@@ -175,7 +180,7 @@ const CategoryTreeNode: React.FC<CategoryTreeNodeProps> = ({
       )}
 
       {!isLeaf && (node.fullPath === '' || isExpanded) && (
-        <div className="flex flex-col w-full">
+        <div className="flex flex-col w-full mt-0.5">
           {children.map(child => (
             <CategoryTreeNode
               key={child.fullPath}
@@ -468,7 +473,7 @@ export function ItemsFilterRail({ filters, onFiltersChange, items, collapsed, on
 
   const sidebarClasses = `
     fixed inset-0 z-50 w-full bg-[var(--background-primary)] flex flex-col h-full overflow-hidden transition-transform duration-300 transform 
-    md:static md:w-64 md:h-auto md:shadow-none md:border md:border-[var(--border-subtle)] md:rounded-[8px] md:flex md:translate-x-0 md:translate-y-0
+    md:static md:w-[280px] md:h-auto md:shadow-none md:border md:border-[var(--border-subtle)] md:rounded-[8px] md:flex md:translate-x-0 md:translate-y-0
     ${collapsed ? 'translate-y-full md:hidden md:-translate-x-full' : 'translate-y-0 md:translate-x-0'}
   `;
 
@@ -549,7 +554,7 @@ export function ItemsFilterRail({ filters, onFiltersChange, items, collapsed, on
                 </button>
               )}
             </div>
-            <div className="flex flex-col gap-0.5 max-h-60 overflow-y-auto slick-scrollbar border border-[var(--border-subtle)] rounded-lg p-1.5 bg-[var(--background-primary)]">
+            <div className="flex flex-col gap-0.5 max-h-60 overflow-y-auto slick-scrollbar bg-transparent pr-1.5">
               {Object.keys(categoryTree.children).length === 0 ? (
                 <span className="text-[11px] text-[var(--text-subtlest)] font-semibold italic p-2">No categories available</span>
               ) : (

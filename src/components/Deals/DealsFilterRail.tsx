@@ -1,9 +1,8 @@
 import { useState, useMemo } from 'react';
-import { X, Calendar, ChevronRight, ChevronDown } from 'lucide-react';
+import { X, Calendar, ChevronRight, ChevronDown, Search } from 'lucide-react';
 import type { Deal } from '../../data/mockDeals';
 import { SHOP_METADATA } from '../../data/mockDeals';
 import { getBusinessAreas, ALL_EXISTING_CATEGORIES, buildCategoryTree, getDescendants, type CategoryNode } from '../../data/businessAreaMapping';
-import { Checkbox } from '../Checkbox/Checkbox';
 
 import { INITIAL_FILTERS } from './dealsFilterConstants';
 import type { FilterState } from './dealsFilterConstants';
@@ -17,7 +16,9 @@ interface CategoryTreeNodeProps {
   expandedPaths: Record<string, boolean>;
   onToggleExpand: (path: string) => void;
   onCheckboxChange: (path: string, checked: boolean) => void;
+  countMap: Record<string, number>;
   level: number;
+  matchingPaths: Set<string> | null;
 }
 
 const CategoryTreeNode: React.FC<CategoryTreeNodeProps> = ({
@@ -26,15 +27,22 @@ const CategoryTreeNode: React.FC<CategoryTreeNodeProps> = ({
   expandedPaths,
   onToggleExpand,
   onCheckboxChange,
-  level = 0
+  countMap,
+  level = 0,
+  matchingPaths
 }) => {
   const children = Object.values(node.children);
   const isLeaf = children.length === 0;
-  const isExpanded = !!expandedPaths[node.fullPath];
-  
+
   const descendants = useMemo(() => {
     return getDescendants(node);
   }, [node]);
+
+  if (matchingPaths && node.fullPath && !matchingPaths.has(node.fullPath)) {
+    return null;
+  }
+
+  const isExpanded = !!expandedPaths[node.fullPath];
 
   const checkedDescendantsCount = descendants.filter(d => selectedPaths.includes(d)).length;
   const isChecked = descendants.length > 0 && checkedDescendantsCount === descendants.length;
@@ -53,40 +61,76 @@ const CategoryTreeNode: React.FC<CategoryTreeNodeProps> = ({
     }
   };
 
+  const displayName = node.displayName;
+  const count = countMap[node.fullPath] || 0;
+
   return (
     <div className="flex flex-col w-full">
       {node.fullPath && (
         <div 
           onClick={handleRowClick}
-          className="flex items-center justify-between py-1.5 px-2 hover:bg-[var(--background-secondary)] rounded-lg transition-colors cursor-pointer text-left w-full h-9 select-none"
-          style={{ paddingLeft: `${level * 12 + 6}px` }}
+          className={`flex items-center justify-between py-1 px-2 hover:bg-[var(--background-secondary-hover)] rounded-[6px] transition-all cursor-pointer text-left w-full h-[36px] ${
+            isChecked ? 'bg-[var(--background-brand-subtle)]/30 hover:bg-[var(--background-brand-subtle-hover)]/30' : ''
+          }`}
+          style={{ paddingLeft: `${level * 16 + 4}px` }}
         >
-          <div className="flex items-center gap-2 min-w-0">
+          <div className="flex items-center gap-1.5 min-w-0">
             {/* Expand indicator */}
-            <div className="w-3.5 h-3.5 flex items-center justify-center shrink-0 text-[var(--text-placeholder)]">
+            <button
+              type="button"
+              onClick={(e) => {
+                e.stopPropagation();
+                onToggleExpand(node.fullPath);
+              }}
+              className="w-3.5 h-3.5 flex items-center justify-center shrink-0 text-[var(--text-subtlest)] hover:text-[var(--text-primary)] bg-transparent border-none p-0 cursor-pointer"
+            >
               {!isLeaf && (
-                isExpanded ? <ChevronDown size={12} strokeWidth={1.5} /> : <ChevronRight size={12} strokeWidth={1.5} />
+                isExpanded ? <ChevronDown size={12} strokeWidth={2} /> : <ChevronRight size={12} strokeWidth={2} />
+              )}
+            </button>
+
+            {/* Checkbox */}
+            <div 
+              onClick={handleCheckboxClick}
+              className={`w-4 h-4 rounded-[4px] border flex items-center justify-center shrink-0 transition-all cursor-pointer ${
+                isChecked 
+                  ? 'bg-[var(--background-brand-solid)] border-[var(--border-brand)] text-white' 
+                  : isIndeterminate
+                    ? 'bg-[var(--background-brand-primary)] border-[var(--border-brand)] text-[var(--text-brand)]'
+                    : 'border-[var(--border-subtle)] bg-[var(--background-primary)] hover:border-[var(--border-brand-hover)]'
+              }`}
+            >
+              {isChecked && (
+                <svg width="10" height="8" viewBox="0 0 10 8" fill="none">
+                  <path d="M1 4L3.5 6.5L9 1" stroke="white" strokeWidth="1.5" strokeLinecap="round" strokeLinejoin="round" />
+                </svg>
+              )}
+              {isIndeterminate && (
+                <div className="w-1.5 h-0.5 bg-[var(--text-brand)] rounded shrink-0" />
               )}
             </div>
-            
-            {/* Checkbox */}
-            <div onClick={handleCheckboxClick} className="flex items-center shrink-0">
-              <Checkbox 
-                checked={isChecked} 
-                indeterminate={isIndeterminate}
-                onChange={() => {}}
-              />
-            </div>
-            
-            <span className={`text-[12px] truncate ${isChecked ? 'text-[var(--text-brand)] font-bold' : 'text-[var(--text-primary)] font-semibold'}`}>
-              {node.displayName}
+
+            <span className={`text-[13px] truncate transition-colors ${
+              isChecked 
+                ? 'text-[var(--text-brand)] font-semibold' 
+                : 'text-[var(--text-primary)] font-medium'
+            }`}>
+              {displayName}
             </span>
           </div>
+
+          <span className={`text-[10px] font-bold tabular-nums px-1.5 py-0.5 rounded-md border transition-colors shrink-0 ${
+            isChecked 
+              ? 'bg-[var(--background-primary)] border-[var(--border-brand-subtle)] text-[var(--text-brand)]' 
+              : 'bg-[var(--background-primary)] border-[var(--border-subtle)] text-[var(--text-subtlest)]'
+          }`}>
+            {count}
+          </span>
         </div>
       )}
-      
-      {(!node.fullPath || isExpanded) && children.length > 0 && (
-        <div className="flex flex-col w-full">
+
+      {!isLeaf && (node.fullPath === '' || isExpanded) && (
+        <div className="flex flex-col w-full mt-0.5">
           {children.map(child => (
             <CategoryTreeNode
               key={child.fullPath}
@@ -95,7 +139,9 @@ const CategoryTreeNode: React.FC<CategoryTreeNodeProps> = ({
               expandedPaths={expandedPaths}
               onToggleExpand={onToggleExpand}
               onCheckboxChange={onCheckboxChange}
-              level={level + 1}
+              countMap={countMap}
+              level={node.fullPath ? level + 1 : level}
+              matchingPaths={matchingPaths}
             />
           ))}
         </div>
@@ -275,6 +321,68 @@ export function DealsFilterRail({ filters, onFiltersChange, deals, collapsed, on
 
   const [expandedPaths, setExpandedPaths] = useState<Record<string, boolean>>({});
 
+  const [categorySearchQuery, setCategorySearchQuery] = useState('');
+  const [matchingPaths, setMatchingPaths] = useState<Set<string> | null>(null);
+
+  const handleCategorySearch = (query: string) => {
+    setCategorySearchQuery(query);
+    if (!query.trim()) {
+      setMatchingPaths(null);
+      return;
+    }
+    const matches = new Set<string>();
+    const lowercaseQuery = query.toLowerCase();
+
+    const searchNode = (node: CategoryNode) => {
+      const isMatch = node.displayName.toLowerCase().includes(lowercaseQuery);
+      let hasMatchingChild = false;
+
+      Object.values(node.children).forEach(child => {
+        const childMatch = searchNode(child);
+        if (childMatch) {
+          hasMatchingChild = true;
+        }
+      });
+
+      if (isMatch || hasMatchingChild) {
+        if (node.fullPath) {
+          matches.add(node.fullPath);
+        }
+        return true;
+      }
+      return false;
+    };
+
+    searchNode(categoryTree);
+    setMatchingPaths(matches);
+
+    const newExpanded = { ...expandedPaths };
+    matches.forEach(path => {
+      newExpanded[path] = true;
+    });
+    setExpandedPaths(newExpanded);
+  };
+
+  const categoryCountMap = useMemo(() => {
+    const counts: Record<string, number> = {};
+    deals.forEach(d => {
+      const dealPaths = new Set<string>();
+      d.items.forEach(i => {
+        if (!i.category) return;
+        const parts = i.category.split('.');
+        let currentPath = '';
+        parts.forEach(part => {
+          currentPath = currentPath ? `${currentPath}.${part}` : part;
+          dealPaths.add(currentPath);
+        });
+      });
+      dealPaths.forEach(p => {
+        counts[p] = (counts[p] || 0) + 1;
+      });
+    });
+    return counts;
+  }, [deals]);
+
   const handleToggleExpand = (path: string) => {
     setExpandedPaths(prev => ({
       ...prev,
@@ -313,7 +421,7 @@ export function DealsFilterRail({ filters, onFiltersChange, deals, collapsed, on
   // Sidebar CSS classes for mobile drawer transitions
   const sidebarClasses = `
     fixed inset-0 z-50 w-full bg-[var(--background-primary)] flex flex-col h-full overflow-hidden transition-transform duration-300 transform 
-    md:static md:w-64 md:h-auto md:shadow-none md:border md:border-[var(--border-subtle)] md:rounded-[8px] md:flex md:translate-x-0 md:translate-y-0
+    md:static md:w-[280px] md:h-auto md:shadow-none md:border md:border-[var(--border-subtle)] md:rounded-[8px] md:flex md:translate-x-0 md:translate-y-0
     ${collapsed ? 'translate-y-full md:hidden md:-translate-x-full' : 'translate-y-0 md:translate-x-0'}
   `;
 
@@ -401,9 +509,31 @@ export function DealsFilterRail({ filters, onFiltersChange, deals, collapsed, on
 
           {/* Item Category Tree */}
           <FilterSection title="Item Category" defaultOpen={false}>
-            <div className="flex flex-col gap-0.5 max-h-60 overflow-y-auto slick-scrollbar border border-[var(--border-subtle)] rounded-xl p-2 bg-[var(--background-secondary)]/10">
+            <div className="relative w-full mb-2">
+              <span className="absolute left-2.5 top-1/2 -translate-y-1/2 text-[var(--text-subtlest)]">
+                <Search size={12} />
+              </span>
+              <input
+                type="text"
+                placeholder="Search categories..."
+                value={categorySearchQuery}
+                onChange={(e) => handleCategorySearch(e.target.value)}
+                className="w-full h-8 pl-8 pr-4 text-[11px] font-semibold bg-[var(--background-secondary)] border border-[var(--border-subtle)] rounded-md focus:outline-none focus:border-[var(--border-brand)] hover:bg-[var(--background-secondary-hover)] focus:bg-[var(--background-primary)] text-[var(--text-primary)] transition-all placeholder:text-[var(--text-subtlest)]"
+              />
+              {categorySearchQuery && (
+                <button
+                  type="button"
+                  onClick={() => handleCategorySearch('')}
+                  className="absolute right-2 top-1/2 -translate-y-1/2 text-[10px] font-bold text-[var(--text-subtlest)] hover:text-[var(--text-primary)] border-none bg-transparent cursor-pointer"
+                >
+                  &times;
+                </button>
+              )}
+            </div>
+
+            <div className="flex flex-col gap-0.5 max-h-60 overflow-y-auto slick-scrollbar bg-transparent pr-1.5">
               {Object.keys(categoryTree.children).length === 0 ? (
-                <span className="text-[11px] text-[var(--text-placeholder)] font-bold italic p-2">No categories available</span>
+                <span className="text-[11px] text-[var(--text-subtlest)] font-semibold italic p-2">No categories available</span>
               ) : (
                 <CategoryTreeNode
                   node={categoryTree}
@@ -411,7 +541,9 @@ export function DealsFilterRail({ filters, onFiltersChange, deals, collapsed, on
                   expandedPaths={expandedPaths}
                   onToggleExpand={handleToggleExpand}
                   onCheckboxChange={handleCategoryCheckboxChange}
+                  countMap={categoryCountMap}
                   level={0}
+                  matchingPaths={matchingPaths}
                 />
               )}
             </div>

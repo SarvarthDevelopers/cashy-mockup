@@ -341,10 +341,10 @@ export function DealsFilterRail({ filters, onFiltersChange, deals, collapsed, on
           <div className="md:hidden">
             <button
               onClick={onToggleCollapse}
-              className="p-1 hover:bg-[var(--background-secondary)] rounded-md transition-colors cursor-pointer focus:outline-none focus-visible:ring-2 focus-visible:ring-[var(--border-brand)]"
+              className="w-10 h-10 flex items-center justify-center hover:bg-[var(--background-secondary-hover)] rounded-md transition-colors cursor-pointer focus:outline-none focus-visible:ring-2 focus-visible:ring-[var(--border-brand)] border-none bg-transparent"
               aria-label="Collapse filters sidebar"
             >
-              <X size={15} strokeWidth={1.5} className="text-[var(--text-subtlest)] hover:text-[var(--text-primary)]" />
+              <X size={20} className="text-[var(--text-subtlest)] hover:text-[var(--text-primary)]" />
             </button>
           </div>
         </div>

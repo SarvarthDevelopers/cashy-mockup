@@ -125,10 +125,20 @@
   padding-left: 18px;
   padding-right: 18px;
   padding-bottom: var(--space-800, 32px);
+  
+  scrollbar-width: none; /* Hide scrollbar for Firefox by default */
+}
+
+/* Show scrollbar for Firefox when column is hovered/focused/active */
+.cashy-kanban-column:hover .cashy-kanban-column-body,
+.cashy-kanban-column:focus-within .cashy-kanban-column-body,
+.cashy-kanban-column-body:hover,
+.cashy-kanban-column-body:active {
+  scrollbar-width: thin;
 }
 
 .cashy-kanban-column-body::-webkit-scrollbar {
-  width: 8px;
+  width: 0px; /* Hide scrollbar for Chrome/Safari by default */
 }
 
 .cashy-kanban-column-body::-webkit-scrollbar-track {
@@ -136,10 +146,25 @@
 }
 
 .cashy-kanban-column-body::-webkit-scrollbar-thumb {
-  background-color: rgba(0, 0, 0, 0.15);
+  background-color: transparent;
   border-radius: 9999px;
   border: 2px solid transparent;
   background-clip: content-box;
+}
+
+/* Show scrollbar and thumb when column is hovered, focused, or body is hovered/scrolled */
+.cashy-kanban-column:hover .cashy-kanban-column-body::-webkit-scrollbar,
+.cashy-kanban-column:focus-within .cashy-kanban-column-body::-webkit-scrollbar,
+.cashy-kanban-column-body:hover::-webkit-scrollbar,
+.cashy-kanban-column-body:active::-webkit-scrollbar {
+  width: 8px;
+}
+
+.cashy-kanban-column:hover .cashy-kanban-column-body::-webkit-scrollbar-thumb,
+.cashy-kanban-column:focus-within .cashy-kanban-column-body::-webkit-scrollbar-thumb,
+.cashy-kanban-column-body:hover::-webkit-scrollbar-thumb,
+.cashy-kanban-column-body:active::-webkit-scrollbar-thumb {
+  background-color: rgba(0, 0, 0, 0.15);
 }
 
 .cashy-kanban-column-body::-webkit-scrollbar-thumb:hover {

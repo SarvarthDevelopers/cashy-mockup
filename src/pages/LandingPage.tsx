@@ -14,6 +14,7 @@ import { ConfirmationModal } from '../components/Modal/ConfirmationModal';
 import { FilterDropdown } from '../components/KanbanFilterBar/FilterDropdown';
 // @ts-expect-error canvas-confetti does not have TypeScript declaration files installed in this project
 import confetti from 'canvas-confetti';
+import { X } from 'lucide-react';
 
 interface TaskData {
     id: string;
@@ -35,6 +36,116 @@ const BoardColumnWrapper: React.FC<BoardColumnWrapperProps> = ({ children, style
 };
 
 const generateTaskId = () => `task-${Math.random().toString(36).substring(2, 7)}`;
+
+// Collapsible Section Wrapper for mobile filter drawer
+function FilterSection({ title, children, defaultOpen = true }: { title: string; children: React.ReactNode; defaultOpen?: boolean }) {
+    const [open, setOpen] = useState(defaultOpen);
+    return (
+        <div className="content-stretch flex flex-col gap-0 items-start relative shrink-0 w-full last:border-b-0 border-b border-[var(--border-subtle)]" data-name="Section">
+            <button
+                type="button"
+                onClick={() => setOpen(!open)}
+                className="bg-[var(--background-primary)] relative shrink-0 w-full cursor-pointer hover:bg-[var(--background-secondary-hover)] transition-colors focus:outline-none focus-visible:ring-2 focus-visible:ring-[var(--border-brand)] text-left border-none"
+                data-name="Section Header"
+                aria-expanded={open}
+            >
+                <div className="flex flex-row items-center size-full">
+                    <div className="content-stretch flex gap-[8px] items-center py-[16px] pl-[16px] pr-[16px] relative w-full">
+                        <div className="content-stretch flex gap-[12px] items-center relative shrink-0" data-name="Title">
+                            <div className="relative shrink-0 size-[24px] flex items-center justify-center text-[var(--text-primary)]">
+                                {open ? (
+                                    <svg width="14" height="8" viewBox="0 0 14 8" fill="none" xmlns="http://www.w3.org/2000/svg">
+                                        <path d="M1 1L7 7L13 1" stroke="currentColor" strokeWidth="1.5" strokeLinecap="round" strokeLinejoin="round"/>
+                                    </svg>
+                                ) : (
+                                    <svg width="8" height="14" viewBox="0 0 8 14" fill="none" xmlns="http://www.w3.org/2000/svg">
+                                        <path d="M1 1L7 7L1 13" stroke="currentColor" strokeWidth="1.5" strokeLinecap="round" strokeLinejoin="round"/>
+                                    </svg>
+                                )}
+                            </div>
+                            <div className="flex flex-col font-['Inter',sans-serif] font-bold justify-center leading-[0] not-italic relative shrink-0 text-[var(--text-primary)] text-[15px] whitespace-nowrap">
+                                <p className="leading-[1.4]">{title}</p>
+                            </div>
+                        </div>
+                    </div>
+                </div>
+            </button>
+            {open && children && (
+                <div className="relative shrink-0 w-full pb-[16px] pl-[16px] pr-[16px]">
+                    <div className="content-stretch flex flex-col gap-[6px] items-stretch relative w-full">
+                        {children}
+                    </div>
+                </div>
+            )}
+        </div>
+    );
+}
+
+// Multi-checkbox helper for mobile filter drawer
+function MultiCheckboxFilter({
+    options,
+    selected,
+    onChange,
+    renderLabel,
+}: {
+    options: string[];
+    selected: string[];
+    onChange: (val: string[]) => void;
+    renderLabel?: (val: string) => string;
+}) {
+    return (
+        <div className="flex flex-col gap-[6px] w-full" role="group">
+            {options.map(opt => {
+                const checked = selected.includes(opt);
+                const displayLabel = renderLabel ? renderLabel(opt) : opt;
+                const handleKeyDown = (e: React.KeyboardEvent) => {
+                    if (e.key === ' ' || e.key === 'Enter') {
+                        e.preventDefault();
+                        if (checked) onChange(selected.filter(s => s !== opt));
+                        else onChange([...selected, opt]);
+                    }
+                };
+
+                return (
+                    <button
+                        key={opt}
+                        type="button"
+                        onClick={() => {
+                            if (checked) {
+                                onChange(selected.filter(s => s !== opt));
+                            } else {
+                                onChange([...selected, opt]);
+                            }
+                        }}
+                        onKeyDown={handleKeyDown}
+                        className={`w-full h-[40px] relative rounded-[6px] shrink-0 border transition-all cursor-pointer flex flex-row items-center justify-between px-[12px] py-[8px] focus:outline-none focus-visible:ring-2 focus-visible:ring-[var(--border-brand)] ${
+                            checked
+                                ? 'bg-[var(--background-brand-subtle)] border-[var(--border-brand)] hover:bg-[var(--background-brand-subtle-hover)]'
+                                : 'bg-[var(--background-secondary)] border-[var(--border-subtle)] hover:bg-[var(--background-secondary-hover)] hover:border-[var(--border-brand-hover)]'
+                        }`}
+                    >
+                        <div className="flex items-center gap-[10px]">
+                            <div className={`w-3.5 h-3.5 rounded-[4px] border flex items-center justify-center shrink-0 transition-all ${
+                                checked 
+                                    ? 'bg-[var(--background-brand-solid)] border-[var(--border-brand)] text-white' 
+                                    : 'border-[var(--border-subtle)] bg-[var(--background-primary)]'
+                            }`}>
+                                {checked && (
+                                    <svg width="8" height="6" viewBox="0 0 10 8" fill="none">
+                                        <path d="M1 4L3.5 6.5L9 1" stroke="white" strokeWidth="1.5" strokeLinecap="round" strokeLinejoin="round" />
+                                    </svg>
+                                )}
+                            </div>
+                            <span className={`text-[13px] font-medium transition-colors ${
+                                checked ? 'text-[var(--text-brand)] font-semibold' : 'text-[var(--text-primary)]'
+                            }`}>{displayLabel}</span>
+                        </div>
+                    </button>
+                );
+            })}
+        </div>
+    );
+}
 
 interface LandingPageProps {
     onSelectDeal: (deal: DealData) => void;
@@ -80,6 +191,16 @@ export const LandingPage: React.FC<LandingPageProps> = ({
     const [branchFilter, setBranchFilter] = useState<string[]>([]);
     const [businessAreaFilter, setBusinessAreaFilter] = useState<string[]>([]);
     const [dealTypeFilter, setDealTypeFilter] = useState<string[]>([]);
+    const [isFilterDrawerOpen, setIsFilterDrawerOpen] = useState(false);
+
+    const activeFiltersCount = useMemo(() => {
+        let count = 0;
+        if (companyFilter.length > 0) count++;
+        if (branchFilter.length > 0) count++;
+        if (businessAreaFilter.length > 0) count++;
+        if (dealTypeFilter.length > 0) count++;
+        return count;
+    }, [companyFilter, branchFilter, businessAreaFilter, dealTypeFilter]);
 
     const [isLoading, setIsLoading] = useState(true);
     useEffect(() => {
@@ -243,9 +364,9 @@ export const LandingPage: React.FC<LandingPageProps> = ({
     return (
         <div className="flex flex-col h-full w-full bg-background text-foreground overflow-hidden relative" onClick={onClearColumnsFocus}>
 
-            {/* ── Filter Bar ────────────────────────────────────────────────── */}
+            {/* ── Filter Bar (Desktop) ──────────────────────────────────────── */}
             <div
-                className="flex items-center gap-2.5 shrink-0 px-6 py-3 bg-[var(--background-primary)] border-b border-[var(--border-subtle)]"
+                className="hidden md:flex items-center gap-2.5 shrink-0 px-6 py-3 bg-[var(--background-primary)] border-b border-[var(--border-subtle)]"
                 onClick={e => e.stopPropagation()}
             >
                 {/* Search — mirrors Input.module.css .inputWrapper + .input */}
@@ -345,6 +466,159 @@ export const LandingPage: React.FC<LandingPageProps> = ({
                         Clear Filters
                     </button>
                 )}
+            </div>
+
+            {/* ── Filter Bar (Mobile) ────────────────────────────────────────── */}
+            <div
+                className="flex md:hidden items-center gap-3 shrink-0 px-4 py-3 bg-[var(--background-primary)] border-b border-[var(--border-subtle)] w-full"
+                onClick={e => e.stopPropagation()}
+            >
+                {/* Search — mirrors Input.module.css .inputWrapper + .input */}
+                <div
+                    className="flex flex-1 items-center min-h-[40px] border border-[var(--border-subtle)] rounded-[var(--radius-200,8px)] bg-[var(--background-primary)] overflow-hidden box-border transition-[border-color,box-shadow] duration-200 focus-within:border-[var(--border-focused)] focus-within:[box-shadow:0_0_0_2px_var(--background-primary),0_0_0_4px_var(--purple-200)] hover:not(:focus-within):border-[var(--border-primary-hover)]"
+                >
+                    {/* Left icon — mirrors .leftIcon */}
+                    <div className="flex items-center justify-center pl-[12px] pr-[4px] text-[var(--text-subtle)] shrink-0">
+                        <svg width="16" height="16" viewBox="0 0 20 20" fill="none" aria-hidden="true">
+                            <path d="M17.5 17.5L13.875 13.875M15.833 9.167a6.667 6.667 0 1 1-13.333 0 6.667 6.667 0 0 1 13.333 0Z" stroke="currentColor" strokeWidth="1.5" strokeLinecap="round" strokeLinejoin="round" />
+                        </svg>
+                    </div>
+                    {/* Input — mirrors .input */}
+                    <input
+                        id="kanban-search-mobile"
+                        type="text"
+                        placeholder="Search..."
+                        value={searchQuery}
+                        onChange={e => setSearchQuery(e.target.value)}
+                        className="flex-1 border-none bg-transparent py-[8px] px-[16px] pl-0 text-[14px] text-[var(--text-primary)] w-full outline-none placeholder:text-[12px] placeholder:text-[var(--text-subtlest)] font-semibold"
+                    />
+                    {/* Clear button */}
+                    {searchQuery && (
+                        <div className="flex items-center justify-center pl-[4px] pr-[12px] text-[var(--text-subtle)] shrink-0">
+                            <button
+                                type="button"
+                                onClick={() => setSearchQuery('')}
+                                className="flex items-center justify-center w-5 h-5 text-[var(--text-subtlest)] hover:text-[var(--text-primary)] transition-colors border-none bg-transparent p-0 cursor-pointer rounded"
+                                aria-label="Clear search"
+                            >
+                                <svg width="14" height="14" viewBox="0 0 14 14" fill="none"><path d="M10.5 3.5L3.5 10.5M3.5 3.5l7 7" stroke="currentColor" strokeWidth="1.5" strokeLinecap="round" /></svg>
+                            </button>
+                        </div>
+                    )}
+                </div>
+
+                {/* Filters button */}
+                <button
+                    onClick={() => setIsFilterDrawerOpen(true)}
+                    className={`h-10 px-3 text-xs font-extrabold rounded-lg border transition-all flex items-center gap-1.5 cursor-pointer focus:outline-none ${
+                        activeFiltersCount > 0
+                            ? 'bg-[var(--background-brand-subtle)] border-[var(--border-brand)] text-[var(--text-brand)] font-black'
+                            : 'bg-[var(--background-primary)] border-[var(--border-subtle)] text-[var(--text-primary)] hover:bg-[var(--background-secondary)]'
+                    }`}
+                >
+                    <svg width="12" height="12" viewBox="0 0 16 16" fill="none" className={activeFiltersCount > 0 ? 'text-[var(--text-brand)]' : 'text-[var(--text-subtle)]'}>
+                        <path d="M2 4h12M4 8h8M6 12h4" stroke="currentColor" strokeWidth="1.5" strokeLinecap="round" />
+                    </svg>
+                    <span>Filters</span>
+                    {activeFiltersCount > 0 && (
+                        <span className="text-[10px] font-black bg-[var(--background-brand-solid)] text-white px-1.5 py-0.5 rounded-full leading-none animate-in scale-in duration-200">
+                            {activeFiltersCount}
+                        </span>
+                    )}
+                </button>
+            </div>
+
+            {/* Mobile Filters Drawer Overlay */}
+            {isFilterDrawerOpen && (
+                <div 
+                    className="fixed inset-0 bg-black/40 z-45 transition-opacity md:hidden animate-in fade-in duration-200" 
+                    onClick={() => setIsFilterDrawerOpen(false)}
+                    aria-hidden="true"
+                />
+            )}
+
+            <div className={`fixed inset-0 z-50 w-full bg-[var(--background-primary)] flex flex-col h-full overflow-hidden transition-transform duration-300 transform md:hidden ${
+                isFilterDrawerOpen ? 'translate-y-0' : 'translate-y-full'
+            }`} role="dialog" aria-label="Kanban filters drawer">
+                {/* Header */}
+                <div className="flex items-center justify-between px-4 py-3.5 border-b border-[var(--border-subtle)] bg-[var(--background-secondary)] shrink-0">
+                    <div className="flex items-center gap-2.5">
+                        <svg width="16" height="16" viewBox="0 0 16 16" fill="none">
+                            <path d="M2 4h12M4 8h8M6 12h4" stroke="var(--text-primary)" strokeWidth="1.5" strokeLinecap="round" />
+                        </svg>
+                        <span className="text-sm font-extrabold text-[var(--text-primary)]">Filters</span>
+                    </div>
+                    <div>
+                        <button
+                            onClick={() => setIsFilterDrawerOpen(false)}
+                            className="w-10 h-10 flex items-center justify-center hover:bg-[var(--background-secondary-hover)] rounded-md transition-colors cursor-pointer focus:outline-none focus-visible:ring-2 focus-visible:ring-[var(--border-brand)] border-none bg-transparent"
+                            aria-label="Close filters"
+                        >
+                            <X size={20} className="text-[var(--text-subtlest)] hover:text-[var(--text-primary)]" />
+                        </button>
+                    </div>
+                </div>
+
+                {/* Scrollable sections */}
+                <div className="flex-1 overflow-y-auto overflow-x-hidden slick-scrollbar">
+                    {/* Company Filter */}
+                    <FilterSection title="Company" defaultOpen={true}>
+                        <MultiCheckboxFilter
+                            options={filterOptions.companies.filter(c => c !== 'all')}
+                            selected={companyFilter}
+                            onChange={setCompanyFilter}
+                            renderLabel={v => v === 'AT' ? 'Cashy AT' : v === 'DE' ? 'Cashy DE' : v}
+                        />
+                    </FilterSection>
+
+                    {/* Branch Filter */}
+                    <FilterSection title="Branch" defaultOpen={true}>
+                        <MultiCheckboxFilter
+                            options={filterOptions.branches.filter(b => b !== 'all')}
+                            selected={branchFilter}
+                            onChange={setBranchFilter}
+                        />
+                    </FilterSection>
+
+                    {/* Business Area Filter */}
+                    <FilterSection title="Business Area" defaultOpen={true}>
+                        <MultiCheckboxFilter
+                            options={filterOptions.businessAreas.filter(b => b !== 'all')}
+                            selected={businessAreaFilter}
+                            onChange={setBusinessAreaFilter}
+                        />
+                    </FilterSection>
+
+                    {/* Deal Type Filter */}
+                    <FilterSection title="Deal Type" defaultOpen={true}>
+                        <MultiCheckboxFilter
+                            options={filterOptions.dealTypes.filter(d => d !== 'all')}
+                            selected={dealTypeFilter}
+                            onChange={setDealTypeFilter}
+                        />
+                    </FilterSection>
+                </div>
+
+                {/* Mobile footer */}
+                <div className="p-4 border-t border-[var(--border-subtle)] bg-[var(--background-secondary)] shrink-0 flex items-center justify-between gap-3">
+                    <button
+                        onClick={() => {
+                            setCompanyFilter([]);
+                            setBranchFilter([]);
+                            setBusinessAreaFilter([]);
+                            setDealTypeFilter([]);
+                        }}
+                        className="flex-1 h-11 text-xs font-semibold text-[var(--text-subtle)] bg-[var(--background-primary)] border border-[var(--border-subtle)] rounded-lg hover:bg-[var(--background-secondary-hover)] transition-all cursor-pointer focus:outline-none"
+                    >
+                        Clear Filters
+                    </button>
+                    <button
+                        onClick={() => setIsFilterDrawerOpen(false)}
+                        className="flex-1 h-11 text-xs font-semibold text-white bg-[var(--background-brand-solid)] hover:bg-[var(--background-brand-solid-hover)] rounded-lg transition-all cursor-pointer focus:outline-none"
+                    >
+                        Apply Filters
+                    </button>
+                </div>
             </div>
 
             <div className="flex-1 overflow-hidden relative">

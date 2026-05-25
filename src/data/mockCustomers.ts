@@ -27,12 +27,13 @@ const generateMockCustomers = (): Customer[] => {
     customerMap.get(email)!.push(deal);
   });
 
+  const PREDEFINED_IDS = ['2030397', '2031878', '2018376', '2031408', '2015829', '2022015', '2016204'];
   const customers: Customer[] = [];
   let counter = 1;
 
   customerMap.forEach((deals) => {
     const firstDeal = deals[0];
-    const customerId = `CUST-${String(counter).padStart(3, '0')}`;
+    const customerId = PREDEFINED_IDS[counter - 1] || String(2032000 + counter);
     
     // Sort deals by createdAt to find the earliest
     const sortedDeals = [...deals].sort((a, b) => 

@@ -189,7 +189,7 @@ export function CustomersFilterRail({ filters, onFiltersChange, customers, colla
           <FilterSection title="Customer ID" defaultOpen={true}>
             <input
               type="text"
-              placeholder="e.g. CUST-001"
+              placeholder="e.g. 2030397"
               value={filters.customerId}
               onChange={(e) => updateFilter('customerId', e.target.value)}
               className="w-full h-10 px-3 text-xs bg-[var(--background-secondary)] border border-[var(--border-subtle)] rounded-md focus:outline-none focus:border-[var(--border-brand)] hover:bg-[var(--background-secondary-hover)] focus:bg-[var(--background-primary)] text-[var(--text-primary)] placeholder:text-[var(--text-subtlest)] transition-all font-semibold"

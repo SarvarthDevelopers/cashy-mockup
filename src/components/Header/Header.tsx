@@ -47,6 +47,7 @@ export function Header({ onCreateDealClick, currentPage }: HeaderProps) {
     if (location.pathname === '/items') return 'items';
     if (location.pathname === '/customers') return 'customers';
     if (location.pathname === '/settings/org') return 'org-settings';
+    if (location.pathname === '/cashbook') return 'cashbook';
     return '';
   };
   const activePage = getActivePage();
@@ -68,6 +69,9 @@ export function Header({ onCreateDealClick, currentPage }: HeaderProps) {
       case 'customers':
         navigate('/customers');
         break;
+      case 'cashbook':
+        navigate('/cashbook');
+        break;
       default:
         break;
     }
@@ -77,7 +81,7 @@ export function Header({ onCreateDealClick, currentPage }: HeaderProps) {
     { key: 'deals', label: 'Deals', path: '/' },
     { key: 'items', label: 'Items', path: '/items' },
     { key: 'customers', label: 'Customers', path: '/customers' },
-    { key: 'cashbook', label: 'Cashbook', path: null },
+    { key: 'cashbook', label: 'Cashbook', path: '/cashbook' },
   ];
 
   return (

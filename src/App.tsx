@@ -428,7 +428,7 @@ function App() {
 
   return (
     <ToastProvider>
-      <div className="flex flex-col h-screen w-full overflow-hidden">
+      <div className="flex flex-col h-screen w-full">
         <Header
           onCreateDealClick={handleCreateDeal}
         />

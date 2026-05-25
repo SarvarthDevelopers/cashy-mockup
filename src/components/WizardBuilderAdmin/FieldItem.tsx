@@ -1,6 +1,7 @@
 import React, { useState } from 'react';
 import './FieldItem.css';
 import type { Field } from './DealWizardBuilder';
+import { Tooltip } from '../Tooltip/Tooltip';
 
 interface FieldItemProps {
   field: Field;
@@ -275,9 +276,11 @@ export function FieldItem({ field, onRemove, onUpdate, isSelected, onSelect, dra
               </button>
             </div>
           )}
-          <button className="fi-header-btn-icon" onClick={(e) => { e.stopPropagation(); onRemove(field.id); }} title="Delete Field">
-            <TrashIcon />
-          </button>
+          <Tooltip content="Delete field" side="top">
+            <button className="fi-header-btn-icon" onClick={(e) => { e.stopPropagation(); onRemove(field.id); }}>
+              <TrashIcon />
+            </button>
+          </Tooltip>
           {field.expanded && <button className="fi-collapse-text-btn" onClick={() => onUpdate(field.id, { expanded: false })}>Collapse</button>}
         </div>
       </div>

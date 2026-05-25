@@ -1,6 +1,7 @@
 import { useState, useEffect, useRef } from 'react';
 import { Search, Download, X, HelpCircle, Loader2, RefreshCw, Eye, EyeOff, ShieldAlert } from 'lucide-react';
 import type { ColumnDef } from './customersTableColumns';
+import { Tooltip } from '../Tooltip/Tooltip';
 
 interface CustomersToolbarProps {
   searchQuery: string;
@@ -197,11 +198,10 @@ export function CustomersToolbar({
                   <X size={12} strokeWidth={1.5} className="text-[var(--text-subtlest)] hover:text-[var(--text-primary)]" />
                 </button>
               )}
-              <div className="absolute right-3 top-1/2 -translate-y-1/2 group z-25 flex items-center">
-                <HelpCircle size={12} strokeWidth={1.5} className="text-[var(--text-subtlest)] cursor-help hover:text-[var(--text-subtle)]" />
-                <div className="absolute bottom-full right-0 mb-2 w-52 hidden group-hover:block bg-[#131518] text-white text-[9px] font-semibold p-2.5 rounded-lg border border-[#4c5564] leading-relaxed">
-                  Search across customer IDs, names, emails, phones, cities, and countries.
-                </div>
+              <div className="absolute right-3 top-1/2 -translate-y-1/2 z-25 flex items-center">
+                <Tooltip content="Search across customer IDs, names, emails, phones, cities, and countries." side="top">
+                  <span><HelpCircle size={12} strokeWidth={1.5} className="text-[var(--text-subtlest)] cursor-help hover:text-[var(--text-subtle)]" /></span>
+                </Tooltip>
               </div>
             </div>
           )}

@@ -1,4 +1,5 @@
 import React, { useState, useRef, useEffect } from 'react';
+import { Tooltip } from '../Tooltip/Tooltip';
 
 interface InlineEditProps {
   value: string;
@@ -64,17 +65,18 @@ export function InlineEdit({
   }
 
   return (
-    <div 
-      className={`cursor-pointer group flex items-center transition-all ${containerClassName}`} 
-      onClick={() => setIsEditing(true)}
-      title="Click to edit"
-    >
-      <div className={`flex flex-col justify-end leading-[0] relative shrink-0 whitespace-nowrap ${textClassName}`}>
-        <p className="leading-[1.2] px-1">{value}</p>
+    <Tooltip content="Click to edit" side="top">
+      <div 
+        className={`cursor-pointer group flex items-center transition-all ${containerClassName}`} 
+        onClick={() => setIsEditing(true)}
+      >
+        <div className={`flex flex-col justify-end leading-[0] relative shrink-0 whitespace-nowrap ${textClassName}`}>
+          <p className="leading-[1.2] px-1">{value}</p>
+        </div>
+        <div className="overflow-clip relative shrink-0 size-[20px]">
+          {iconNode}
+        </div>
       </div>
-      <div className="overflow-clip relative shrink-0 size-[20px]">
-        {iconNode}
-      </div>
-    </div>
+    </Tooltip>
   );
 }

@@ -1,5 +1,6 @@
 import { useState, useEffect, useRef } from 'react';
 import { Search, Download, Archive, X, HelpCircle, Loader2, RefreshCw, Eye, EyeOff } from 'lucide-react';
+import { Tooltip } from '../Tooltip/Tooltip';
 import { DEALS_MICROCOPY } from '../../data/mockDeals';
 import type { ColumnDef } from './DealsTable';
 
@@ -211,11 +212,10 @@ export function DealsToolbar({
                 </button>
               )}
               {/* Tooltip Help icon on mobile */}
-              <div className="absolute right-3 top-1/2 -translate-y-1/2 group z-25 flex items-center">
-                <HelpCircle size={12} strokeWidth={1.5} className="text-[var(--text-subtlest)] cursor-help hover:text-[var(--text-subtle)]" />
-                <div className="absolute bottom-full right-0 mb-2 w-52 hidden group-hover:block bg-[#131518] text-white text-[9px] font-bold p-2.5 rounded-lg border border-[#4c5564] leading-relaxed">
-                  Search across IDs, customer details, status, and timeline notes.
-                </div>
+              <div className="absolute right-3 top-1/2 -translate-y-1/2 z-25 flex items-center">
+                <Tooltip content="Search across IDs, customer details, status, and timeline notes." side="top">
+                  <span><HelpCircle size={12} strokeWidth={1.5} className="text-[var(--text-subtlest)] cursor-help hover:text-[var(--text-subtle)]" /></span>
+                </Tooltip>
               </div>
             </div>
           )}
@@ -362,29 +362,28 @@ export function DealsToolbar({
 
         {/* Right: Actions */}
         <div className="flex items-center gap-2.5 shrink-0 flex-nowrap">
-          {/* Export Action */}
-          <div className="relative group inline-block">
-            <button
-              onClick={onExportAll}
-              disabled={exportStatus === 'processing'}
-              className="h-10 px-4 bg-[var(--background-primary)] border border-[var(--border-subtle)] text-[var(--text-primary)] font-extrabold rounded-lg text-sm hover:bg-[var(--background-secondary)] hover:border-[var(--border-brand-hover)] transition-all flex items-center gap-1.5 cursor-pointer disabled:opacity-50 disabled:pointer-events-none"
-            >
-              {exportStatus === 'processing' ? (
-                <Loader2 size={14} strokeWidth={1.5} className="animate-spin text-[var(--text-brand)]" />
-              ) : (
-                <Download size={14} strokeWidth={1.5} className="text-[var(--text-subtle)]" />
-              )}
-              <span>Export</span>
-            </button>
             {/* Help Tooltip */}
-            <div className="absolute bottom-full left-1/2 -translate-x-1/2 mb-2 w-52 hidden group-hover:block bg-[#131518] text-white text-[10px] font-bold p-3 rounded-lg border border-[#4c5564] leading-relaxed z-50 animate-in fade-in duration-150">
-              <span className="block text-[9px] text-[var(--text-brand)] uppercase tracking-wider mb-1 font-black">Export Output</span>
-              {selectedCount > 0
-                ? `Downloads your selected ${selectedCount} deal${selectedCount > 1 ? 's' : ''} in highly structured CSV spreadsheet format.`
-                : 'Downloads your actively filtered list containing all 28+ deal details in highly structured CSV spreadsheet format.'
+            <Tooltip
+              content={
+                selectedCount > 0
+                  ? `Downloads your selected ${selectedCount} deal${selectedCount > 1 ? 's' : ''} in highly structured CSV spreadsheet format.`
+                  : 'Downloads your actively filtered list containing all 28+ deal details in highly structured CSV spreadsheet format.'
               }
-            </div>
-          </div>
+              side="top"
+            >
+              <button
+                onClick={onExportAll}
+                disabled={exportStatus === 'processing'}
+                className="h-10 px-4 bg-[var(--background-primary)] border border-[var(--border-subtle)] text-[var(--text-primary)] font-extrabold rounded-lg text-sm hover:bg-[var(--background-secondary)] hover:border-[var(--border-brand-hover)] transition-all flex items-center gap-1.5 cursor-pointer disabled:opacity-50 disabled:pointer-events-none"
+              >
+                {exportStatus === 'processing' ? (
+                  <Loader2 size={14} strokeWidth={1.5} className="animate-spin text-[var(--text-brand)]" />
+                ) : (
+                  <Download size={14} strokeWidth={1.5} className="text-[var(--text-subtle)]" />
+                )}
+                <span>Export</span>
+              </button>
+            </Tooltip>
         </div>
       </div>
 

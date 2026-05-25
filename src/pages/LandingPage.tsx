@@ -12,8 +12,7 @@ import type { ColumnConfig } from '../components/Board/types';
 import { ColumnConfigPanel } from '../components/Board/ColumnConfigPanel';
 import { ConfirmationModal } from '../components/Modal/ConfirmationModal';
 import { FilterDropdown } from '../components/KanbanFilterBar/FilterDropdown';
-// @ts-expect-error canvas-confetti does not have TypeScript declaration files installed in this project
-import confetti from 'canvas-confetti';
+
 import { X } from 'lucide-react';
 
 interface TaskData {
@@ -284,17 +283,6 @@ export const LandingPage: React.FC<LandingPageProps> = ({
         const newId = onAddColumn(index);
         if (newId) {
             showToast('New column added successfully.', 'success');
-            // Confetti burst for micro-interaction delight!
-            try {
-                confetti({
-                    particleCount: 80,
-                    spread: 60,
-                    origin: { y: 0.8 },
-                    colors: ['#4649e5', '#60a5fa', '#34d399', '#f472b6']
-                });
-            } catch (err) {
-                console.error('Failed to trigger confetti', err);
-            }
         }
     };
 
@@ -531,13 +519,13 @@ export const LandingPage: React.FC<LandingPageProps> = ({
             {/* Mobile Filters Drawer Overlay */}
             {isFilterDrawerOpen && (
                 <div 
-                    className="fixed inset-0 bg-black/40 z-45 transition-opacity md:hidden animate-in fade-in duration-200" 
+                    className="fixed inset-0 bg-black/40 z-[150] transition-opacity md:hidden animate-in fade-in duration-200" 
                     onClick={() => setIsFilterDrawerOpen(false)}
                     aria-hidden="true"
                 />
             )}
 
-            <div className={`fixed inset-0 z-50 w-full bg-[var(--background-primary)] flex flex-col h-full overflow-hidden transition-transform duration-300 transform md:hidden ${
+            <div className={`fixed inset-0 z-[200] w-full bg-[var(--background-primary)] flex flex-col h-full overflow-hidden transition-transform duration-300 transform md:hidden ${
                 isFilterDrawerOpen ? 'translate-y-0' : 'translate-y-full'
             }`} role="dialog" aria-label="Kanban filters drawer">
                 {/* Header */}

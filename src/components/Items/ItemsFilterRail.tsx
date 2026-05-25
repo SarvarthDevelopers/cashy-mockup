@@ -494,7 +494,7 @@ export function ItemsFilterRail({ filters, onFiltersChange, items, collapsed, on
   };
 
   const sidebarClasses = `
-    fixed inset-0 z-50 w-full bg-[var(--background-primary)] flex flex-col h-full overflow-hidden transition-transform duration-300 transform 
+    fixed inset-0 z-[200] w-full bg-[var(--background-primary)] flex flex-col h-full overflow-hidden transition-transform duration-300 transform 
     md:static md:w-[280px] md:h-auto md:shadow-none md:border md:border-[var(--border-subtle)] md:rounded-[8px] md:flex md:translate-x-0 md:translate-y-0
     ${collapsed ? 'translate-y-full md:hidden md:-translate-x-full' : 'translate-y-0 md:translate-x-0'}
   `;
@@ -503,7 +503,7 @@ export function ItemsFilterRail({ filters, onFiltersChange, items, collapsed, on
     <>
       {!collapsed && (
         <div 
-          className="fixed inset-0 bg-black/40 z-45 transition-opacity md:hidden animate-in fade-in duration-200" 
+          className="fixed inset-0 bg-black/40 z-[150] transition-opacity md:hidden animate-in fade-in duration-200" 
           onClick={onToggleCollapse}
           aria-hidden="true"
         />

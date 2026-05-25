@@ -2,6 +2,7 @@ import { useState, useRef, useCallback, useEffect } from 'react';
 import { MoreHorizontal, AlertTriangle, X, Search, HelpCircle, Loader2 } from 'lucide-react';
 import type { Customer } from '../../data/mockCustomers';
 import type { ColumnDef } from './customersTableColumns';
+import { Tooltip } from '../Tooltip/Tooltip';
 
 interface CustomersTableProps {
   customers: Customer[];
@@ -309,12 +310,18 @@ export function CustomersTable({
               </button>
             )}
 
-            <div className="absolute right-3.5 top-1/2 -translate-y-1/2 group z-25 flex items-center">
-              <HelpCircle size={14} strokeWidth={1.5} className="text-[var(--text-subtlest)] cursor-help hover:text-[var(--text-subtle)]" />
-              <div className="absolute bottom-full right-0 mb-2 w-64 hidden group-hover:block bg-[#131518] text-white text-[10px] font-semibold p-3 rounded-lg border border-[#4c5564] leading-relaxed animate-in fade-in duration-150">
-                <span className="block text-[9px] text-[var(--text-brand)] uppercase tracking-wider mb-1 font-semibold">Search Fields</span>
-                Searches across Customer ID, Name, Email, Phone, City, and Country.
-              </div>
+            <div className="absolute right-3.5 top-1/2 -translate-y-1/2 z-25 flex items-center">
+              <Tooltip
+                content={
+                  <span className="block max-w-[240px]">
+                    <span className="block text-[9px] text-[var(--text-brand)] uppercase tracking-wider mb-1 font-semibold">Search Fields</span>
+                    Searches across Customer ID, Name, Email, Phone, City, and Country.
+                  </span>
+                }
+                side="top"
+              >
+                <span><HelpCircle size={14} strokeWidth={1.5} className="text-[var(--text-subtlest)] cursor-help hover:text-[var(--text-subtle)]" /></span>
+              </Tooltip>
             </div>
           </div>
         </div>
@@ -364,12 +371,13 @@ export function CustomersTable({
                       className={`${isNumeric ? 'text-right' : 'text-left'} relative group py-3.5 sticky top-0 bg-[var(--background-secondary)] z-10`}
                       style={{ width: col.width + 'px', minWidth: col.minWidth + 'px' }}
                     >
-                      <div
-                        className={`flex items-center ${isNumeric ? 'justify-end' : 'justify-start'} gap-1.5 px-2 text-[10px] font-black text-[var(--text-subtlest)] uppercase tracking-wider select-none focus:outline-none`}
-                        title={sortTooltipText}
-                      >
-                        <span className="truncate">{col.label}</span>
-                      </div>
+                      <Tooltip content={sortTooltipText} side="top">
+                        <div
+                          className={`flex items-center ${isNumeric ? 'justify-end' : 'justify-start'} gap-1.5 px-2 text-[10px] font-black text-[var(--text-subtlest)] uppercase tracking-wider select-none focus:outline-none`}
+                        >
+                          <span className="truncate">{col.label}</span>
+                        </div>
+                      </Tooltip>
 
                       {/* Resize handle */}
                       <div

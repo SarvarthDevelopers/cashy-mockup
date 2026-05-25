@@ -5,6 +5,7 @@ import { DraggableFieldItem } from './DraggableFieldItem';
 import { DraggableStepTab } from './DraggableStepTab';
 import { Breadcrumb } from './Breadcrumb';
 import { InlineEdit } from './InlineEdit';
+import { Tooltip } from '../Tooltip/Tooltip';
 
 import { useToast } from '../Toast/useToast';
 
@@ -72,38 +73,42 @@ export function MainContent({
               }
             />
             <div className="flex items-center gap-4">
-              <button
-                onClick={() => {
-                  if (!wizardState.active && !wizardState.category) {
-                    showToast('Please select an Item Category in the Assignments panel before activating this wizard.', 'error');
-                    return;
-                  }
-                  onToggleActive();
-                }}
-                className={`content-stretch flex gap-[12px] items-center py-[2px] relative shrink-0 transition-opacity ${(!wizardState.active && !wizardState.category) ? 'opacity-50' : ''}`}
-                title={(!wizardState.active && !wizardState.category) ? "Select a category to activate" : ""}
+              <Tooltip
+                content={(!wizardState.active && !wizardState.category) ? 'Select an Item Category in Assignments before activating' : (wizardState.active ? 'Deactivate wizard' : 'Activate wizard')}
+                side="left"
               >
-                <div className="flex flex-col font-['Inter',sans-serif] font-medium justify-center leading-[0] relative shrink-0 text-[var(--text-primary)] text-[16px] whitespace-nowrap">
-                  <p className="leading-[1.4]">{wizardState.active ? 'Active' : 'Inactive'}</p>
-                </div>
-                <div
-                  className={`${
-                    wizardState.active ? 'bg-[var(--background-brand-solid)]' : 'bg-[var(--background-disabled)]'
-                  } h-[20px] overflow-clip relative rounded-[19px] shrink-0 w-[40px] transition-colors`}
+                <button
+                  onClick={() => {
+                    if (!wizardState.active && !wizardState.category) {
+                      showToast('Please select an Item Category in the Assignments panel before activating this wizard.', 'error');
+                      return;
+                    }
+                    onToggleActive();
+                  }}
+                  className={`content-stretch flex gap-[12px] items-center py-[2px] relative shrink-0 transition-opacity ${(!wizardState.active && !wizardState.category) ? 'opacity-50' : ''}`}
                 >
-                  <div className="absolute top-1/2 -translate-y-1/2 size-[16px] transition-all" style={{
-                    right: wizardState.active ? '3px' : 'calc(100% - 19px)'
-                  }}>
-                    <div className="absolute inset-[-12.5%_-18.75%_-25%_-18.75%]">
-                      <svg className="block size-full" fill="none" preserveAspectRatio="none" viewBox="0 0 22 22">
-                        <g filter="url(#filter0_dd)" style={{ filter: 'drop-shadow(0 1px 3px rgba(0,0,0,0.08)) drop-shadow(0 1px 2px rgba(0,0,0,0.04))' }}>
-                          <circle cx="11" cy="10" fill="white" r="8" />
-                        </g>
-                      </svg>
+                  <div className="flex flex-col font-['Inter',sans-serif] font-medium justify-center leading-[0] relative shrink-0 text-[var(--text-primary)] text-[16px] whitespace-nowrap">
+                    <p className="leading-[1.4]">{wizardState.active ? 'Active' : 'Inactive'}</p>
+                  </div>
+                  <div
+                    className={`${
+                      wizardState.active ? 'bg-[var(--background-brand-solid)]' : 'bg-[var(--background-disabled)]'
+                    } h-[20px] overflow-clip relative rounded-[19px] shrink-0 w-[40px] transition-colors`}
+                  >
+                    <div className="absolute top-1/2 -translate-y-1/2 size-[16px] transition-all" style={{
+                      right: wizardState.active ? '3px' : 'calc(100% - 19px)'
+                    }}>
+                      <div className="absolute inset-[-12.5%_-18.75%_-25%_-18.75%]">
+                        <svg className="block size-full" fill="none" preserveAspectRatio="none" viewBox="0 0 22 22">
+                          <g filter="url(#filter0_dd)" style={{ filter: 'drop-shadow(0 1px 3px rgba(0,0,0,0.08)) drop-shadow(0 1px 2px rgba(0,0,0,0.04))' }}>
+                            <circle cx="11" cy="10" fill="white" r="8" />
+                          </g>
+                        </svg>
+                      </div>
                     </div>
                   </div>
-                </div>
-              </button>
+                </button>
+              </Tooltip>
             </div>
           </div>
         </div>

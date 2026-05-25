@@ -15,6 +15,7 @@ import { useToast } from '../components/Toast/useToast';
 import { Button } from '../components/Button/Button';
 import { Input } from '../components/Input/Input';
 import { ShopLabel } from '../components/Card/ShopLabel';
+import { Tooltip } from '../components/Tooltip/Tooltip';
 import { CategoryTreeCheckbox } from '../components/CategoryTree/CategoryTreeCheckbox';
 
 // Data layers
@@ -376,20 +377,22 @@ export const OrgSettingsPage: React.FC = () => {
                             </span>
                           </div>
                           <div className="flex items-center gap-1 shrink-0">
-                            <button
-                              onClick={() => openEditDrawer(area)}
-                              className="p-2 hover:bg-[var(--background-secondary-hover)] text-[var(--text-subtle)] hover:text-[#4649e5] rounded-lg cursor-pointer border-none bg-transparent"
-                              title="Edit"
-                            >
-                              <Edit3 size={15} />
-                            </button>
-                            <button
-                              onClick={() => handleDeleteArea(area.id, area.name)}
-                              className="p-2 hover:bg-red-50 text-gray-400 hover:text-red-500 rounded-lg cursor-pointer border-none bg-transparent"
-                              title="Delete"
-                            >
-                              <Trash2 size={15} />
-                            </button>
+                            <Tooltip content="Edit business area" side="top">
+                              <button
+                                onClick={() => openEditDrawer(area)}
+                                className="p-2 hover:bg-[var(--background-secondary-hover)] text-[var(--text-subtle)] hover:text-[#4649e5] rounded-lg cursor-pointer border-none bg-transparent"
+                              >
+                                <Edit3 size={15} />
+                              </button>
+                            </Tooltip>
+                            <Tooltip content="Delete business area" side="top">
+                              <button
+                                onClick={() => handleDeleteArea(area.id, area.name)}
+                                className="p-2 hover:bg-red-50 text-gray-400 hover:text-red-500 rounded-lg cursor-pointer border-none bg-transparent"
+                              >
+                                <Trash2 size={15} />
+                              </button>
+                            </Tooltip>
                           </div>
                         </div>
 
@@ -519,13 +522,14 @@ export const OrgSettingsPage: React.FC = () => {
                             </div>
 
                             {activeColor && (
-                              <button
-                                onClick={() => handleResetBranch(branchName)}
-                                className="text-xs font-bold text-gray-400 hover:text-red-500 transition-colors border-none bg-transparent cursor-pointer"
-                                title="Reset color"
-                              >
-                                Reset
-                              </button>
+                              <Tooltip content="Reset to default color" side="top">
+                                <button
+                                  onClick={() => handleResetBranch(branchName)}
+                                  className="text-xs font-bold text-gray-400 hover:text-red-500 transition-colors border-none bg-transparent cursor-pointer"
+                                >
+                                  Reset
+                                </button>
+                              </Tooltip>
                             )}
                           </div>
                         </div>

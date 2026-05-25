@@ -2,6 +2,7 @@ import { useState, useRef, useCallback, useEffect } from 'react';
 import { MoreHorizontal, ArrowUpDown, ArrowUp, ArrowDown, AlertTriangle, X, Search, HelpCircle, Loader2, Image, FileText } from 'lucide-react';
 import type { Deal } from '../../data/mockDeals';
 import { STATUS_STYLES } from '../../data/mockDeals';
+import { Tooltip } from '../Tooltip/Tooltip';
 
 export interface SortConfig {
   key: string;
@@ -391,12 +392,18 @@ export function ItemsTable({
               </button>
             )}
 
-            <div className="absolute right-3.5 top-1/2 -translate-y-1/2 group z-25 flex items-center">
-              <HelpCircle size={14} strokeWidth={1.5} className="text-[var(--text-subtlest)] cursor-help hover:text-[var(--text-subtle)]" />
-              <div className="absolute bottom-full right-0 mb-2 w-64 hidden group-hover:block bg-[#131518] text-white text-[10px] font-semibold p-3 rounded-lg border border-[#4c5564] leading-relaxed animate-in fade-in duration-150">
-                <span className="block text-[9px] text-[var(--text-brand)] uppercase tracking-wider mb-1 font-semibold">Search Fields</span>
-                Searches across Item ID, Item Title, Variant, Category Path, Business Area, and parent Deal ID.
-              </div>
+            <div className="absolute right-3.5 top-1/2 -translate-y-1/2 z-25 flex items-center">
+              <Tooltip
+                content={
+                  <span className="block max-w-[240px]">
+                    <span className="block text-[9px] text-[var(--text-brand)] uppercase tracking-wider mb-1 font-semibold">Search Fields</span>
+                    Searches across Item ID, Item Title, Variant, Category Path, Business Area, and parent Deal ID.
+                  </span>
+                }
+                side="top"
+              >
+                <span><HelpCircle size={14} strokeWidth={1.5} className="text-[var(--text-subtlest)] cursor-help hover:text-[var(--text-subtle)]" /></span>
+              </Tooltip>
             </div>
           </div>
         </div>
@@ -453,27 +460,28 @@ export function ItemsTable({
                       className={`${isNumeric ? 'text-right' : 'text-left'} relative group py-3.5 sticky top-0 bg-[var(--background-secondary)] z-10`}
                       style={{ width: col.width + 'px', minWidth: col.minWidth + 'px' }}
                     >
-                      <div
-                        className={`flex items-center ${isNumeric ? 'justify-end' : 'justify-start'} gap-1.5 px-2 text-[10px] font-black text-[var(--text-subtlest)] uppercase tracking-wider cursor-pointer hover:text-[var(--text-primary)] select-none focus-visible:text-[var(--text-primary)] focus:outline-none`}
-                        onClick={(e) => handleSortClick(col.key, e)}
-                        role="columnheader"
-                        aria-sort={sortConfig ? (sortConfig.direction === 'asc' ? 'ascending' : 'descending') : 'none'}
-                        title={sortTooltipText}
-                      >
-                        <span className="truncate">{col.label}</span>
-                        {!sortConfig && (
-                          <ArrowUpDown size={12} strokeWidth={1.5} className="opacity-0 group-hover:opacity-60 transition-opacity shrink-0 text-[var(--text-subtlest)]" />
-                        )}
-                        {sortConfig && (
-                          <span className="flex items-center gap-1 shrink-0 animate-in fade-in duration-150">
-                            {sortConfig.direction === 'asc' ? <ArrowUp size={12} strokeWidth={1.5} className="text-[var(--text-brand)]" /> : <ArrowDown size={12} strokeWidth={1.5} className="text-[var(--text-brand)]" />}
-                            {sortConfigs.length > 1 && (
-                              <span className="text-[8px] text-[var(--text-brand)] font-extrabold bg-[var(--background-brand-primary)] px-1 rounded-sm">{sortIdx + 1}</span>
-                            )}
-                            <span className={`w-1.5 h-1.5 rounded-full shrink-0 ${isColServerSorted ? 'bg-emerald-500' : 'bg-blue-500'}`} />
-                          </span>
-                        )}
-                      </div>
+                      <Tooltip content={sortTooltipText} side="top">
+                        <div
+                          className={`flex items-center ${isNumeric ? 'justify-end' : 'justify-start'} gap-1.5 px-2 text-[10px] font-black text-[var(--text-subtlest)] uppercase tracking-wider cursor-pointer hover:text-[var(--text-primary)] select-none focus-visible:text-[var(--text-primary)] focus:outline-none`}
+                          onClick={(e) => handleSortClick(col.key, e)}
+                          role="columnheader"
+                          aria-sort={sortConfig ? (sortConfig.direction === 'asc' ? 'ascending' : 'descending') : 'none'}
+                        >
+                          <span className="truncate">{col.label}</span>
+                          {!sortConfig && (
+                            <ArrowUpDown size={12} strokeWidth={1.5} className="opacity-0 group-hover:opacity-60 transition-opacity shrink-0 text-[var(--text-subtlest)]" />
+                          )}
+                          {sortConfig && (
+                            <span className="flex items-center gap-1 shrink-0 animate-in fade-in duration-150">
+                              {sortConfig.direction === 'asc' ? <ArrowUp size={12} strokeWidth={1.5} className="text-[var(--text-brand)]" /> : <ArrowDown size={12} strokeWidth={1.5} className="text-[var(--text-brand)]" />}
+                              {sortConfigs.length > 1 && (
+                                <span className="text-[8px] text-[var(--text-brand)] font-extrabold bg-[var(--background-brand-primary)] px-1 rounded-sm">{sortIdx + 1}</span>
+                              )}
+                              <span className={`w-1.5 h-1.5 rounded-full shrink-0 ${isColServerSorted ? 'bg-emerald-500' : 'bg-blue-500'}`} />
+                            </span>
+                          )}
+                        </div>
+                      </Tooltip>
 
                       {/* Resize handle */}
                       <div

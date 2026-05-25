@@ -111,6 +111,22 @@ const CategoryTreeNode: React.FC<CategoryTreeNodeProps> = ({
     }
   };
 
+  const handleKeyDown = (e: React.KeyboardEvent) => {
+    if (e.key === ' ') {
+      e.preventDefault();
+      onCheckboxChange(node.fullPath, !isChecked);
+    } else if (e.key === 'Enter') {
+      e.preventDefault();
+      handleRowClick();
+    } else if (e.key === 'ArrowRight' && !isLeaf && !isExpanded) {
+      e.preventDefault();
+      onToggleExpand(node.fullPath);
+    } else if (e.key === 'ArrowLeft' && !isLeaf && isExpanded) {
+      e.preventDefault();
+      onToggleExpand(node.fullPath);
+    }
+  };
+
   const displayName = node.displayName;
   const count = countMap[node.fullPath] || 0;
 
@@ -119,7 +135,12 @@ const CategoryTreeNode: React.FC<CategoryTreeNodeProps> = ({
       {node.fullPath && (
         <div 
           onClick={handleRowClick}
-          className={`flex items-center justify-between py-1 px-2 hover:bg-[var(--background-secondary-hover)] rounded-[6px] transition-all cursor-pointer text-left w-full h-[36px] ${
+          onKeyDown={handleKeyDown}
+          tabIndex={0}
+          role="checkbox"
+          aria-checked={isChecked ? "true" : isIndeterminate ? "mixed" : "false"}
+          aria-label={displayName}
+          className={`flex items-center justify-between py-1 px-2 hover:bg-[var(--background-secondary-hover)] rounded-[6px] transition-all cursor-pointer text-left w-full h-[36px] focus:outline-none focus-visible:ring-2 focus-visible:ring-[var(--border-brand)] focus-visible:ring-inset ${
             isChecked ? 'bg-[var(--background-brand-subtle)]/30 hover:bg-[var(--background-brand-subtle-hover)]/30' : ''
           }`}
           style={{ paddingLeft: `${level * 16 + 4}px` }}
@@ -128,11 +149,12 @@ const CategoryTreeNode: React.FC<CategoryTreeNodeProps> = ({
             {/* Expand indicator */}
             <button
               type="button"
+              tabIndex={-1}
               onClick={(e) => {
                 e.stopPropagation();
                 onToggleExpand(node.fullPath);
               }}
-              className="w-3.5 h-3.5 flex items-center justify-center shrink-0 text-[var(--text-subtlest)] hover:text-[var(--text-primary)] bg-transparent border-none p-0 cursor-pointer"
+              className="w-3.5 h-3.5 flex items-center justify-center shrink-0 text-[var(--text-subtlest)] hover:text-[var(--text-primary)] bg-transparent border-none p-0 cursor-pointer focus:outline-none"
             >
               {!isLeaf && (
                 isExpanded ? <ChevronDown size={12} strokeWidth={2} /> : <ChevronRight size={12} strokeWidth={2} />

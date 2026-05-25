@@ -16,6 +16,7 @@ export function Header({ onCreateDealClick, currentPage }: HeaderProps) {
   const [isMobileMenuOpen, setIsMobileMenuOpen] = useState(false);
   const [isSettingsOpen, setIsSettingsOpen] = useState(false);
   const settingsRef = useRef<HTMLDivElement>(null);
+  const settingsButtonRef = useRef<HTMLButtonElement>(null);
 
   useEffect(() => {
     if (!isSettingsOpen) return;
@@ -24,8 +25,18 @@ export function Header({ onCreateDealClick, currentPage }: HeaderProps) {
         setIsSettingsOpen(false);
       }
     };
+    const handleKeyDown = (e: KeyboardEvent) => {
+      if (e.key === 'Escape') {
+        setIsSettingsOpen(false);
+        settingsButtonRef.current?.focus();
+      }
+    };
     document.addEventListener('mousedown', handleOutsideClick);
-    return () => document.removeEventListener('mousedown', handleOutsideClick);
+    document.addEventListener('keydown', handleKeyDown);
+    return () => {
+      document.removeEventListener('mousedown', handleOutsideClick);
+      document.removeEventListener('keydown', handleKeyDown);
+    };
   }, [isSettingsOpen]);
 
   // Determine active nav item from route
@@ -75,9 +86,10 @@ export function Header({ onCreateDealClick, currentPage }: HeaderProps) {
         <div className="flex items-center justify-between px-[24px] size-full">
           <div className="flex gap-[48px] items-center relative shrink-0">
             {/* Logo */}
-            <div
-              className="h-[26px] overflow-clip relative shrink-0 w-[87px] cursor-pointer"
+            <button
               onClick={() => navigate('/')}
+              className="h-[26px] relative shrink-0 w-[87px] cursor-pointer bg-transparent border-none p-0 focus:outline-none focus-visible:ring-2 focus-visible:ring-[#4649e5] rounded-[4px]"
+              aria-label="Cashy Home"
             >
               <div className="absolute inset-[3.52%_72.41%_3.52%_0]">
                 <svg className="absolute block size-full" fill="none" preserveAspectRatio="none" viewBox="0 0 24 24.1684">
@@ -89,7 +101,7 @@ export function Header({ onCreateDealClick, currentPage }: HeaderProps) {
                   <path d={svgPaths.p2dfd2f70} fill="white" />
                 </svg>
               </div>
-            </div>
+            </button>
 
             {/* Navigation (Desktop) */}
             <div className="hidden md:flex font-sans gap-[32px] items-center leading-[1.4] relative shrink-0 text-[16px] whitespace-nowrap">
@@ -97,7 +109,7 @@ export function Header({ onCreateDealClick, currentPage }: HeaderProps) {
                 <button
                   key={item.key}
                   onClick={() => handleNavClick(item.key)}
-                  className={`relative shrink-0 transition-colors cursor-pointer bg-transparent border-none pb-[2px] ${
+                  className={`relative shrink-0 transition-colors cursor-pointer bg-transparent border-none pb-[2px] focus:outline-none focus-visible:ring-2 focus-visible:ring-[#4649e5] rounded-[4px] px-1 ${
                     activePage === item.key
                       ? 'text-white font-medium'
                       : 'text-[#fbfcfc]/60 hover:text-[#fbfcfc]'
@@ -117,7 +129,7 @@ export function Header({ onCreateDealClick, currentPage }: HeaderProps) {
           <div className="hidden md:flex gap-[10px] items-center justify-end relative shrink-0">
             <button
               onClick={onCreateDealClick}
-              className="bg-[#4649e5] hover:bg-[#3b3ec3] transition-colors cursor-pointer flex h-[40px] items-center justify-center px-[12px] py-[12px] relative rounded-[8px] shrink-0 border-none"
+              className="bg-[#4649e5] hover:bg-[#3b3ec3] transition-colors cursor-pointer flex h-[40px] items-center justify-center px-[12px] py-[12px] relative rounded-[8px] shrink-0 border-none focus:outline-none focus-visible:ring-2 focus-visible:ring-white focus-visible:ring-offset-2 focus-visible:ring-offset-[#17142b]"
             >
               <div className="flex flex-col font-sans font-semibold justify-end leading-[0] text-[14px] text-white whitespace-nowrap">
                 <p className="leading-[1.4]">Create a Deal</p>
@@ -139,8 +151,9 @@ export function Header({ onCreateDealClick, currentPage }: HeaderProps) {
               </div>
               <div ref={settingsRef} className="relative shrink-0">
                 <button
+                  ref={settingsButtonRef}
                   onClick={() => setIsSettingsOpen(!isSettingsOpen)}
-                  className={`flex items-center justify-center p-[12px] rounded-[8px] size-[40px] border transition-all cursor-pointer focus:outline-none ${
+                  className={`flex items-center justify-center p-[12px] rounded-[8px] size-[40px] border transition-all cursor-pointer focus:outline-none focus-visible:ring-2 focus-visible:ring-[#4649e5] ${
                     isSettingsOpen
                       ? 'bg-[#1f2227] border-[#4c5564]/80 text-white'
                       : 'bg-[#131518] border-[#4c5564] text-[#FBFCFC] hover:bg-[#1f2227] hover:border-[#4c5564]/80'
@@ -168,7 +181,7 @@ export function Header({ onCreateDealClick, currentPage }: HeaderProps) {
                         handleNavClick('wizard-builder');
                         setIsSettingsOpen(false);
                       }}
-                      className={`w-full text-left px-3 py-2 text-sm font-sans flex items-center gap-2 hover:bg-gray-50 hover:text-gray-900 transition-colors border-none bg-transparent cursor-pointer ${
+                      className={`w-full text-left px-3 py-2 text-sm font-sans flex items-center gap-2 hover:bg-gray-50 hover:text-gray-900 transition-colors border-none bg-transparent cursor-pointer focus:outline-none focus-visible:bg-gray-50 focus-visible:text-gray-900 ${
                         activePage === 'wizard-builder'
                           ? 'text-[#4649e5] font-semibold'
                           : 'text-gray-700'
@@ -182,7 +195,7 @@ export function Header({ onCreateDealClick, currentPage }: HeaderProps) {
                         handleNavClick('org-settings');
                         setIsSettingsOpen(false);
                       }}
-                      className={`w-full text-left px-3 py-2 text-sm font-sans flex items-center gap-2 hover:bg-gray-50 hover:text-gray-900 transition-colors border-none bg-transparent cursor-pointer ${
+                      className={`w-full text-left px-3 py-2 text-sm font-sans flex items-center gap-2 hover:bg-gray-50 hover:text-gray-900 transition-colors border-none bg-transparent cursor-pointer focus:outline-none focus-visible:bg-gray-50 focus-visible:text-gray-900 ${
                         activePage === 'org-settings'
                           ? 'text-[#4649e5] font-semibold'
                           : 'text-gray-700'

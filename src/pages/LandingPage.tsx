@@ -387,7 +387,7 @@ export const LandingPage: React.FC<LandingPageProps> = ({
                         placeholder="Search deals, customers, items…"
                         value={searchQuery}
                         onChange={e => setSearchQuery(e.target.value)}
-                        className="flex-1 border-none bg-transparent py-[var(--space-200,8px)] px-[var(--space-400,16px)] pl-0 text-[length:var(--body-size-large,14px)] text-[var(--text-primary)] w-full outline-none placeholder:text-[length:var(--body-size-medium,12px)] placeholder:text-[var(--text-subtlest)]"
+                        className="flex-1 border-none bg-transparent py-[var(--space-200,8px)] px-[var(--space-400,16px)] pl-0 text-[length:var(--body-size-large,14px)] text-[var(--text-primary)] w-full outline-none placeholder:text-[length:var(--body-size-large,14px)] placeholder:text-[var(--text-subtlest)]"
                     />
                     {/* Clear button */}
                     {searchQuery && (

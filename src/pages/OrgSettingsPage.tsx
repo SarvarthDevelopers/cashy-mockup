@@ -252,9 +252,9 @@ export const OrgSettingsPage: React.FC = () => {
           
           {/* Desktop Side Nav Tab Buttons */}
           <div className="hidden md:flex w-full bg-[var(--background-primary)] border border-[var(--border-subtle)] rounded-[8px] flex-col overflow-hidden shadow-sm h-fit">
-            <button
+             <button
               onClick={() => setActiveTab('business-areas')}
-              className={`w-full text-left p-4 flex items-start gap-3.5 transition-all cursor-pointer border-y-0 border-r-0 border-l-4 bg-transparent focus:outline-none hover:bg-[var(--background-secondary-hover)] ${
+              className={`w-full text-left p-4 flex items-start gap-3.5 transition-all cursor-pointer border-y-0 border-r-0 border-l-4 bg-transparent focus:outline-none focus-visible:ring-2 focus-visible:ring-[var(--border-brand)] focus-visible:ring-inset hover:bg-[var(--background-secondary-hover)] ${
                 activeTab === 'business-areas'
                   ? 'bg-[var(--background-brand-subtle)] border-[var(--border-brand)] text-[var(--text-brand)]'
                   : 'border-transparent text-[var(--text-subtle)]'
@@ -271,7 +271,7 @@ export const OrgSettingsPage: React.FC = () => {
 
             <button
               onClick={() => setActiveTab('branch-colors')}
-              className={`w-full text-left p-4 flex items-start gap-3.5 transition-all cursor-pointer border-y-0 border-r-0 border-l-4 bg-transparent focus:outline-none hover:bg-[var(--background-secondary-hover)] ${
+              className={`w-full text-left p-4 flex items-start gap-3.5 transition-all cursor-pointer border-y-0 border-r-0 border-l-4 bg-transparent focus:outline-none focus-visible:ring-2 focus-visible:ring-[var(--border-brand)] focus-visible:ring-inset hover:bg-[var(--background-secondary-hover)] ${
                 activeTab === 'branch-colors'
                   ? 'bg-[var(--background-brand-subtle)] border-[var(--border-brand)] text-[var(--text-brand)]'
                   : 'border-transparent text-[var(--text-subtle)]'
@@ -452,7 +452,7 @@ export const OrgSettingsPage: React.FC = () => {
                   placeholder="Search shops or branches..."
                   value={branchSearchQuery}
                   onChange={(e) => setBranchSearchQuery(e.target.value)}
-                  className="w-full h-12 pl-11 pr-4 bg-[var(--background-primary)] border border-[var(--border-subtle)] rounded-lg text-sm font-medium focus:outline-none focus:border-blue-500 transition-all text-[var(--text-primary)]"
+                  className="w-full h-12 pl-11 pr-4 bg-[var(--background-primary)] border border-[var(--border-subtle)] rounded-lg text-sm font-medium focus:outline-none focus:border-[var(--border-brand)] focus:ring-2 focus:ring-[var(--border-brand)]/20 transition-all text-[var(--text-primary)]"
                 />
               </div>
 

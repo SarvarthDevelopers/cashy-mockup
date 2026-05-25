@@ -48,6 +48,16 @@
     box-shadow: 0 0 0 2px var(--background-primary), 0 0 0 4px var(--purple-800, #4e21b6);
 }
 
+.trigger:focus-visible {
+    border-color: var(--border-focused);
+    box-shadow: 0 0 0 2px var(--background-primary), 0 0 0 4px var(--purple-200, #e2d6fe);
+    outline: none;
+}
+
+[data-theme="dark"] .trigger:focus-visible {
+    box-shadow: 0 0 0 2px var(--background-primary), 0 0 0 4px var(--purple-800, #4e21b6);
+}
+
 /* Active (has selections) — a subtle brand tint on the trigger */
 .triggerActive {
     border-color: var(--border-brand);
@@ -80,7 +90,7 @@
 
 /* ── Placeholder / value label ── */
 .triggerLabel {
-    font-size: var(--scale-04, 16px);         /* matches .value in design system */
+    font-size: var(--body-size-large, var(--scale-03, 14px));         /* matches search bar and design system */
     font-weight: var(--body-font-weight-regular, 400);
     color: var(--text-subtlest);              /* placeholder colour */
     white-space: nowrap;
@@ -245,7 +255,7 @@
     border-radius: var(--radius-100, 4px);
     cursor: pointer;
     font-family: inherit;
-    font-size: var(--scale-04, 16px);         /* matches .item font-size exactly */
+    font-size: var(--body-size-large, var(--scale-03, 14px));         /* matches trigger label and design system */
     font-weight: var(--body-font-weight-regular, 400);
     color: var(--text-primary);
     line-height: 1.4;

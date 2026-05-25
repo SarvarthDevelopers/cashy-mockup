@@ -50,15 +50,24 @@ export const DealCardLarge = React.forwardRef<HTMLDivElement, DealCardLargeProps
   const menuRef = useRef<HTMLDivElement>(null);
 
   useEffect(() => {
-    const handler = (e: MouseEvent) => {
+    const clickHandler = (e: MouseEvent) => {
       if (menuRef.current && !menuRef.current.contains(e.target as Node)) {
         setIsMenuOpen(false);
       }
     };
+    const keyHandler = (e: KeyboardEvent) => {
+      if (e.key === 'Escape') {
+        setIsMenuOpen(false);
+      }
+    };
     if (isMenuOpen) {
-      document.addEventListener('mousedown', handler);
+      document.addEventListener('mousedown', clickHandler);
+      document.addEventListener('keydown', keyHandler);
     }
-    return () => document.removeEventListener('mousedown', handler);
+    return () => {
+      document.removeEventListener('mousedown', clickHandler);
+      document.removeEventListener('keydown', keyHandler);
+    };
   }, [isMenuOpen]);
 
   let displayDate = dueDate;
@@ -79,8 +88,23 @@ export const DealCardLarge = React.forwardRef<HTMLDivElement, DealCardLargeProps
     }
   }
 
+  const handleKeyDown = (e: React.KeyboardEvent) => {
+    if (e.key === ' ' || e.key === 'Enter') {
+      // Don't trigger click if it comes from the more button
+      if ((e.target as HTMLElement).closest('.deal-card-more-button')) return;
+      e.preventDefault();
+      onClick?.();
+    }
+  };
+
   return (
-    <div ref={ref} className={`deal-card ${stateClass} ${className}`} onClick={onClick} tabIndex={0}>
+    <div 
+      ref={ref} 
+      className={`deal-card ${stateClass} ${className} focus:outline-none focus-visible:ring-2 focus-visible:ring-[#4649e5] focus-visible:ring-offset-2`} 
+      onClick={onClick} 
+      onKeyDown={handleKeyDown}
+      tabIndex={0}
+    >
       {/* Header Row */}
       <div className="deal-card-row deal-card-row--header">
         <div className="deal-card-left">
@@ -95,13 +119,13 @@ export const DealCardLarge = React.forwardRef<HTMLDivElement, DealCardLargeProps
         </div>
         <div className="deal-card-right">
           <div className="deal-card-header-right-container">
-            <div 
-              className="deal-card-more-button"
+            <button 
+              type="button"
+              className="deal-card-more-button focus:outline-none focus-visible:ring-2 focus-visible:ring-[#4649e5]"
               onClick={(e) => {
                 e.stopPropagation();
                 setIsMenuOpen(!isMenuOpen);
               }}
-              role="button"
               aria-label="More options"
               aria-expanded={isMenuOpen}
             >
@@ -115,7 +139,7 @@ export const DealCardLarge = React.forwardRef<HTMLDivElement, DealCardLargeProps
                   fill="currentColor"
                 />
               </svg>
-            </div>
+            </button>
             {isMenuOpen && (
               <div 
                 ref={menuRef}

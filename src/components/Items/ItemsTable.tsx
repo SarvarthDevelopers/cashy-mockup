@@ -61,19 +61,53 @@ function formatEur(value: number): string {
 
 function RowActionMenu({ item, onAction }: { item: FlatItem; onAction: (action: string, item: FlatItem) => void }) {
   const [open, setOpen] = useState(false);
+  const [focusIndex, setFocusIndex] = useState(-1);
   const ref = useRef<HTMLDivElement>(null);
+  const triggerRef = useRef<HTMLButtonElement>(null);
+  const menuItemsRef = useRef<(HTMLButtonElement | null)[]>([]);
 
   useEffect(() => {
-    const handler = (e: MouseEvent) => {
+    const clickHandler = (e: MouseEvent) => {
       if (ref.current && !ref.current.contains(e.target as Node)) setOpen(false);
     };
-    if (open) document.addEventListener('mousedown', handler);
-    return () => document.removeEventListener('mousedown', handler);
+    const keyHandler = (e: KeyboardEvent) => {
+      if (e.key === 'Escape') {
+        e.preventDefault();
+        setOpen(false);
+        triggerRef.current?.focus();
+      } else if (e.key === 'ArrowDown') {
+        e.preventDefault();
+        setFocusIndex((prev) => (prev + 1) % 4);
+      } else if (e.key === 'ArrowUp') {
+        e.preventDefault();
+        setFocusIndex((prev) => (prev - 1 + 4) % 4);
+      }
+    };
+    let frameId: number;
+    if (open) {
+      document.addEventListener('mousedown', clickHandler);
+      document.addEventListener('keydown', keyHandler);
+      frameId = requestAnimationFrame(() => {
+        setFocusIndex(0); // Focus the first item when opened
+      });
+    }
+    return () => {
+      if (frameId) cancelAnimationFrame(frameId);
+      document.removeEventListener('mousedown', clickHandler);
+      document.removeEventListener('keydown', keyHandler);
+    };
   }, [open]);
+
+  useEffect(() => {
+    if (open && focusIndex >= 0 && menuItemsRef.current[focusIndex]) {
+      menuItemsRef.current[focusIndex]?.focus();
+    }
+  }, [open, focusIndex]);
 
   return (
     <div ref={ref} className="relative flex justify-center">
       <button
+        ref={triggerRef}
         onClick={(e) => { e.stopPropagation(); setOpen(!open); }}
         className="p-1 hover:bg-[var(--background-secondary)] rounded-md transition-colors cursor-pointer focus:outline-none focus-visible:ring-2 focus-visible:ring-[var(--border-brand)]"
         aria-label="Row context menu"
@@ -82,17 +116,19 @@ function RowActionMenu({ item, onAction }: { item: FlatItem; onAction: (action: 
         <MoreHorizontal size={16} strokeWidth={1.5} className="text-[var(--text-subtlest)] hover:text-[var(--text-primary)]" />
       </button>
       {open && (
-        <div className="absolute right-0 top-7 z-50 bg-[var(--background-primary)] border border-[var(--border-subtle)] rounded-lg py-1 w-44 animate-in fade-in zoom-in-95 duration-150">
+        <div className="absolute right-0 top-7 z-50 bg-[var(--background-primary)] border border-[var(--border-subtle)] rounded-lg py-1 w-44 animate-in fade-in zoom-in-95 duration-150" role="menu">
           {[
             { key: 'open', label: 'Open Deal Wizard' },
             { key: 'comment', label: 'Add Comment' },
             { key: 'archive', label: 'Mark Archived' },
             { key: 'export', label: 'Export Row' },
-          ].map(action => (
+          ].map((action, idx) => (
             <button
               key={action.key}
-              onClick={(e) => { e.stopPropagation(); onAction(action.key, item); setOpen(false); }}
-              className="w-full text-left px-3 py-1.5 text-xs text-[var(--text-subtle)] hover:bg-[var(--background-secondary)] hover:text-[var(--text-primary)] transition-colors cursor-pointer font-semibold focus:outline-none focus:bg-[var(--background-secondary)]"
+              ref={(el) => { menuItemsRef.current[idx] = el; }}
+              role="menuitem"
+              onClick={(e) => { e.stopPropagation(); onAction(action.key, item); setOpen(false); triggerRef.current?.focus(); }}
+              className="w-full text-left px-3 py-1.5 text-xs text-[var(--text-subtle)] hover:bg-[var(--background-secondary)] hover:text-[var(--text-primary)] transition-colors cursor-pointer font-semibold focus:outline-none focus:bg-[var(--background-secondary)] focus-visible:ring-2 focus-visible:ring-[var(--border-brand)] focus-visible:ring-inset"
             >
               {action.label}
             </button>

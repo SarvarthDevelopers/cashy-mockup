@@ -141,61 +141,88 @@ export const CategoryTreeCheckbox: React.FC<CategoryTreeCheckboxProps> = ({
 
     const warningArea = node.fullPath ? warningMap[node.fullPath] : null;
 
-    return (
-      <div key={node.fullPath || 'root'} className="flex flex-col w-full">
-        {node.fullPath && (
-          <div 
-            onClick={() => {
-              if (!isLeaf) {
-                setExpandedPaths(prev => ({ ...prev, [node.fullPath]: !prev[node.fullPath] }));
-              } else {
-                handleCheckboxChange(node, !isChecked);
-              }
-            }}
-            className="flex items-center justify-between py-2 px-3 hover:bg-[var(--background-secondary)] rounded-xl transition-all cursor-pointer select-none text-left w-full gap-2 min-h-10 border border-transparent hover:border-[var(--border-subtler)]"
-            style={{ paddingLeft: `${Math.max(12, level * 16)}px` }}
-          >
-            <div className="flex items-center gap-2.5 min-w-0">
-              {/* Expand/Collapse arrow */}
-              <button
-                type="button"
-                onClick={(e) => handleToggleExpand(node.fullPath, e)}
-                className={`w-5 h-5 flex items-center justify-center rounded-md hover:bg-gray-100 text-[var(--text-placeholder)] shrink-0 transition-colors border-none bg-transparent cursor-pointer ${
-                  isLeaf ? 'opacity-0 pointer-events-none' : ''
-                }`}
-              >
-                {isExpanded ? <ChevronDown size={14} /> : <ChevronRight size={14} />}
-              </button>
+      const handleKeyDown = (e: React.KeyboardEvent) => {
+        if (e.key === ' ') {
+          e.preventDefault();
+          handleCheckboxChange(node, !isChecked);
+        } else if (e.key === 'Enter') {
+          e.preventDefault();
+          if (!isLeaf) {
+            setExpandedPaths(prev => ({ ...prev, [node.fullPath]: !prev[node.fullPath] }));
+          } else {
+            handleCheckboxChange(node, !isChecked);
+          }
+        } else if (e.key === 'ArrowRight' && !isLeaf && !isExpanded) {
+          e.preventDefault();
+          setExpandedPaths(prev => ({ ...prev, [node.fullPath]: true }));
+        } else if (e.key === 'ArrowLeft' && !isLeaf && isExpanded) {
+          e.preventDefault();
+          setExpandedPaths(prev => ({ ...prev, [node.fullPath]: false }));
+        }
+      };
 
-              {/* Checkbox */}
-              <div onClick={(e) => e.stopPropagation()} className="flex items-center shrink-0">
-                <Checkbox
-                  checked={isChecked}
-                  indeterminate={isIndeterminate}
-                  onChange={(e) => handleCheckboxChange(node, e.target.checked)}
-                />
+      return (
+        <div key={node.fullPath || 'root'} className="flex flex-col w-full">
+          {node.fullPath && (
+            <div 
+              onClick={() => {
+                if (!isLeaf) {
+                  setExpandedPaths(prev => ({ ...prev, [node.fullPath]: !prev[node.fullPath] }));
+                } else {
+                  handleCheckboxChange(node, !isChecked);
+                }
+              }}
+              onKeyDown={handleKeyDown}
+              tabIndex={0}
+              role="checkbox"
+              aria-checked={isChecked ? "true" : isIndeterminate ? "mixed" : "false"}
+              aria-label={node.displayName}
+              className="flex items-center justify-between py-2 px-3 hover:bg-[var(--background-secondary)] rounded-xl transition-all cursor-pointer select-none text-left w-full gap-2 min-h-10 border border-transparent hover:border-[var(--border-subtler)] focus:outline-none focus-visible:ring-2 focus-visible:ring-[var(--border-brand)] focus-visible:ring-inset"
+              style={{ paddingLeft: `${Math.max(12, level * 16)}px` }}
+            >
+              <div className="flex items-center gap-2.5 min-w-0">
+                {/* Expand/Collapse arrow */}
+                <button
+                  type="button"
+                  tabIndex={-1}
+                  onClick={(e) => handleToggleExpand(node.fullPath, e)}
+                  className={`w-5 h-5 flex items-center justify-center rounded-md hover:bg-gray-100 text-[var(--text-placeholder)] shrink-0 transition-colors border-none bg-transparent cursor-pointer focus:outline-none ${
+                    isLeaf ? 'opacity-0 pointer-events-none' : ''
+                  }`}
+                >
+                  {isExpanded ? <ChevronDown size={14} /> : <ChevronRight size={14} />}
+                </button>
+  
+                {/* Checkbox */}
+                <div onClick={(e) => e.stopPropagation()} className="flex items-center shrink-0">
+                  <Checkbox
+                    checked={isChecked}
+                    indeterminate={isIndeterminate}
+                    onChange={(e) => handleCheckboxChange(node, e.target.checked)}
+                    tabIndex={-1}
+                  />
+                </div>
+  
+                {/* Label */}
+                <div className="flex flex-col min-w-0">
+                  <span className={`text-[13px] truncate ${isChecked ? 'text-[var(--text-brand)] font-bold' : 'text-[var(--text-primary)] font-semibold'}`}>
+                    {node.displayName}
+                  </span>
+                  {isLeaf && (
+                    <span className="text-[9px] text-[var(--text-placeholder)] font-mono tracking-tight">{node.fullPath}</span>
+                  )}
+                </div>
               </div>
-
-              {/* Label */}
-              <div className="flex flex-col min-w-0">
-                <span className={`text-[13px] truncate ${isChecked ? 'text-[var(--text-brand)] font-bold' : 'text-[var(--text-primary)] font-semibold'}`}>
-                  {node.displayName}
-                </span>
-                {isLeaf && (
-                  <span className="text-[9px] text-[var(--text-placeholder)] font-mono tracking-tight">{node.fullPath}</span>
-                )}
-              </div>
+  
+              {/* Warning indicator */}
+              {isLeaf && warningArea && (
+                <div className="flex items-center gap-1 px-2 py-0.5 bg-amber-50 border border-amber-100 rounded-md text-[9px] font-extrabold text-amber-700 uppercase tracking-tight shrink-0">
+                  <AlertTriangle size={9} />
+                  <span>In {warningArea}</span>
+                </div>
+              )}
             </div>
-
-            {/* Warning indicator */}
-            {isLeaf && warningArea && (
-              <div className="flex items-center gap-1 px-2 py-0.5 bg-amber-50 border border-amber-100 rounded-md text-[9px] font-extrabold text-amber-700 uppercase tracking-tight shrink-0">
-                <AlertTriangle size={9} />
-                <span>In {warningArea}</span>
-              </div>
-            )}
-          </div>
-        )}
+          )}
 
         {/* Child Nodes */}
         {(!node.fullPath || isExpanded) && children.length > 0 && (

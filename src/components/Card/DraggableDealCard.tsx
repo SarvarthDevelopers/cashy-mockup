@@ -44,6 +44,7 @@ export const DraggableDealCard = React.forwardRef<HTMLDivElement, DraggableDealC
       style={style}
       {...listeners}
       {...attributes}
+      tabIndex={-1}
       className={isDragging ? 'deal-card-wrapper--dragging' : ''}
     >
       <DealCardLarge

@@ -138,12 +138,29 @@ export const CategoryTreeDropdown: React.FC<CategoryTreeDropdownProps> = ({
     const isExpanded = !!expandedPaths[node.fullPath];
     const isSelected = value === node.fullPath;
 
+    const handleKeyDown = (e: React.KeyboardEvent) => {
+      if (e.key === ' ' || e.key === 'Enter') {
+        e.preventDefault();
+        handleSelectNode(node.fullPath);
+      } else if (e.key === 'ArrowRight' && !isLeaf && !isExpanded) {
+        e.preventDefault();
+        setExpandedPaths(prev => ({ ...prev, [node.fullPath]: true }));
+      } else if (e.key === 'ArrowLeft' && !isLeaf && isExpanded) {
+        e.preventDefault();
+        setExpandedPaths(prev => ({ ...prev, [node.fullPath]: false }));
+      }
+    };
+
     return (
       <div key={node.fullPath || 'root'} className="flex flex-col w-full">
         {node.fullPath && (
           <div 
             onClick={() => handleSelectNode(node.fullPath)}
-            className={`flex items-center justify-between py-2 px-3 hover:bg-[var(--background-secondary)] rounded-xl transition-all cursor-pointer select-none text-left w-full h-10 border border-transparent ${
+            onKeyDown={handleKeyDown}
+            tabIndex={0}
+            role="button"
+            aria-selected={isSelected}
+            className={`flex items-center justify-between py-2 px-3 hover:bg-[var(--background-secondary)] rounded-xl transition-all cursor-pointer select-none text-left w-full h-10 border border-transparent focus:outline-none focus-visible:ring-2 focus-visible:ring-[var(--border-brand)] focus-visible:ring-inset ${
               isSelected 
                 ? 'bg-[var(--background-brand-subtle)] border-[var(--border-brand)] text-[var(--text-brand)]' 
                 : 'hover:border-[var(--border-subtler)]'
@@ -155,8 +172,9 @@ export const CategoryTreeDropdown: React.FC<CategoryTreeDropdownProps> = ({
               {!isLeaf ? (
                 <button
                   type="button"
+                  tabIndex={-1}
                   onClick={(e) => handleToggleExpand(node.fullPath, e)}
-                  className="w-5 h-5 flex items-center justify-center rounded-md hover:bg-gray-100/50 text-[var(--text-placeholder)] shrink-0 transition-colors border-none bg-transparent cursor-pointer"
+                  className="w-5 h-5 flex items-center justify-center rounded-md hover:bg-gray-100/50 text-[var(--text-placeholder)] shrink-0 transition-colors border-none bg-transparent cursor-pointer focus:outline-none"
                 >
                   {isExpanded ? <ChevronDown size={13} /> : <ChevronRight size={13} />}
                 </button>

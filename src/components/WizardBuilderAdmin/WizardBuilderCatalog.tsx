@@ -143,7 +143,6 @@ interface CatalogSidebarProps {
   selectedShops: string[];
   onShopsChange: (shops: string[]) => void;
   onClear: () => void;
-  onCreateNew: () => void;
   wizards: WizardConfig[];
 }
 
@@ -156,7 +155,6 @@ const CatalogSidebar: React.FC<CatalogSidebarProps> = ({
   selectedShops, 
   onShopsChange, 
   onClear,
-  onCreateNew,
   wizards
 }) => {
   return (
@@ -230,12 +228,6 @@ const CatalogSidebar: React.FC<CatalogSidebarProps> = ({
             Clear all filters
           </button>
         )}
-        <button 
-          onClick={onCreateNew}
-          className="h-11 bg-[var(--background-brand-solid)] text-[var(--text-white)] rounded-lg flex items-center justify-center gap-2 font-bold text-sm hover:bg-[var(--background-brand-solid-hover)] transition-colors shadow-lg shadow-[var(--lilac-100)]"
-        >
-          <span>+</span> Create New Wizard
-        </button>
         <button 
           onClick={() => {
             if (confirm('Are you sure you want to reset all wizards to default? This will clear all your custom changes.')) {
@@ -388,37 +380,45 @@ export const WizardBuilderCatalog: React.FC<WizardBuilderCatalogProps> = ({
           selectedShops={filterShops}
           onShopsChange={setFilterShops}
           onClear={clearFilters}
-          onCreateNew={onCreateNew}
           wizards={wizards}
         />
 
         <div className="flex-1 flex flex-col gap-4">
           <div className="flex items-center justify-between px-2 mb-2">
-            <label className="flex items-center gap-3 text-sm font-bold text-[var(--text-primary)] cursor-pointer">
-              <input 
-                type="checkbox" 
-                checked={allSelected}
-                onChange={(e) => handleSelectAll(e.target.checked)}
-                className="w-4 h-4 rounded border-[var(--border-subtle)] cursor-pointer" 
-              />
-              Select All ({selectedIds.size})
-            </label>
-            {selectedIds.size > 0 && (
-              <div className="flex items-center gap-4">
-                <button 
-                  onClick={() => setIsDeactivateModalOpen(true)}
-                  className="text-[var(--text-subtle)] text-sm font-bold hover:text-[var(--text-primary)] transition-colors"
-                >
-                  Deactivate Wizards
-                </button>
-                <button 
-                  onClick={() => setIsDeleteModalOpen(true)}
-                  className="text-[var(--text-error)] text-sm font-bold hover:underline"
-                >
-                  Delete Wizards
-                </button>
-              </div>
-            )}
+            <div className="flex items-center gap-6">
+              <label className="flex items-center gap-3 text-sm font-bold text-[var(--text-primary)] cursor-pointer">
+                <input 
+                  type="checkbox" 
+                  checked={allSelected}
+                  onChange={(e) => handleSelectAll(e.target.checked)}
+                  className="w-4 h-4 rounded border-[var(--border-subtle)] cursor-pointer" 
+                />
+                Select All ({selectedIds.size})
+              </label>
+              {selectedIds.size > 0 && (
+                <div className="flex items-center gap-4 border-l border-[var(--border-subtle)] pl-4">
+                  <button 
+                    onClick={() => setIsDeactivateModalOpen(true)}
+                    className="text-[var(--text-subtle)] text-xs font-bold hover:text-[var(--text-primary)] transition-colors cursor-pointer"
+                  >
+                    Deactivate Wizards
+                  </button>
+                  <button 
+                    onClick={() => setIsDeleteModalOpen(true)}
+                    className="text-[var(--text-error)] text-xs font-bold hover:underline cursor-pointer"
+                  >
+                    Delete Wizards
+                  </button>
+                </div>
+              )}
+            </div>
+
+            <button 
+              onClick={onCreateNew}
+              className="h-10 px-4 bg-[var(--background-brand-solid)] text-[var(--text-white)] rounded-lg flex items-center justify-center gap-2 font-bold text-sm hover:bg-[var(--background-brand-solid-hover)] transition-colors shadow-lg shadow-[var(--lilac-100)] cursor-pointer"
+            >
+              <span>+</span> Create New Wizard
+            </button>
           </div>
 
           <div className="flex flex-col gap-3">

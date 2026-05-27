@@ -683,26 +683,8 @@ export function CashbookDashboard() {
           {/* LEDGER TAB */}
           {activeTab === 'ledger' && (
             <div className="absolute inset-0 flex flex-col p-6 min-h-0">
-            {/* Ledger Quick Summary and Table */}
-            <div className="flex items-center gap-6 py-2 px-1 mb-2 text-xs shrink-0">
-              <div className="flex items-center gap-2">
-                <span className="text-[var(--text-subtlest)] font-semibold">Total Inflow:</span>
-                <span className="text-[var(--text-success)] font-black">{formatEuro(ledgerSummary.totalInflow)}</span>
-              </div>
-              <div className="w-[1.5px] h-3 bg-[var(--border-subtle)]" />
-              <div className="flex items-center gap-2">
-                <span className="text-[var(--text-subtlest)] font-semibold">Total Outflow:</span>
-                <span className="text-[var(--text-error)] font-black">{formatEuro(ledgerSummary.totalOutflow)}</span>
-              </div>
-              <div className="w-[1.5px] h-3 bg-[var(--border-subtle)]" />
-              <div className="flex items-center gap-2">
-                <span className="text-[var(--text-subtlest)] font-semibold">Current Balance:</span>
-                <span className="text-[var(--text-primary)] font-black">{formatEuro(ledgerSummary.currentBalance)}</span>
-              </div>
-            </div>
-
             {/* Ledger Table Spreadsheet */}
-            <div className="flex-1 bg-[var(--background-primary)] border border-[var(--border-subtle)] rounded-xl flex flex-col overflow-hidden shadow-sm">
+            <div className="flex-1 bg-[var(--background-primary)] border border-[var(--border-subtle)] rounded-xl flex flex-col overflow-hidden shadow-sm mb-20">
               <div className="flex-1 overflow-auto slick-scrollbar bg-[var(--background-primary)]">
                 <table className="w-full border-collapse text-left text-sm select-text bg-[var(--background-primary)]">
                   <thead>
@@ -821,6 +803,26 @@ export function CashbookDashboard() {
                     )}
                   </tbody>
                 </table>
+              </div>
+            </div>
+
+            {/* Sticky/Fixed Ledger Footer */}
+            <div className="fixed bottom-0 left-0 right-0 bg-[var(--background-secondary)] border-t border-[var(--border-subtle)] py-4 px-6 md:px-12 flex items-center justify-center shadow-[0_-8px_32px_rgba(19,21,24,0.05)] z-10 select-none">
+              <div className="flex items-center gap-8 text-sm">
+                <div className="flex items-center gap-3">
+                  <span className="text-[var(--text-subtlest)] font-bold">Total Inflow:</span>
+                  <span className="text-[var(--text-success)] font-black text-base">{formatEuro(ledgerSummary.totalInflow)}</span>
+                </div>
+                <div className="w-[1.5px] h-5 bg-[var(--border-subtle)]" />
+                <div className="flex items-center gap-3">
+                  <span className="text-[var(--text-subtlest)] font-bold">Total Outflow:</span>
+                  <span className="text-[var(--text-error)] font-black text-base">{formatEuro(ledgerSummary.totalOutflow)}</span>
+                </div>
+                <div className="w-[1.5px] h-5 bg-[var(--border-subtle)]" />
+                <div className="flex items-center gap-3">
+                  <span className="text-[var(--text-subtlest)] font-bold">Current Balance:</span>
+                  <span className="text-[var(--text-primary)] font-black text-base">{formatEuro(ledgerSummary.currentBalance)}</span>
+                </div>
               </div>
             </div>
             </div>

@@ -1,8 +1,10 @@
 import { useState, useMemo } from 'react';
-import * as Tabs from '@radix-ui/react-tabs';
+import { Tabs } from '../components/Tabs/Tabs';
+import { Tab } from '../components/Tabs/Tab';
 import { motion, AnimatePresence } from 'motion/react';
 import { 
   Plus, 
+  Minus,
   Search, 
   ArrowDownRight, 
   ArrowUpRight, 
@@ -20,6 +22,8 @@ import { FileUpload } from '../components/FileUpload/FileUpload';
 import { Tooltip } from '../components/Tooltip/Tooltip';
 import { ConfirmationModal } from '../components/Modal/ConfirmationModal';
 import { DateRangePicker } from '../components/DatePicker/DateRangePicker';
+import { DatePicker } from '../components/DatePicker/DatePicker';
+import { useToast } from '../components/Toast/useToast';
 
 // Types
 interface LedgerEntry {
@@ -42,6 +46,16 @@ interface DenominationConfig {
   label: string;
   registerCount: number;
   reserveCount: number;
+}
+
+interface HistoricalReconciliation {
+  id: string;
+  shop: string;
+  date: string; // YYYY-MM-DD
+  expectedTotal: number;
+  totalCounted: number;
+  difference: number;
+  counts: { value: number; registerCount: number; reserveCount: number }[];
 }
 
 // Mock Data
@@ -71,6 +85,84 @@ const mockDenominations: DenominationConfig[] = [
   { value: 0.05, label: '5 Cent', registerCount: 11, reserveCount: 0 },
   { value: 0.02, label: '2 Cent', registerCount: 1, reserveCount: 0 },
   { value: 0.01, label: '1 Cent', registerCount: 6, reserveCount: 201 }
+];
+
+const mockReconciliationHistory: HistoricalReconciliation[] = [
+  {
+    id: 'hist-1',
+    shop: 'vienna',
+    date: '2026-05-23',
+    expectedTotal: 26839.44,
+    totalCounted: 26839.44,
+    difference: 0.00,
+    counts: [
+      { value: 500, registerCount: 0, reserveCount: 0 },
+      { value: 200, registerCount: 47, reserveCount: 0 },
+      { value: 100, registerCount: 52, reserveCount: 0 },
+      { value: 50, registerCount: 102, reserveCount: 100 },
+      { value: 20, registerCount: 0, reserveCount: 0 },
+      { value: 10, registerCount: 175, reserveCount: 0 },
+      { value: 5, registerCount: 0, reserveCount: 0 },
+      { value: 2, registerCount: 0, reserveCount: 125 },
+      { value: 1, registerCount: 3, reserveCount: 125 },
+      { value: 0.50, registerCount: 0, reserveCount: 0 },
+      { value: 0.20, registerCount: 0, reserveCount: 0 },
+      { value: 0.10, registerCount: 8, reserveCount: 80 },
+      { value: 0.05, registerCount: 11, reserveCount: 0 },
+      { value: 0.02, registerCount: 1, reserveCount: 0 },
+      { value: 0.01, registerCount: 6, reserveCount: 201 }
+    ]
+  },
+  {
+    id: 'hist-2',
+    shop: 'vienna',
+    date: '2026-05-22',
+    expectedTotal: 15450.00,
+    totalCounted: 15450.00,
+    difference: 0.00,
+    counts: [
+      { value: 500, registerCount: 0, reserveCount: 0 },
+      { value: 200, registerCount: 20, reserveCount: 0 },
+      { value: 100, registerCount: 50, reserveCount: 0 },
+      { value: 50, registerCount: 80, reserveCount: 40 },
+      { value: 20, registerCount: 10, reserveCount: 0 },
+      { value: 10, registerCount: 40, reserveCount: 5 },
+      { value: 5, registerCount: 0, reserveCount: 0 },
+      { value: 2, registerCount: 0, reserveCount: 0 },
+      { value: 1, registerCount: 0, reserveCount: 0 },
+      { value: 0.50, registerCount: 0, reserveCount: 0 },
+      { value: 0.20, registerCount: 0, reserveCount: 0 },
+      { value: 0.10, registerCount: 0, reserveCount: 0 },
+      { value: 0.05, registerCount: 0, reserveCount: 0 },
+      { value: 0.02, registerCount: 0, reserveCount: 0 },
+      { value: 0.01, registerCount: 0, reserveCount: 0 }
+    ]
+  },
+  {
+    id: 'hist-3',
+    shop: 'graz',
+    date: '2026-05-23',
+    expectedTotal: 8350.00,
+    totalCounted: 8350.00,
+    difference: 0.00,
+    counts: [
+      { value: 500, registerCount: 0, reserveCount: 0 },
+      { value: 200, registerCount: 10, reserveCount: 0 },
+      { value: 100, registerCount: 30, reserveCount: 0 },
+      { value: 50, registerCount: 40, reserveCount: 20 },
+      { value: 20, registerCount: 15, reserveCount: 0 },
+      { value: 10, registerCount: 5, reserveCount: 0 },
+      { value: 5, registerCount: 0, reserveCount: 0 },
+      { value: 2, registerCount: 0, reserveCount: 0 },
+      { value: 1, registerCount: 0, reserveCount: 0 },
+      { value: 0.50, registerCount: 0, reserveCount: 0 },
+      { value: 0.20, registerCount: 0, reserveCount: 0 },
+      { value: 0.10, registerCount: 0, reserveCount: 0 },
+      { value: 0.05, registerCount: 0, reserveCount: 0 },
+      { value: 0.02, registerCount: 0, reserveCount: 0 },
+      { value: 0.01, registerCount: 0, reserveCount: 0 }
+    ]
+  }
 ];
 
 const SHOP_OPTIONS = [
@@ -128,11 +220,28 @@ export function CashbookDashboard() {
   const [activeTab, setActiveTab] = useState('ledger');
   const [searchQuery, setSearchQuery] = useState('');
   
+  const { showToast } = useToast();
+
   // Ledger and Denominations States
   const [ledgerData, setLedgerData] = useState<LedgerEntry[]>(mockLedgerEntries);
   const [denominations, setDenominations] = useState<DenominationConfig[]>(mockDenominations);
 
-  // Hardcoded Expected Total
+  // History states
+  const [historyEntries, setHistoryEntries] = useState<HistoricalReconciliation[]>(mockReconciliationHistory);
+  const [historyShop, setHistoryShop] = useState('vienna');
+  const [historyDate, setHistoryDate] = useState<Date | null>(() => new Date(2026, 4, 23)); // 2026-05-23
+  const [isEditingHistory, setIsEditingHistory] = useState(false);
+  const [editHistoryCounts, setEditHistoryCounts] = useState<{ value: number; registerCount: number; reserveCount: number }[]>([]);
+
+  const formattedHistoryDate = useMemo(() => {
+    return formatDateString(historyDate);
+  }, [historyDate]);
+
+  const currentHistoryEntry = useMemo(() => {
+    return historyEntries.find(h => h.shop === historyShop && h.date === formattedHistoryDate) || null;
+  }, [historyEntries, historyShop, formattedHistoryDate]);
+
+  // Hardcoded Expected Total for active reconciliation
   const expectedTotal = 26839.44;
 
   // New Entry Drawer state
@@ -192,6 +301,22 @@ export function CashbookDashboard() {
   const totalCounted = registerTotal + reserveTotal;
   const reconciliationDifference = totalCounted - expectedTotal;
 
+  const editingRegisterTotal = useMemo(() => {
+    return editHistoryCounts.reduce((sum, d) => sum + (d.registerCount * d.value), 0);
+  }, [editHistoryCounts]);
+
+  const editingReserveTotal = useMemo(() => {
+    return editHistoryCounts.reduce((sum, d) => sum + (d.reserveCount * d.value), 0);
+  }, [editHistoryCounts]);
+
+  const editingTotalCounted = useMemo(() => {
+    return editingRegisterTotal + editingReserveTotal;
+  }, [editingRegisterTotal, editingReserveTotal]);
+
+  const editingDifference = useMemo(() => {
+    return editingTotalCounted - (currentHistoryEntry?.expectedTotal || 0);
+  }, [editingTotalCounted, currentHistoryEntry]);
+
   // Format currency value as Euros: e.g. "€ 425.00"
   const formatEuro = (amount: number) => {
     return `€ ${new Intl.NumberFormat('en-US', { minimumFractionDigits: 2, maximumFractionDigits: 2 }).format(amount)}`;
@@ -213,17 +338,148 @@ export function CashbookDashboard() {
   };
 
   // Handlers
+  // Handlers for Active Reconciliation
   const handleCountChange = (
     value: number,
     field: 'registerCount' | 'reserveCount',
     valStr: string
   ) => {
-    const val = valStr === '' ? 0 : parseInt(valStr, 10);
+    const cleanText = valStr.replace(/[^0-9]/g, '');
+    const val = cleanText === '' ? 0 : parseInt(cleanText, 10);
     if (isNaN(val) || val < 0) return;
 
     setDenominations(prev => 
       prev.map(d => d.value === value ? { ...d, [field]: val } : d)
     );
+  };
+
+  const handleIncrement = (value: number, field: 'registerCount' | 'reserveCount') => {
+    setDenominations(prev =>
+      prev.map(d => d.value === value ? { ...d, [field]: d[field] + 1 } : d)
+    );
+  };
+
+  const handleDecrement = (value: number, field: 'registerCount' | 'reserveCount') => {
+    setDenominations(prev =>
+      prev.map(d => d.value === value ? { ...d, [field]: Math.max(0, d[field] - 1) } : d)
+    );
+  };
+
+  const handleLoadLastValues = () => {
+    const latestShopEntry = historyEntries
+      .filter(h => h.shop === selectedShop)
+      .sort((a, b) => b.date.localeCompare(a.date))[0];
+
+    if (latestShopEntry) {
+      setDenominations(prev => prev.map(d => {
+        const histMatch = latestShopEntry.counts.find(c => c.value === d.value);
+        return {
+          ...d,
+          registerCount: histMatch ? histMatch.registerCount : 0,
+          reserveCount: histMatch ? histMatch.reserveCount : 0
+        };
+      }));
+      showToast('Counts loaded from last reconciliation values.', 'success');
+    } else {
+      showToast('No previous reconciliation counts found to load.', 'warning');
+    }
+  };
+
+  const handleSubmitActiveReconciliation = () => {
+    const todayStr = formatDateString(new Date());
+    const newEntry: HistoricalReconciliation = {
+      id: `hist-${Date.now()}`,
+      shop: selectedShop,
+      date: todayStr,
+      expectedTotal: expectedTotal,
+      totalCounted: totalCounted,
+      difference: reconciliationDifference,
+      counts: denominations.map(d => ({
+        value: d.value,
+        registerCount: d.registerCount,
+        reserveCount: d.reserveCount
+      }))
+    };
+
+    setHistoryEntries(prev => {
+      const filtered = prev.filter(h => !(h.shop === selectedShop && h.date === todayStr));
+      return [newEntry, ...filtered];
+    });
+
+    showToast('Reconciliation submitted successfully!', 'success');
+  };
+
+  // Handlers for History Reconciliation
+  const handleHistoryCountChange = (
+    value: number,
+    field: 'registerCount' | 'reserveCount',
+    valStr: string
+  ) => {
+    const cleanText = valStr.replace(/[^0-9]/g, '');
+    const val = cleanText === '' ? 0 : parseInt(cleanText, 10);
+    if (isNaN(val) || val < 0) return;
+
+    setEditHistoryCounts(prev =>
+      prev.map(d => d.value === value ? { ...d, [field]: val } : d)
+    );
+  };
+
+  const handleHistoryIncrement = (value: number, field: 'registerCount' | 'reserveCount') => {
+    setEditHistoryCounts(prev =>
+      prev.map(d => d.value === value ? { ...d, [field]: d[field] + 1 } : d)
+    );
+  };
+
+  const handleHistoryDecrement = (value: number, field: 'registerCount' | 'reserveCount') => {
+    setEditHistoryCounts(prev =>
+      prev.map(d => d.value === value ? { ...d, [field]: Math.max(0, d[field] - 1) } : d)
+    );
+  };
+
+  const handleInitializeHistoryRecord = () => {
+    const dateStr = formattedHistoryDate;
+    if (!dateStr) return;
+    const newEntry: HistoricalReconciliation = {
+      id: `hist-${Date.now()}`,
+      shop: historyShop,
+      date: dateStr,
+      expectedTotal: 0.00,
+      totalCounted: 0.00,
+      difference: 0.00,
+      counts: mockDenominations.map(d => ({
+        value: d.value,
+        registerCount: 0,
+        reserveCount: 0
+      }))
+    };
+    setHistoryEntries(prev => [newEntry, ...prev]);
+    setEditHistoryCounts(newEntry.counts);
+    setIsEditingHistory(true);
+    showToast('Initialized empty record. You are now in edit mode.', 'success');
+  };
+
+  const handleSaveHistoryChanges = () => {
+    if (!currentHistoryEntry) return;
+
+    const updatedRegisterTotal = editHistoryCounts.reduce((sum, d) => sum + (d.registerCount * d.value), 0);
+    const updatedReserveTotal = editHistoryCounts.reduce((sum, d) => sum + (d.reserveCount * d.value), 0);
+    const updatedTotal = updatedRegisterTotal + updatedReserveTotal;
+    const updatedDiff = updatedTotal - currentHistoryEntry.expectedTotal;
+
+    setHistoryEntries(prev => prev.map(h => {
+      if (h.id === currentHistoryEntry.id) {
+        return {
+          ...h,
+          totalCounted: updatedTotal,
+          difference: updatedDiff,
+          counts: editHistoryCounts
+        };
+      }
+      return h;
+    }));
+
+    setIsEditingHistory(false);
+    showToast('Historical reconciliation updated successfully.', 'success');
   };
 
   const handleDeleteEntry = (id: string) => {
@@ -346,122 +602,112 @@ export function CashbookDashboard() {
   return (
     <div className="bg-[var(--background-tertiary)] h-full w-full flex flex-col font-sans overflow-hidden select-none">
       
-      {/* Header section */}
+      {/* Header section - Cleaned up to only show title */}
       <div className="bg-[var(--background-primary)] border-b border-[var(--border-subtle)] flex flex-col md:flex-row md:items-center justify-between px-6 py-4 gap-4 shrink-0">
         <div className="flex flex-wrap items-center gap-6">
           <h1 className="text-xl font-black text-[var(--text-primary)] tracking-tight">Cashbook</h1>
-          
-          <div className="w-[1.5px] h-6 bg-[var(--border-subtle)] hidden md:block" />
-
-          {/* Shop Selector Dropdown */}
-          <div className="flex flex-col gap-1 w-48">
-            <span className="text-[10px] font-black text-[var(--text-subtlest)] uppercase tracking-wider pl-1">Shop</span>
-            <Dropdown
-              options={SHOP_OPTIONS}
-              value={selectedShop}
-              onChange={setSelectedShop}
-            />
-          </div>
-
-          {/* Cashbook Type Dropdown */}
-          <div className="flex flex-col gap-1 w-40">
-            <span className="text-[10px] font-black text-[var(--text-subtlest)] uppercase tracking-wider pl-1">Type</span>
-            <Dropdown
-              options={TYPE_OPTIONS}
-              value={selectedType}
-              onChange={setSelectedType}
-            />
-          </div>
-
-          {/* Date Range Picker */}
-          <div className="flex flex-col gap-1 w-64">
-            <span className="text-[10px] font-black text-[var(--text-subtlest)] uppercase tracking-wider pl-1">Date Range</span>
-            <DateRangePicker
-              value={rangeValue}
-              onChange={handleRangeChange}
-              placeholder="Select date range"
-              className="w-full"
-            />
-          </div>
+          <Tabs variant="segment" value={activeTab} onValueChange={setActiveTab} className="scale-105 ml-2">
+            <Tab value="ledger">Ledger</Tab>
+            <Tab value="reconciliation">Reconciliation</Tab>
+            <Tab value="history">History</Tab>
+          </Tabs>
         </div>
-
-        {/* Right Actions */}
-        <div className="flex items-center gap-3 shrink-0">
-          <Button 
-            onClick={handleExportLedger} 
-            variant="secondary" 
-            className="font-extrabold flex items-center gap-1.5 h-10 px-4 text-xs shrink-0"
-          >
-            <Download size={14} />
-            <span>Export</span>
-          </Button>
-
-          <Button 
-            onClick={() => setIsDrawerOpen(true)} 
-            variant="primary" 
-            className="font-extrabold flex items-center gap-1.5 h-10 px-4 text-xs shrink-0"
-          >
-            <Plus size={16} />
-            <span>New Entry</span>
-          </Button>
-        </div>
+        
+        {/* Quick summary view */}
+        {activeTab === 'ledger' && (
+          <div className="hidden sm:flex items-center gap-6 py-2 text-xs">
+            <div className="flex items-center gap-2">
+              <span className="text-[var(--text-subtlest)] font-semibold">Total Inflow:</span>
+              <span className="text-[var(--text-success)] font-black">{formatEuro(ledgerSummary.totalInflow)}</span>
+            </div>
+            <div className="w-[1.5px] h-3 bg-[var(--border-subtle)]" />
+            <div className="flex items-center gap-2">
+              <span className="text-[var(--text-subtlest)] font-semibold">Total Outflow:</span>
+              <span className="text-[var(--text-error)] font-black">{formatEuro(ledgerSummary.totalOutflow)}</span>
+            </div>
+            <div className="w-[1.5px] h-3 bg-[var(--border-subtle)]" />
+            <div className="flex items-center gap-2">
+              <span className="text-[var(--text-subtlest)] font-semibold">Current Balance:</span>
+              <span className="text-[var(--text-primary)] font-black">{formatEuro(ledgerSummary.currentBalance)}</span>
+            </div>
+          </div>
+        )}
       </div>
 
-      {/* Tabs navigation block */}
-      <Tabs.Root value={activeTab} onValueChange={setActiveTab} className="flex-1 flex flex-col overflow-hidden">
-        <div className="bg-[var(--background-primary)] border-b border-[var(--border-subtle)] px-6 shrink-0 flex items-center justify-between">
-          <Tabs.List className="flex gap-6">
-            <Tabs.Trigger
-              value="ledger"
-              className="py-3 text-[13px] font-extrabold uppercase tracking-wider text-[var(--text-subtlest)] border-b-2 border-transparent transition-all cursor-pointer focus:outline-none data-[state=active]:border-[var(--border-brand)] data-[state=active]:text-[var(--text-brand)] hover:text-[var(--text-primary)]"
-            >
-              Ledger
-            </Tabs.Trigger>
-            <Tabs.Trigger
-              value="reconciliation"
-              className="py-3 text-[13px] font-extrabold uppercase tracking-wider text-[var(--text-subtlest)] border-b-2 border-transparent transition-all cursor-pointer focus:outline-none data-[state=active]:border-[var(--border-brand)] data-[state=active]:text-[var(--text-brand)] hover:text-[var(--text-primary)]"
-            >
-              Reconciliation
-            </Tabs.Trigger>
-          </Tabs.List>
-
-          {/* Quick summary view */}
-          {activeTab === 'ledger' && (
-            <div className="hidden sm:flex items-center gap-6 py-2 text-xs">
-              <div className="flex items-center gap-2">
-                <span className="text-[var(--text-subtlest)] font-semibold">Total Inflow:</span>
-                <span className="text-[var(--text-success)] font-black">{formatEuro(ledgerSummary.totalInflow)}</span>
-              </div>
-              <div className="w-[1.5px] h-3 bg-[var(--border-subtle)]" />
-              <div className="flex items-center gap-2">
-                <span className="text-[var(--text-subtlest)] font-semibold">Total Outflow:</span>
-                <span className="text-[var(--text-error)] font-black">{formatEuro(ledgerSummary.totalOutflow)}</span>
-              </div>
-              <div className="w-[1.5px] h-3 bg-[var(--border-subtle)]" />
-              <div className="flex items-center gap-2">
-                <span className="text-[var(--text-subtlest)] font-semibold">Current Balance:</span>
-                <span className="text-[var(--text-primary)] font-black">{formatEuro(ledgerSummary.currentBalance)}</span>
-              </div>
-            </div>
-          )}
-        </div>
+      <div className="flex-1 flex flex-col overflow-hidden">
 
         {/* Tab contents */}
         <div className="flex-1 min-h-0 relative">
           
           {/* LEDGER TAB */}
-          <Tabs.Content value="ledger" className="absolute inset-0 flex flex-col p-6 min-h-0">
-            {/* Filter and Search rail */}
-            <div className="bg-[var(--background-primary)] border border-[var(--border-subtle)] rounded-xl px-4 py-3 flex items-center justify-between gap-4 mb-4 shrink-0 shadow-sm">
-              <div className="relative flex-1 max-w-md">
-                <Search className="absolute left-3 top-1/2 -translate-y-1/2 text-[var(--text-subtlest)]" size={16} />
-                <input
-                  type="text"
-                  placeholder="Search transactions by reference, ID, customer..."
-                  value={searchQuery}
-                  onChange={e => setSearchQuery(e.target.value)}
-                  className="w-full pl-10 pr-4 py-2 bg-[var(--background-secondary)] border border-[var(--border-subtle)] rounded-lg text-sm text-[var(--text-primary)] focus:outline-none focus:border-[var(--border-brand)] font-semibold"
-                />
+          {activeTab === 'ledger' && (
+            <div className="absolute inset-0 flex flex-col p-6 min-h-0">
+            {/* Filter and Actions rail */}
+            <div className="bg-[var(--background-primary)] border border-[var(--border-subtle)] rounded-xl px-4 py-3 flex flex-col lg:flex-row items-stretch lg:items-end justify-between gap-4 mb-4 shrink-0 shadow-sm">
+              <div className="flex flex-wrap items-end gap-4 w-full lg:w-auto">
+                {/* Shop Selector Dropdown */}
+                <div className="flex flex-col gap-1 w-full sm:w-48">
+                  <span className="text-[10px] font-black text-[var(--text-subtlest)] uppercase tracking-wider pl-1">Shop</span>
+                  <Dropdown
+                    options={SHOP_OPTIONS}
+                    value={selectedShop}
+                    onChange={setSelectedShop}
+                  />
+                </div>
+
+                {/* Cashbook Type Dropdown */}
+                <div className="flex flex-col gap-1 w-full sm:w-40">
+                  <span className="text-[10px] font-black text-[var(--text-subtlest)] uppercase tracking-wider pl-1">Type</span>
+                  <Dropdown
+                    options={TYPE_OPTIONS}
+                    value={selectedType}
+                    onChange={setSelectedType}
+                  />
+                </div>
+
+                {/* Date Range Picker */}
+                <div className="flex flex-col gap-1 w-full sm:w-64">
+                  <span className="text-[10px] font-black text-[var(--text-subtlest)] uppercase tracking-wider pl-1">Date Range</span>
+                  <DateRangePicker
+                    value={rangeValue}
+                    onChange={handleRangeChange}
+                    placeholder="Select date range"
+                    className="w-full"
+                  />
+                </div>
+
+                {/* Search */}
+                <div className="relative flex-1 min-w-[200px] w-full lg:w-auto mt-2 sm:mt-0">
+                  <Search className="absolute left-3 top-1/2 -translate-y-1/2 text-[var(--text-subtlest)]" size={16} />
+                  <input
+                    type="text"
+                    placeholder="Search transactions..."
+                    value={searchQuery}
+                    onChange={e => setSearchQuery(e.target.value)}
+                    className="w-full pl-10 pr-4 py-2 bg-[var(--background-secondary)] border border-[var(--border-subtle)] rounded-lg text-sm text-[var(--text-primary)] focus:outline-none focus:border-[var(--border-brand)] font-semibold h-10"
+                  />
+                </div>
+              </div>
+
+              {/* Right Actions */}
+              <div className="flex items-center gap-3 shrink-0 w-full lg:w-auto justify-end mt-2 lg:mt-0">
+                <Button 
+                  onClick={handleExportLedger} 
+                  variant="secondary" 
+                  className="font-extrabold flex items-center gap-1.5 h-10 px-4 text-xs shrink-0"
+                >
+                  <Download size={14} />
+                  <span>Export</span>
+                </Button>
+
+                <Button 
+                  onClick={() => setIsDrawerOpen(true)} 
+                  variant="primary" 
+                  className="font-extrabold flex items-center gap-1.5 h-10 px-4 text-xs shrink-0"
+                >
+                  <Plus size={16} />
+                  <span>New Entry</span>
+                </Button>
               </div>
             </div>
 
@@ -587,74 +833,117 @@ export function CashbookDashboard() {
                 </table>
               </div>
             </div>
-          </Tabs.Content>
+          )}
 
           {/* RECONCILIATION TAB */}
-          <Tabs.Content value="reconciliation" className="absolute inset-0 flex flex-col p-6 min-h-0 overflow-y-auto slick-scrollbar">
-            <div className="grid grid-cols-1 lg:grid-cols-2 gap-6 pb-24">
-              
-              {/* REGISTER COUNTING */}
-              <div className="bg-[var(--background-primary)] border border-[var(--border-subtle)] rounded-xl p-5 shadow-sm">
-                <div className="flex justify-between items-center mb-4 border-b border-[var(--border-subtle)] pb-3">
-                  <h3 className="text-sm font-black text-[var(--text-primary)] uppercase tracking-wider">Register Counting</h3>
-                  <span className="text-sm font-black text-[var(--text-primary)] bg-[var(--background-secondary)] px-3 py-1 rounded-lg">
-                    Total: {formatEuro(registerTotal)}
-                  </span>
+          {activeTab === 'reconciliation' && (
+            <div className="absolute inset-0 flex flex-col p-6 min-h-0 overflow-y-auto slick-scrollbar">
+            {/* Filter and Actions rail */}
+            <div className="bg-[var(--background-primary)] border border-[var(--border-subtle)] rounded-xl px-4 py-3 flex items-center justify-between gap-4 mb-4 shrink-0 shadow-sm">
+              <div className="flex flex-col gap-1 w-48">
+                <span className="text-[10px] font-black text-[var(--text-subtlest)] uppercase tracking-wider pl-1">Shop</span>
+                <Dropdown
+                  options={SHOP_OPTIONS}
+                  value={selectedShop}
+                  onChange={setSelectedShop}
+                />
+              </div>
+              <Button 
+                onClick={handleLoadLastValues}
+                variant="secondary" 
+                className="h-10 px-4 text-xs font-extrabold uppercase tracking-wider flex items-center gap-1.5"
+              >
+                <Download size={14} />
+                <span>Load Last Values</span>
+              </Button>
+            </div>
+
+            {/* Active Reconciliation Grid */}
+            <div className="bg-[var(--background-primary)] border border-[var(--border-subtle)] rounded-xl p-5 shadow-sm flex flex-col mb-24">
+              <div className="flex justify-between items-center mb-5 border-b border-[var(--border-subtle)] pb-3">
+                <div>
+                  <h3 className="text-sm font-black text-[var(--text-primary)] uppercase tracking-wider">Active Reconciliation</h3>
+                  <span className="text-[10px] font-bold text-[var(--text-subtlest)]">Today's cashbook counts</span>
                 </div>
-                <div className="flex flex-col gap-2.5">
-                  {denominations.map(denom => (
-                    <div key={`reg-${denom.value}`} className="flex items-center justify-between gap-4 py-1.5 border-b border-[var(--border-subtlest)] last:border-0">
-                      <span className="text-xs font-black text-[var(--text-subtle)] w-20">{denom.label}</span>
-                      <div className="flex items-center gap-3">
-                        <span className="text-[10px] text-gray-400 font-extrabold uppercase">Qty</span>
-                        <input
-                          type="number"
-                          value={denom.registerCount === 0 ? '' : denom.registerCount}
-                          onChange={e => handleCountChange(denom.value, 'registerCount', e.target.value)}
-                          placeholder="0"
-                          className="w-20 px-2 py-1 bg-[var(--background-secondary)] border border-[var(--border-subtle)] rounded text-right text-xs font-bold text-[var(--text-primary)] focus:outline-none focus:border-[var(--border-brand)] [appearance:textfield] [&::-webkit-outer-spin-button]:appearance-none [&::-webkit-inner-spin-button]:appearance-none"
-                        />
-                      </div>
-                      <span className="text-xs font-black text-[var(--text-primary)] text-right w-24">
+              </div>
+
+              {/* Grid header row */}
+              <div className="grid grid-cols-[100px_1fr_1fr] gap-4 pb-2 border-b border-[var(--border-subtle)] text-[10px] font-black text-[var(--text-subtlest)] uppercase tracking-wider mb-2">
+                <span>Denomination</span>
+                <span className="text-center">Kassa</span>
+                <span className="text-center">Reserve</span>
+              </div>
+
+              {/* Denomination rows */}
+              <div className="flex flex-col gap-1.5 divide-y divide-[var(--border-subtlest)]">
+                {denominations.map(denom => (
+                  <div key={`active-${denom.value}`} className="grid grid-cols-[100px_1fr_1fr] gap-4 py-2 items-center">
+                    <span className="text-xs font-black text-[var(--text-primary)]">{denom.label}</span>
+                    
+                    {/* Kassa Column */}
+                    <div className="flex items-center gap-1 justify-center">
+                      <button
+                        type="button"
+                        onClick={() => handleDecrement(denom.value, 'registerCount')}
+                        className="w-6 h-6 rounded bg-[var(--background-secondary)] hover:bg-[var(--background-tertiary)] border border-[var(--border-subtle)] flex items-center justify-center text-[var(--text-primary)] transition-colors active:scale-95 cursor-pointer"
+                      >
+                        <Minus size={12} />
+                      </button>
+                      <input
+                        type="text"
+                        inputMode="numeric"
+                        pattern="[0-9]*"
+                        value={denom.registerCount === 0 ? '' : denom.registerCount}
+                        onChange={e => handleCountChange(denom.value, 'registerCount', e.target.value)}
+                        className="w-10 h-6 px-1 bg-[var(--background-secondary)] border border-[var(--border-subtle)] rounded text-center text-xs font-bold text-[var(--text-primary)] focus:outline-none focus:border-[var(--border-brand)]"
+                        placeholder="0"
+                      />
+                      <button
+                        type="button"
+                        onClick={() => handleIncrement(denom.value, 'registerCount')}
+                        className="w-6 h-6 rounded bg-[var(--background-secondary)] hover:bg-[var(--background-tertiary)] border border-[var(--border-subtle)] flex items-center justify-center text-[var(--text-primary)] transition-colors active:scale-95 cursor-pointer"
+                      >
+                        <Plus size={12} />
+                      </button>
+                      <span className="text-[10px] font-bold text-[var(--text-subtle)] min-w-[50px] text-right">
                         {formatEuro(denom.registerCount * denom.value)}
                       </span>
                     </div>
-                  ))}
-                </div>
-              </div>
 
-              {/* RESERVE COUNTING */}
-              <div className="bg-[var(--background-primary)] border border-[var(--border-subtle)] rounded-xl p-5 shadow-sm">
-                <div className="flex justify-between items-center mb-4 border-b border-[var(--border-subtle)] pb-3">
-                  <h3 className="text-sm font-black text-[var(--text-primary)] uppercase tracking-wider">Reserve Counting</h3>
-                  <span className="text-sm font-black text-[var(--text-primary)] bg-[var(--background-secondary)] px-3 py-1 rounded-lg">
-                    Total: {formatEuro(reserveTotal)}
-                  </span>
-                </div>
-                <div className="flex flex-col gap-2.5">
-                  {denominations.map(denom => (
-                    <div key={`res-${denom.value}`} className="flex items-center justify-between gap-4 py-1.5 border-b border-[var(--border-subtlest)] last:border-0">
-                      <span className="text-xs font-black text-[var(--text-subtle)] w-20">{denom.label}</span>
-                      <div className="flex items-center gap-3">
-                        <span className="text-[10px] text-gray-400 font-extrabold uppercase">Qty</span>
-                        <input
-                          type="number"
-                          value={denom.reserveCount === 0 ? '' : denom.reserveCount}
-                          onChange={e => handleCountChange(denom.value, 'reserveCount', e.target.value)}
-                          placeholder="0"
-                          className="w-20 px-2 py-1 bg-[var(--background-secondary)] border border-[var(--border-subtle)] rounded text-right text-xs font-bold text-[var(--text-primary)] focus:outline-none focus:border-[var(--border-brand)] [appearance:textfield] [&::-webkit-outer-spin-button]:appearance-none [&::-webkit-inner-spin-button]:appearance-none"
-                        />
-                      </div>
-                      <span className="text-xs font-black text-[var(--text-primary)] text-right w-24">
+                    {/* Reserve Column */}
+                    <div className="flex items-center gap-1 justify-center">
+                      <button
+                        type="button"
+                        onClick={() => handleDecrement(denom.value, 'reserveCount')}
+                        className="w-6 h-6 rounded bg-[var(--background-secondary)] hover:bg-[var(--background-tertiary)] border border-[var(--border-subtle)] flex items-center justify-center text-[var(--text-primary)] transition-colors active:scale-95 cursor-pointer"
+                      >
+                        <Minus size={12} />
+                      </button>
+                      <input
+                        type="text"
+                        inputMode="numeric"
+                        pattern="[0-9]*"
+                        value={denom.reserveCount === 0 ? '' : denom.reserveCount}
+                        onChange={e => handleCountChange(denom.value, 'reserveCount', e.target.value)}
+                        className="w-10 h-6 px-1 bg-[var(--background-secondary)] border border-[var(--border-subtle)] rounded text-center text-xs font-bold text-[var(--text-primary)] focus:outline-none focus:border-[var(--border-brand)]"
+                        placeholder="0"
+                      />
+                      <button
+                        type="button"
+                        onClick={() => handleIncrement(denom.value, 'reserveCount')}
+                        className="w-6 h-6 rounded bg-[var(--background-secondary)] hover:bg-[var(--background-tertiary)] border border-[var(--border-subtle)] flex items-center justify-center text-[var(--text-primary)] transition-colors active:scale-95 cursor-pointer"
+                      >
+                        <Plus size={12} />
+                      </button>
+                      <span className="text-[10px] font-bold text-[var(--text-subtle)] min-w-[50px] text-right">
                         {formatEuro(denom.reserveCount * denom.value)}
                       </span>
                     </div>
-                  ))}
-                </div>
+                  </div>
+                ))}
               </div>
-
             </div>
-
+            
             {/* Sticky/Fixed Bottom Calculations Bar */}
             <div className="fixed bottom-0 left-0 right-0 bg-[var(--background-primary)] border-t border-[var(--border-subtle)] py-4 px-6 md:px-12 flex flex-col md:flex-row items-center justify-between gap-4 shadow-[0_-8px_32px_rgba(19,21,24,0.05)] z-10 select-none">
               <div className="flex flex-wrap items-center gap-6 md:gap-12">
@@ -685,22 +974,244 @@ export function CashbookDashboard() {
               <div className="flex items-center gap-3">
                 <Button variant="secondary" onClick={() => {
                   setDenominations(prev => prev.map(d => ({ ...d, registerCount: 0, reserveCount: 0 })));
-                }} className="h-10 text-xs font-extrabold">Reset Counts</Button>
+                }} className="h-10 text-xs font-extrabold px-4">Reset Counts</Button>
                 
                 <Button 
                   variant="primary" 
                   disabled={Math.abs(reconciliationDifference) >= 0.001} 
-                  className="h-10 text-xs font-black"
+                  onClick={handleSubmitActiveReconciliation}
+                  className="h-10 text-xs font-black px-4"
                 >
                   <Check size={14} className="mr-1.5" />
                   <span>Submit Reconciliation</span>
                 </Button>
               </div>
             </div>
-          </Tabs.Content>
+          )}
 
+          {/* HISTORY TAB */}
+          {activeTab === 'history' && (
+            <div className="absolute inset-0 flex flex-col p-6 min-h-0 overflow-y-auto slick-scrollbar">
+            {/* Filter and Actions rail */}
+            <div className="bg-[var(--background-primary)] border border-[var(--border-subtle)] rounded-xl px-4 py-3 flex flex-wrap sm:flex-nowrap items-center justify-start gap-4 mb-4 shrink-0 shadow-sm">
+              <div className="flex flex-col gap-1 w-full sm:w-48">
+                <span className="text-[10px] font-black text-[var(--text-subtlest)] uppercase tracking-wider pl-1">Select Cashbook</span>
+                <Dropdown
+                  options={SHOP_OPTIONS}
+                  value={historyShop}
+                  onChange={(val) => {
+                    setHistoryShop(val);
+                    setIsEditingHistory(false);
+                  }}
+                />
+              </div>
+              <div className="flex flex-col gap-1 w-full sm:w-64">
+                <span className="text-[10px] font-black text-[var(--text-subtlest)] uppercase tracking-wider pl-1">Show counted cash from</span>
+                <DatePicker
+                  value={historyDate}
+                  onChange={(date) => {
+                    setHistoryDate(date);
+                    setIsEditingHistory(false);
+                  }}
+                  className="w-full"
+                />
+              </div>
+            </div>
+
+            {/* HISTORY RECORDS GRID */}
+            <div className="bg-[var(--background-primary)] border border-[var(--border-subtle)] rounded-xl p-5 shadow-sm flex flex-col h-fit">
+              <div className="border-b border-[var(--border-subtle)] pb-4 mb-4">
+                <h3 className="text-sm font-black text-[var(--text-primary)] uppercase tracking-wider mb-1">Historical Records</h3>
+              </div>
+
+              {/* History table view or editing state */}
+              {currentHistoryEntry ? (
+                <>
+                  {/* Table headers */}
+                  <div className="grid grid-cols-[100px_1fr_1fr] gap-4 pb-2 border-b border-[var(--border-subtle)] text-[10px] font-black text-[var(--text-subtlest)] uppercase tracking-wider mb-2">
+                    <span>Denomination</span>
+                    <span className="text-center">Kassa</span>
+                    <span className="text-center">Reserve</span>
+                  </div>
+
+                  {isEditingHistory ? (
+                    /* Editing historical counts */
+                    <div className="flex flex-col gap-1.5 divide-y divide-[var(--border-subtlest)]">
+                      {editHistoryCounts.map(denom => {
+                        const originalDenom = mockDenominations.find(d => d.value === denom.value);
+                        const denomLabel = originalDenom ? originalDenom.label : `${denom.value} €`;
+                        return (
+                          <div key={`edit-hist-${denom.value}`} className="grid grid-cols-[100px_1fr_1fr] gap-4 py-2 items-center">
+                            <span className="text-xs font-black text-[var(--text-primary)]">{denomLabel}</span>
+                            
+                            {/* Kassa Column */}
+                            <div className="flex items-center gap-1 justify-center">
+                              <button
+                                type="button"
+                                onClick={() => handleHistoryDecrement(denom.value, 'registerCount')}
+                                className="w-6 h-6 rounded bg-[var(--background-secondary)] hover:bg-[var(--background-tertiary)] border border-[var(--border-subtle)] flex items-center justify-center text-[var(--text-primary)] transition-colors active:scale-95 cursor-pointer"
+                              >
+                                <Minus size={12} />
+                              </button>
+                              <input
+                                type="text"
+                                inputMode="numeric"
+                                pattern="[0-9]*"
+                                value={denom.registerCount === 0 ? '' : denom.registerCount}
+                                onChange={e => handleHistoryCountChange(denom.value, 'registerCount', e.target.value)}
+                                className="w-10 h-6 px-1 bg-[var(--background-secondary)] border border-[var(--border-subtle)] rounded text-center text-xs font-bold text-[var(--text-primary)] focus:outline-none focus:border-[var(--border-brand)]"
+                                placeholder="0"
+                              />
+                              <button
+                                type="button"
+                                onClick={() => handleHistoryIncrement(denom.value, 'registerCount')}
+                                className="w-6 h-6 rounded bg-[var(--background-secondary)] hover:bg-[var(--background-tertiary)] border border-[var(--border-subtle)] flex items-center justify-center text-[var(--text-primary)] transition-colors active:scale-95 cursor-pointer"
+                              >
+                                <Plus size={12} />
+                              </button>
+                              <span className="text-[10px] font-bold text-[var(--text-subtle)] min-w-[50px] text-right">
+                                {formatEuro(denom.registerCount * denom.value)}
+                              </span>
+                            </div>
+
+                            {/* Reserve Column */}
+                            <div className="flex items-center gap-1 justify-center">
+                              <button
+                                type="button"
+                                onClick={() => handleHistoryDecrement(denom.value, 'reserveCount')}
+                                className="w-6 h-6 rounded bg-[var(--background-secondary)] hover:bg-[var(--background-tertiary)] border border-[var(--border-subtle)] flex items-center justify-center text-[var(--text-primary)] transition-colors active:scale-95 cursor-pointer"
+                              >
+                                <Minus size={12} />
+                              </button>
+                              <input
+                                type="text"
+                                inputMode="numeric"
+                                pattern="[0-9]*"
+                                value={denom.reserveCount === 0 ? '' : denom.reserveCount}
+                                onChange={e => handleHistoryCountChange(denom.value, 'reserveCount', e.target.value)}
+                                className="w-10 h-6 px-1 bg-[var(--background-secondary)] border border-[var(--border-subtle)] rounded text-center text-xs font-bold text-[var(--text-primary)] focus:outline-none focus:border-[var(--border-brand)]"
+                                placeholder="0"
+                              />
+                              <button
+                                type="button"
+                                onClick={() => handleHistoryIncrement(denom.value, 'reserveCount')}
+                                className="w-6 h-6 rounded bg-[var(--background-secondary)] hover:bg-[var(--background-tertiary)] border border-[var(--border-subtle)] flex items-center justify-center text-[var(--text-primary)] transition-colors active:scale-95 cursor-pointer"
+                              >
+                                <Plus size={12} />
+                              </button>
+                              <span className="text-[10px] font-bold text-[var(--text-subtle)] min-w-[50px] text-right">
+                                {formatEuro(denom.reserveCount * denom.value)}
+                              </span>
+                            </div>
+                          </div>
+                        );
+                      })}
+                    </div>
+                  ) : (
+                    /* Read-Only historical counts view */
+                    <div className="flex flex-col gap-1.5 divide-y divide-[var(--border-subtlest)]">
+                      {currentHistoryEntry.counts.map(denom => {
+                        const originalDenom = mockDenominations.find(d => d.value === denom.value);
+                        const denomLabel = originalDenom ? originalDenom.label : `${denom.value} €`;
+                        return (
+                          <div key={`view-hist-${denom.value}`} className="grid grid-cols-[100px_1fr_1fr] gap-4 py-2 items-center">
+                            <span className="text-xs font-black text-[var(--text-primary)]">{denomLabel}</span>
+                            <div className="text-center text-xs font-bold text-[var(--text-subtle)]">
+                              {denom.registerCount} <span className="text-[10px] text-[var(--text-subtlest)]">({formatEuro(denom.registerCount * denom.value)})</span>
+                            </div>
+                            <div className="text-center text-xs font-bold text-[var(--text-subtle)]">
+                              {denom.reserveCount} <span className="text-[10px] text-[var(--text-subtlest)]">({formatEuro(denom.reserveCount * denom.value)})</span>
+                            </div>
+                          </div>
+                        );
+                      })}
+                    </div>
+                  )}
+
+                  {/* Historical Totals */}
+                  <div className="mt-5 pt-4 border-t border-[var(--border-subtle)] flex flex-col gap-2.5">
+                    <div className="flex justify-between items-center text-xs font-bold text-[var(--text-subtle)]">
+                      <span>Total Counted:</span>
+                      <span className="text-sm font-black text-[var(--text-primary)]">
+                        {formatEuro(isEditingHistory ? editingTotalCounted : currentHistoryEntry.totalCounted)}
+                      </span>
+                    </div>
+                    <div className="flex justify-between items-center text-xs font-bold text-[var(--text-subtle)]">
+                      <span>Expected Total:</span>
+                      <span className="text-sm font-black text-[var(--text-subtle)]">
+                        {formatEuro(currentHistoryEntry.expectedTotal)}
+                      </span>
+                    </div>
+                    <div className="flex justify-between items-center text-xs font-bold text-[var(--text-subtle)]">
+                      <span>Difference:</span>
+                      {Math.abs(isEditingHistory ? editingDifference : currentHistoryEntry.difference) < 0.001 ? (
+                        <span className="text-sm font-black text-[var(--text-success)]">{formatEuro(0.00)}</span>
+                      ) : (
+                        <span className="text-sm font-black text-[var(--text-error)] bg-[var(--background-secondary)] px-2 py-0.5 rounded border border-[var(--border-subtle)]">
+                          {(isEditingHistory ? editingDifference : currentHistoryEntry.difference) > 0 ? '+' : ''}
+                          {formatEuro(isEditingHistory ? editingDifference : currentHistoryEntry.difference)}
+                        </span>
+                      )}
+                    </div>
+                  </div>
+
+                  {/* Historical Actions */}
+                  <div className="mt-6 flex gap-3 border-t border-[var(--border-subtle)] pt-4 justify-end">
+                    {isEditingHistory ? (
+                      <>
+                        <Button
+                          variant="secondary"
+                          onClick={() => setIsEditingHistory(false)}
+                          className="h-10 text-xs font-extrabold px-4"
+                        >
+                          Cancel
+                        </Button>
+                        <Button
+                          variant="primary"
+                          onClick={handleSaveHistoryChanges}
+                          className="h-10 text-xs font-black px-4"
+                        >
+                          <Check size={14} className="mr-1.5" />
+                          <span>Save Changes</span>
+                        </Button>
+                      </>
+                    ) : (
+                      <Button
+                        variant="secondary"
+                        onClick={() => {
+                          setEditHistoryCounts(currentHistoryEntry.counts);
+                          setIsEditingHistory(true);
+                        }}
+                        className="h-10 text-xs font-black px-4"
+                      >
+                        Edit history entry
+                      </Button>
+                    )}
+                  </div>
+                </>
+              ) : (
+                /* Empty state when no history entry is found */
+                <div className="flex flex-col items-center justify-center py-12 px-4 border border-dashed border-[var(--border-subtle)] rounded-xl bg-[var(--background-secondary)] my-4 text-center">
+                  <svg className="w-12 h-12 text-[var(--text-subtlest)] mb-3" fill="none" viewBox="0 0 24 24" stroke="currentColor">
+                    <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={1.5} d="M8 7V3m8 4V3m-9 8h10M5 21h14a2 2 0 002-2V7a2 2 0 00-2-2H5a2 2 0 00-2 2v12a2 2 0 002 2z" />
+                  </svg>
+                  <span className="text-xs font-bold text-[var(--text-subtle)] mb-1">No history entry found</span>
+                  <span className="text-[10px] text-[var(--text-subtlest)] max-w-xs mb-4">
+                    There is no recorded reconciliation count for this cashbook on {formattedHistoryDate}.
+                  </span>
+                  <Button
+                    variant="primary"
+                    onClick={handleInitializeHistoryRecord}
+                    className="h-9 px-3 text-[10px] font-extrabold uppercase tracking-wider"
+                  >
+                    Initialize counts
+                  </Button>
+                </div>
+              )}
+            </div>
+          )}
         </div>
-      </Tabs.Root>
+      </div>
 
       {/* NEW ENTRY DRAWER */}
       <AnimatePresence>

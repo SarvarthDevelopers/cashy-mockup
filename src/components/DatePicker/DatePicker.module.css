@@ -110,10 +110,6 @@
 }
 
 .clearButton {
-    position: absolute;
-    right: 32px; /* leave room for the chevron (14px icon + 8px padding on each side ≈ 30–32px) */
-    top: 50%;
-    transform: translateY(-50%);
     display: flex;
     align-items: center;
     justify-content: center;

@@ -228,8 +228,7 @@ export function CashbookDashboard() {
 
   // History states
   const [historyEntries, setHistoryEntries] = useState<HistoricalReconciliation[]>(mockReconciliationHistory);
-  const [historyShop, setHistoryShop] = useState('vienna');
-  const [historyDate, setHistoryDate] = useState<Date | null>(() => new Date(2026, 4, 23)); // 2026-05-23
+  const [historyDate, setHistoryDate] = useState<Date | null>(() => new Date());
   const [isEditingHistory, setIsEditingHistory] = useState(false);
   const [editHistoryCounts, setEditHistoryCounts] = useState<{ value: number; registerCount: number; reserveCount: number }[]>([]);
 
@@ -237,9 +236,12 @@ export function CashbookDashboard() {
     return formatDateString(historyDate);
   }, [historyDate]);
 
+  const formattedToday = useMemo(() => formatDateString(new Date()), []);
+  const isViewingToday = formattedHistoryDate === formattedToday;
+
   const currentHistoryEntry = useMemo(() => {
-    return historyEntries.find(h => h.shop === historyShop && h.date === formattedHistoryDate) || null;
-  }, [historyEntries, historyShop, formattedHistoryDate]);
+    return historyEntries.find(h => h.shop === selectedShop && h.date === formattedHistoryDate) || null;
+  }, [historyEntries, selectedShop, formattedHistoryDate]);
 
   // Hardcoded Expected Total for active reconciliation
   const expectedTotal = 26839.44;
@@ -441,7 +443,7 @@ export function CashbookDashboard() {
     if (!dateStr) return;
     const newEntry: HistoricalReconciliation = {
       id: `hist-${Date.now()}`,
-      shop: historyShop,
+      shop: selectedShop,
       date: dateStr,
       expectedTotal: 0.00,
       totalCounted: 0.00,
@@ -602,36 +604,88 @@ export function CashbookDashboard() {
   return (
     <div className="bg-[var(--background-tertiary)] h-full w-full flex flex-col font-sans overflow-hidden select-none">
       
-      {/* Header section - Cleaned up to only show title */}
-      <div className="bg-[var(--background-primary)] border-b border-[var(--border-subtle)] flex flex-col md:flex-row md:items-center justify-between px-6 py-4 gap-4 shrink-0">
+      {/* Header section with Global Filters */}
+      <div className="bg-[var(--background-primary)] border-b border-[var(--border-subtle)] flex flex-col xl:flex-row xl:items-center justify-between px-6 py-3 gap-4 shrink-0">
         <div className="flex flex-wrap items-center gap-6">
           <h1 className="text-xl font-black text-[var(--text-primary)] tracking-tight">Cashbook</h1>
-          <Tabs variant="segment" value={activeTab} onValueChange={setActiveTab} className="scale-105 ml-2">
+          <Tabs variant="segment" value={activeTab} onValueChange={(val) => {
+            setActiveTab(val);
+            if (val === 'reconciliation') {
+              setHistoryDate(new Date());
+              setIsEditingHistory(false);
+            }
+          }} className="scale-105 ml-2">
             <Tab value="ledger">Ledger</Tab>
             <Tab value="reconciliation">Reconciliation</Tab>
-            <Tab value="history">History</Tab>
           </Tabs>
         </div>
         
-        {/* Quick summary view */}
-        {activeTab === 'ledger' && (
-          <div className="hidden sm:flex items-center gap-6 py-2 text-xs">
-            <div className="flex items-center gap-2">
-              <span className="text-[var(--text-subtlest)] font-semibold">Total Inflow:</span>
-              <span className="text-[var(--text-success)] font-black">{formatEuro(ledgerSummary.totalInflow)}</span>
-            </div>
-            <div className="w-[1.5px] h-3 bg-[var(--border-subtle)]" />
-            <div className="flex items-center gap-2">
-              <span className="text-[var(--text-subtlest)] font-semibold">Total Outflow:</span>
-              <span className="text-[var(--text-error)] font-black">{formatEuro(ledgerSummary.totalOutflow)}</span>
-            </div>
-            <div className="w-[1.5px] h-3 bg-[var(--border-subtle)]" />
-            <div className="flex items-center gap-2">
-              <span className="text-[var(--text-subtlest)] font-semibold">Current Balance:</span>
-              <span className="text-[var(--text-primary)] font-black">{formatEuro(ledgerSummary.currentBalance)}</span>
-            </div>
+        {/* Global Filters and Actions */}
+        <div className="flex flex-wrap items-center gap-3 xl:justify-end">
+          {/* Shop is shared */}
+          <div className="w-40 shrink-0">
+            <Dropdown options={SHOP_OPTIONS} value={selectedShop} onChange={(val) => {
+              setSelectedShop(val);
+              setIsEditingHistory(false);
+            }} />
           </div>
-        )}
+
+          {activeTab === 'ledger' && (
+            <>
+              <div className="w-32 shrink-0">
+                <Dropdown options={TYPE_OPTIONS} value={selectedType} onChange={setSelectedType} />
+              </div>
+              <div className="w-56 shrink-0">
+                <DateRangePicker value={rangeValue} onChange={handleRangeChange} placeholder="Date range" />
+              </div>
+              <div className="relative w-48 shrink-0">
+                <Search className="absolute left-3 top-1/2 -translate-y-1/2 text-[var(--text-subtlest)]" size={14} />
+                <input
+                  type="text"
+                  placeholder="Search..."
+                  value={searchQuery}
+                  onChange={e => setSearchQuery(e.target.value)}
+                  className="w-full pl-9 pr-3 py-1.5 bg-[var(--background-secondary)] border border-[var(--border-subtle)] rounded-lg text-xs text-[var(--text-primary)] focus:outline-none focus:border-[var(--border-brand)] font-semibold h-9"
+                />
+              </div>
+              <Button onClick={handleExportLedger} variant="secondary" className="h-9 px-3 text-xs flex items-center gap-1.5 shrink-0"><Download size={14}/> Export</Button>
+              <Button onClick={() => setIsDrawerOpen(true)} variant="primary" className="h-9 px-3 text-xs flex items-center gap-1.5 shrink-0"><Plus size={14}/> New Entry</Button>
+            </>
+          )}
+
+          {activeTab === 'reconciliation' && (
+            <>
+              <div className="w-48 shrink-0">
+                <DatePicker 
+                  value={historyDate} 
+                  onChange={(date) => {
+                    setHistoryDate(date);
+                    setIsEditingHistory(false);
+                  }} 
+                />
+              </div>
+              
+              {!isViewingToday && !isEditingHistory && currentHistoryEntry && (
+                <Button variant="secondary" onClick={() => { setEditHistoryCounts(currentHistoryEntry.counts); setIsEditingHistory(true); }} className="h-9 px-3 text-xs shrink-0">
+                  Edit History
+                </Button>
+              )}
+              
+              {!isViewingToday && isEditingHistory && (
+                <>
+                  <Button variant="secondary" onClick={() => setIsEditingHistory(false)} className="h-9 px-3 text-xs shrink-0">Cancel</Button>
+                  <Button variant="primary" onClick={handleSaveHistoryChanges} className="h-9 px-3 text-xs shrink-0"><Check size={14} className="mr-1.5"/> Save Changes</Button>
+                </>
+              )}
+
+              {isViewingToday && (
+                <Button onClick={handleLoadLastValues} variant="secondary" className="h-9 px-3 text-xs flex items-center gap-1.5 shrink-0">
+                  <Download size={14}/> Load Last Values
+                </Button>
+              )}
+            </>
+          )}
+        </div>
       </div>
 
       <div className="flex-1 flex flex-col overflow-hidden">
@@ -642,72 +696,21 @@ export function CashbookDashboard() {
           {/* LEDGER TAB */}
           {activeTab === 'ledger' && (
             <div className="absolute inset-0 flex flex-col p-6 min-h-0">
-            {/* Filter and Actions rail */}
-            <div className="bg-[var(--background-primary)] border border-[var(--border-subtle)] rounded-xl px-4 py-3 flex flex-col lg:flex-row items-stretch lg:items-end justify-between gap-4 mb-4 shrink-0 shadow-sm">
-              <div className="flex flex-wrap items-end gap-4 w-full lg:w-auto">
-                {/* Shop Selector Dropdown */}
-                <div className="flex flex-col gap-1 w-full sm:w-48">
-                  <span className="text-[10px] font-black text-[var(--text-subtlest)] uppercase tracking-wider pl-1">Shop</span>
-                  <Dropdown
-                    options={SHOP_OPTIONS}
-                    value={selectedShop}
-                    onChange={setSelectedShop}
-                  />
-                </div>
-
-                {/* Cashbook Type Dropdown */}
-                <div className="flex flex-col gap-1 w-full sm:w-40">
-                  <span className="text-[10px] font-black text-[var(--text-subtlest)] uppercase tracking-wider pl-1">Type</span>
-                  <Dropdown
-                    options={TYPE_OPTIONS}
-                    value={selectedType}
-                    onChange={setSelectedType}
-                  />
-                </div>
-
-                {/* Date Range Picker */}
-                <div className="flex flex-col gap-1 w-full sm:w-64">
-                  <span className="text-[10px] font-black text-[var(--text-subtlest)] uppercase tracking-wider pl-1">Date Range</span>
-                  <DateRangePicker
-                    value={rangeValue}
-                    onChange={handleRangeChange}
-                    placeholder="Select date range"
-                    className="w-full"
-                  />
-                </div>
-
-                {/* Search */}
-                <div className="relative flex-1 min-w-[200px] w-full lg:w-auto mt-2 sm:mt-0">
-                  <Search className="absolute left-3 top-1/2 -translate-y-1/2 text-[var(--text-subtlest)]" size={16} />
-                  <input
-                    type="text"
-                    placeholder="Search transactions..."
-                    value={searchQuery}
-                    onChange={e => setSearchQuery(e.target.value)}
-                    className="w-full pl-10 pr-4 py-2 bg-[var(--background-secondary)] border border-[var(--border-subtle)] rounded-lg text-sm text-[var(--text-primary)] focus:outline-none focus:border-[var(--border-brand)] font-semibold h-10"
-                  />
-                </div>
+            {/* Ledger Quick Summary and Table */}
+            <div className="flex items-center gap-6 py-2 px-1 mb-2 text-xs shrink-0">
+              <div className="flex items-center gap-2">
+                <span className="text-[var(--text-subtlest)] font-semibold">Total Inflow:</span>
+                <span className="text-[var(--text-success)] font-black">{formatEuro(ledgerSummary.totalInflow)}</span>
               </div>
-
-              {/* Right Actions */}
-              <div className="flex items-center gap-3 shrink-0 w-full lg:w-auto justify-end mt-2 lg:mt-0">
-                <Button 
-                  onClick={handleExportLedger} 
-                  variant="secondary" 
-                  className="font-extrabold flex items-center gap-1.5 h-10 px-4 text-xs shrink-0"
-                >
-                  <Download size={14} />
-                  <span>Export</span>
-                </Button>
-
-                <Button 
-                  onClick={() => setIsDrawerOpen(true)} 
-                  variant="primary" 
-                  className="font-extrabold flex items-center gap-1.5 h-10 px-4 text-xs shrink-0"
-                >
-                  <Plus size={16} />
-                  <span>New Entry</span>
-                </Button>
+              <div className="w-[1.5px] h-3 bg-[var(--border-subtle)]" />
+              <div className="flex items-center gap-2">
+                <span className="text-[var(--text-subtlest)] font-semibold">Total Outflow:</span>
+                <span className="text-[var(--text-error)] font-black">{formatEuro(ledgerSummary.totalOutflow)}</span>
+              </div>
+              <div className="w-[1.5px] h-3 bg-[var(--border-subtle)]" />
+              <div className="flex items-center gap-2">
+                <span className="text-[var(--text-subtlest)] font-semibold">Current Balance:</span>
+                <span className="text-[var(--text-primary)] font-black">{formatEuro(ledgerSummary.currentBalance)}</span>
               </div>
             </div>
 
@@ -839,378 +842,301 @@ export function CashbookDashboard() {
           {/* RECONCILIATION TAB */}
           {activeTab === 'reconciliation' && (
             <div className="absolute inset-0 flex flex-col p-6 min-h-0 overflow-y-auto slick-scrollbar">
-            {/* Filter and Actions rail */}
-            <div className="bg-[var(--background-primary)] border border-[var(--border-subtle)] rounded-xl px-4 py-3 flex items-center justify-between gap-4 mb-4 shrink-0 shadow-sm">
-              <div className="flex flex-col gap-1 w-48">
-                <span className="text-[10px] font-black text-[var(--text-subtlest)] uppercase tracking-wider pl-1">Shop</span>
-                <Dropdown
-                  options={SHOP_OPTIONS}
-                  value={selectedShop}
-                  onChange={setSelectedShop}
-                />
-              </div>
-              <Button 
-                onClick={handleLoadLastValues}
-                variant="secondary" 
-                className="h-10 px-4 text-xs font-extrabold uppercase tracking-wider flex items-center gap-1.5"
-              >
-                <Download size={14} />
-                <span>Load Last Values</span>
-              </Button>
-            </div>
-
-            {/* Active Reconciliation Grid */}
-            <div className="bg-[var(--background-primary)] border border-[var(--border-subtle)] rounded-xl p-5 shadow-sm flex flex-col mb-24">
-              <div className="flex justify-between items-center mb-5 border-b border-[var(--border-subtle)] pb-3">
-                <div>
-                  <h3 className="text-sm font-black text-[var(--text-primary)] uppercase tracking-wider">Active Reconciliation</h3>
-                  <span className="text-[10px] font-bold text-[var(--text-subtlest)]">Today's cashbook counts</span>
-                </div>
-              </div>
-
-              {/* Grid header row */}
-              <div className="grid grid-cols-[100px_1fr_1fr] gap-4 pb-2 border-b border-[var(--border-subtle)] text-[10px] font-black text-[var(--text-subtlest)] uppercase tracking-wider mb-2">
-                <span>Denomination</span>
-                <span className="text-center">Kassa</span>
-                <span className="text-center">Reserve</span>
-              </div>
-
-              {/* Denomination rows */}
-              <div className="flex flex-col gap-1.5 divide-y divide-[var(--border-subtlest)]">
-                {denominations.map(denom => (
-                  <div key={`active-${denom.value}`} className="grid grid-cols-[100px_1fr_1fr] gap-4 py-2 items-center">
-                    <span className="text-xs font-black text-[var(--text-primary)]">{denom.label}</span>
-                    
-                    {/* Kassa Column */}
-                    <div className="flex items-center gap-1 justify-center">
-                      <button
-                        type="button"
-                        onClick={() => handleDecrement(denom.value, 'registerCount')}
-                        className="w-6 h-6 rounded bg-[var(--background-secondary)] hover:bg-[var(--background-tertiary)] border border-[var(--border-subtle)] flex items-center justify-center text-[var(--text-primary)] transition-colors active:scale-95 cursor-pointer"
-                      >
-                        <Minus size={12} />
-                      </button>
-                      <input
-                        type="text"
-                        inputMode="numeric"
-                        pattern="[0-9]*"
-                        value={denom.registerCount === 0 ? '' : denom.registerCount}
-                        onChange={e => handleCountChange(denom.value, 'registerCount', e.target.value)}
-                        className="w-10 h-6 px-1 bg-[var(--background-secondary)] border border-[var(--border-subtle)] rounded text-center text-xs font-bold text-[var(--text-primary)] focus:outline-none focus:border-[var(--border-brand)]"
-                        placeholder="0"
-                      />
-                      <button
-                        type="button"
-                        onClick={() => handleIncrement(denom.value, 'registerCount')}
-                        className="w-6 h-6 rounded bg-[var(--background-secondary)] hover:bg-[var(--background-tertiary)] border border-[var(--border-subtle)] flex items-center justify-center text-[var(--text-primary)] transition-colors active:scale-95 cursor-pointer"
-                      >
-                        <Plus size={12} />
-                      </button>
-                      <span className="text-[10px] font-bold text-[var(--text-subtle)] min-w-[50px] text-right">
-                        {formatEuro(denom.registerCount * denom.value)}
-                      </span>
-                    </div>
-
-                    {/* Reserve Column */}
-                    <div className="flex items-center gap-1 justify-center">
-                      <button
-                        type="button"
-                        onClick={() => handleDecrement(denom.value, 'reserveCount')}
-                        className="w-6 h-6 rounded bg-[var(--background-secondary)] hover:bg-[var(--background-tertiary)] border border-[var(--border-subtle)] flex items-center justify-center text-[var(--text-primary)] transition-colors active:scale-95 cursor-pointer"
-                      >
-                        <Minus size={12} />
-                      </button>
-                      <input
-                        type="text"
-                        inputMode="numeric"
-                        pattern="[0-9]*"
-                        value={denom.reserveCount === 0 ? '' : denom.reserveCount}
-                        onChange={e => handleCountChange(denom.value, 'reserveCount', e.target.value)}
-                        className="w-10 h-6 px-1 bg-[var(--background-secondary)] border border-[var(--border-subtle)] rounded text-center text-xs font-bold text-[var(--text-primary)] focus:outline-none focus:border-[var(--border-brand)]"
-                        placeholder="0"
-                      />
-                      <button
-                        type="button"
-                        onClick={() => handleIncrement(denom.value, 'reserveCount')}
-                        className="w-6 h-6 rounded bg-[var(--background-secondary)] hover:bg-[var(--background-tertiary)] border border-[var(--border-subtle)] flex items-center justify-center text-[var(--text-primary)] transition-colors active:scale-95 cursor-pointer"
-                      >
-                        <Plus size={12} />
-                      </button>
-                      <span className="text-[10px] font-bold text-[var(--text-subtle)] min-w-[50px] text-right">
-                        {formatEuro(denom.reserveCount * denom.value)}
-                      </span>
+            
+            {isViewingToday ? (
+              <>
+                {/* Active Reconciliation Grid */}
+                <div className="bg-[var(--background-primary)] border border-[var(--border-subtle)] rounded-xl p-5 shadow-sm flex flex-col mb-24">
+                  <div className="flex justify-between items-center mb-5 border-b border-[var(--border-subtle)] pb-3">
+                    <div>
+                      <h3 className="text-sm font-black text-[var(--text-primary)] uppercase tracking-wider">Active Reconciliation</h3>
+                      <span className="text-[10px] font-bold text-[var(--text-subtlest)]">Today's cashbook counts ({formattedToday})</span>
                     </div>
                   </div>
-                ))}
-              </div>
-            </div>
-            
-            {/* Sticky/Fixed Bottom Calculations Bar */}
-            <div className="fixed bottom-0 left-0 right-0 bg-[var(--background-primary)] border-t border-[var(--border-subtle)] py-4 px-6 md:px-12 flex flex-col md:flex-row items-center justify-between gap-4 shadow-[0_-8px_32px_rgba(19,21,24,0.05)] z-10 select-none">
-              <div className="flex flex-wrap items-center gap-6 md:gap-12">
-                <div className="flex flex-col gap-0.5">
-                  <span className="text-[9px] font-black text-[var(--text-subtlest)] uppercase tracking-wider">Total Counted</span>
-                  <span className="text-base font-black text-[var(--text-primary)]">{formatEuro(totalCounted)}</span>
-                </div>
-                <div className="w-[1.5px] h-6 bg-[var(--border-subtle)] hidden md:block" />
-                <div className="flex flex-col gap-0.5">
-                  <span className="text-[9px] font-black text-[var(--text-subtlest)] uppercase tracking-wider">Expected Total</span>
-                  <span className="text-base font-black text-[var(--text-subtle)]">{formatEuro(expectedTotal)}</span>
-                </div>
-                <div className="w-[1.5px] h-6 bg-[var(--border-subtle)] hidden md:block" />
-                <div className="flex flex-col gap-0.5">
-                  <span className="text-[9px] font-black text-[var(--text-subtlest)] uppercase tracking-wider">Variance / Difference</span>
-                  {Math.abs(reconciliationDifference) < 0.001 ? (
-                    <span className="text-base font-black text-[var(--text-success)]">
-                      {formatEuro(0.00)}
-                    </span>
-                  ) : (
-                    <span className="text-base font-black text-[#EF4444] bg-[#FEF2F2] border border-[#FECACA] px-2 py-0.5 rounded animate-pulse">
-                      {reconciliationDifference > 0 ? '+' : ''}{formatEuro(reconciliationDifference)} (Discrepancy)
-                    </span>
-                  )}
-                </div>
-              </div>
 
-              <div className="flex items-center gap-3">
-                <Button variant="secondary" onClick={() => {
-                  setDenominations(prev => prev.map(d => ({ ...d, registerCount: 0, reserveCount: 0 })));
-                }} className="h-10 text-xs font-extrabold px-4">Reset Counts</Button>
-                
-                <Button 
-                  variant="primary" 
-                  disabled={Math.abs(reconciliationDifference) >= 0.001} 
-                  onClick={handleSubmitActiveReconciliation}
-                  className="h-10 text-xs font-black px-4"
-                >
-                  <Check size={14} className="mr-1.5" />
-                  <span>Submit Reconciliation</span>
-                </Button>
-              </div>
-            </div>
-            </div>
-          )}
-
-          {/* HISTORY TAB */}
-          {activeTab === 'history' && (
-            <div className="absolute inset-0 flex flex-col p-6 min-h-0 overflow-y-auto slick-scrollbar">
-            {/* Filter and Actions rail */}
-            <div className="bg-[var(--background-primary)] border border-[var(--border-subtle)] rounded-xl px-4 py-3 flex flex-wrap sm:flex-nowrap items-center justify-start gap-4 mb-4 shrink-0 shadow-sm">
-              <div className="flex flex-col gap-1 w-full sm:w-48">
-                <span className="text-[10px] font-black text-[var(--text-subtlest)] uppercase tracking-wider pl-1">Select Cashbook</span>
-                <Dropdown
-                  options={SHOP_OPTIONS}
-                  value={historyShop}
-                  onChange={(val) => {
-                    setHistoryShop(val);
-                    setIsEditingHistory(false);
-                  }}
-                />
-              </div>
-              <div className="flex flex-col gap-1 w-full sm:w-64">
-                <span className="text-[10px] font-black text-[var(--text-subtlest)] uppercase tracking-wider pl-1">Show counted cash from</span>
-                <DatePicker
-                  value={historyDate}
-                  onChange={(date) => {
-                    setHistoryDate(date);
-                    setIsEditingHistory(false);
-                  }}
-                  className="w-full"
-                />
-              </div>
-            </div>
-
-            {/* HISTORY RECORDS GRID */}
-            <div className="bg-[var(--background-primary)] border border-[var(--border-subtle)] rounded-xl p-5 shadow-sm flex flex-col h-fit">
-              <div className="border-b border-[var(--border-subtle)] pb-4 mb-4">
-                <h3 className="text-sm font-black text-[var(--text-primary)] uppercase tracking-wider mb-1">Historical Records</h3>
-              </div>
-
-              {/* History table view or editing state */}
-              {currentHistoryEntry ? (
-                <>
-                  {/* Table headers */}
+                  {/* Grid header row */}
                   <div className="grid grid-cols-[100px_1fr_1fr] gap-4 pb-2 border-b border-[var(--border-subtle)] text-[10px] font-black text-[var(--text-subtlest)] uppercase tracking-wider mb-2">
                     <span>Denomination</span>
                     <span className="text-center">Kassa</span>
                     <span className="text-center">Reserve</span>
                   </div>
 
-                  {isEditingHistory ? (
-                    /* Editing historical counts */
-                    <div className="flex flex-col gap-1.5 divide-y divide-[var(--border-subtlest)]">
-                      {editHistoryCounts.map(denom => {
-                        const originalDenom = mockDenominations.find(d => d.value === denom.value);
-                        const denomLabel = originalDenom ? originalDenom.label : `${denom.value} €`;
-                        return (
-                          <div key={`edit-hist-${denom.value}`} className="grid grid-cols-[100px_1fr_1fr] gap-4 py-2 items-center">
-                            <span className="text-xs font-black text-[var(--text-primary)]">{denomLabel}</span>
-                            
-                            {/* Kassa Column */}
-                            <div className="flex items-center gap-1 justify-center">
-                              <button
-                                type="button"
-                                onClick={() => handleHistoryDecrement(denom.value, 'registerCount')}
-                                className="w-6 h-6 rounded bg-[var(--background-secondary)] hover:bg-[var(--background-tertiary)] border border-[var(--border-subtle)] flex items-center justify-center text-[var(--text-primary)] transition-colors active:scale-95 cursor-pointer"
-                              >
-                                <Minus size={12} />
-                              </button>
-                              <input
-                                type="text"
-                                inputMode="numeric"
-                                pattern="[0-9]*"
-                                value={denom.registerCount === 0 ? '' : denom.registerCount}
-                                onChange={e => handleHistoryCountChange(denom.value, 'registerCount', e.target.value)}
-                                className="w-10 h-6 px-1 bg-[var(--background-secondary)] border border-[var(--border-subtle)] rounded text-center text-xs font-bold text-[var(--text-primary)] focus:outline-none focus:border-[var(--border-brand)]"
-                                placeholder="0"
-                              />
-                              <button
-                                type="button"
-                                onClick={() => handleHistoryIncrement(denom.value, 'registerCount')}
-                                className="w-6 h-6 rounded bg-[var(--background-secondary)] hover:bg-[var(--background-tertiary)] border border-[var(--border-subtle)] flex items-center justify-center text-[var(--text-primary)] transition-colors active:scale-95 cursor-pointer"
-                              >
-                                <Plus size={12} />
-                              </button>
-                              <span className="text-[10px] font-bold text-[var(--text-subtle)] min-w-[50px] text-right">
-                                {formatEuro(denom.registerCount * denom.value)}
-                              </span>
-                            </div>
+                  {/* Denomination rows */}
+                  <div className="flex flex-col gap-1.5 divide-y divide-[var(--border-subtlest)]">
+                    {denominations.map(denom => (
+                      <div key={`active-${denom.value}`} className="grid grid-cols-[100px_1fr_1fr] gap-4 py-2 items-center">
+                        <span className="text-xs font-black text-[var(--text-primary)]">{denom.label}</span>
+                        
+                        {/* Kassa Column */}
+                        <div className="flex items-center gap-1 justify-center">
+                          <button
+                            type="button"
+                            onClick={() => handleDecrement(denom.value, 'registerCount')}
+                            className="w-6 h-6 rounded bg-[var(--background-secondary)] hover:bg-[var(--background-tertiary)] border border-[var(--border-subtle)] flex items-center justify-center text-[var(--text-primary)] transition-colors active:scale-95 cursor-pointer"
+                          >
+                            <Minus size={12} />
+                          </button>
+                          <input
+                            type="text"
+                            inputMode="numeric"
+                            pattern="[0-9]*"
+                            value={denom.registerCount === 0 ? '' : denom.registerCount}
+                            onChange={e => handleCountChange(denom.value, 'registerCount', e.target.value)}
+                            className="w-10 h-6 px-1 bg-[var(--background-secondary)] border border-[var(--border-subtle)] rounded text-center text-xs font-bold text-[var(--text-primary)] focus:outline-none focus:border-[var(--border-brand)]"
+                            placeholder="0"
+                          />
+                          <button
+                            type="button"
+                            onClick={() => handleIncrement(denom.value, 'registerCount')}
+                            className="w-6 h-6 rounded bg-[var(--background-secondary)] hover:bg-[var(--background-tertiary)] border border-[var(--border-subtle)] flex items-center justify-center text-[var(--text-primary)] transition-colors active:scale-95 cursor-pointer"
+                          >
+                            <Plus size={12} />
+                          </button>
+                          <span className="text-[10px] font-bold text-[var(--text-subtle)] min-w-[50px] text-right">
+                            {formatEuro(denom.registerCount * denom.value)}
+                          </span>
+                        </div>
 
-                            {/* Reserve Column */}
-                            <div className="flex items-center gap-1 justify-center">
-                              <button
-                                type="button"
-                                onClick={() => handleHistoryDecrement(denom.value, 'reserveCount')}
-                                className="w-6 h-6 rounded bg-[var(--background-secondary)] hover:bg-[var(--background-tertiary)] border border-[var(--border-subtle)] flex items-center justify-center text-[var(--text-primary)] transition-colors active:scale-95 cursor-pointer"
-                              >
-                                <Minus size={12} />
-                              </button>
-                              <input
-                                type="text"
-                                inputMode="numeric"
-                                pattern="[0-9]*"
-                                value={denom.reserveCount === 0 ? '' : denom.reserveCount}
-                                onChange={e => handleHistoryCountChange(denom.value, 'reserveCount', e.target.value)}
-                                className="w-10 h-6 px-1 bg-[var(--background-secondary)] border border-[var(--border-subtle)] rounded text-center text-xs font-bold text-[var(--text-primary)] focus:outline-none focus:border-[var(--border-brand)]"
-                                placeholder="0"
-                              />
-                              <button
-                                type="button"
-                                onClick={() => handleHistoryIncrement(denom.value, 'reserveCount')}
-                                className="w-6 h-6 rounded bg-[var(--background-secondary)] hover:bg-[var(--background-tertiary)] border border-[var(--border-subtle)] flex items-center justify-center text-[var(--text-primary)] transition-colors active:scale-95 cursor-pointer"
-                              >
-                                <Plus size={12} />
-                              </button>
-                              <span className="text-[10px] font-bold text-[var(--text-subtle)] min-w-[50px] text-right">
-                                {formatEuro(denom.reserveCount * denom.value)}
-                              </span>
-                            </div>
-                          </div>
-                        );
-                      })}
+                        {/* Reserve Column */}
+                        <div className="flex items-center gap-1 justify-center">
+                          <button
+                            type="button"
+                            onClick={() => handleDecrement(denom.value, 'reserveCount')}
+                            className="w-6 h-6 rounded bg-[var(--background-secondary)] hover:bg-[var(--background-tertiary)] border border-[var(--border-subtle)] flex items-center justify-center text-[var(--text-primary)] transition-colors active:scale-95 cursor-pointer"
+                          >
+                            <Minus size={12} />
+                          </button>
+                          <input
+                            type="text"
+                            inputMode="numeric"
+                            pattern="[0-9]*"
+                            value={denom.reserveCount === 0 ? '' : denom.reserveCount}
+                            onChange={e => handleCountChange(denom.value, 'reserveCount', e.target.value)}
+                            className="w-10 h-6 px-1 bg-[var(--background-secondary)] border border-[var(--border-subtle)] rounded text-center text-xs font-bold text-[var(--text-primary)] focus:outline-none focus:border-[var(--border-brand)]"
+                            placeholder="0"
+                          />
+                          <button
+                            type="button"
+                            onClick={() => handleIncrement(denom.value, 'reserveCount')}
+                            className="w-6 h-6 rounded bg-[var(--background-secondary)] hover:bg-[var(--background-tertiary)] border border-[var(--border-subtle)] flex items-center justify-center text-[var(--text-primary)] transition-colors active:scale-95 cursor-pointer"
+                          >
+                            <Plus size={12} />
+                          </button>
+                          <span className="text-[10px] font-bold text-[var(--text-subtle)] min-w-[50px] text-right">
+                            {formatEuro(denom.reserveCount * denom.value)}
+                          </span>
+                        </div>
+                      </div>
+                    ))}
+                  </div>
+                </div>
+                
+                {/* Sticky/Fixed Bottom Calculations Bar */}
+                <div className="fixed bottom-0 left-0 right-0 bg-[var(--background-primary)] border-t border-[var(--border-subtle)] py-4 px-6 md:px-12 flex flex-col md:flex-row items-center justify-between gap-4 shadow-[0_-8px_32px_rgba(19,21,24,0.05)] z-10 select-none">
+                  <div className="flex flex-wrap items-center gap-6 md:gap-12">
+                    <div className="flex flex-col gap-0.5">
+                      <span className="text-[9px] font-black text-[var(--text-subtlest)] uppercase tracking-wider">Total Counted</span>
+                      <span className="text-base font-black text-[var(--text-primary)]">{formatEuro(totalCounted)}</span>
                     </div>
-                  ) : (
-                    /* Read-Only historical counts view */
-                    <div className="flex flex-col gap-1.5 divide-y divide-[var(--border-subtlest)]">
-                      {currentHistoryEntry.counts.map(denom => {
-                        const originalDenom = mockDenominations.find(d => d.value === denom.value);
-                        const denomLabel = originalDenom ? originalDenom.label : `${denom.value} €`;
-                        return (
-                          <div key={`view-hist-${denom.value}`} className="grid grid-cols-[100px_1fr_1fr] gap-4 py-2 items-center">
-                            <span className="text-xs font-black text-[var(--text-primary)]">{denomLabel}</span>
-                            <div className="text-center text-xs font-bold text-[var(--text-subtle)]">
-                              {denom.registerCount} <span className="text-[10px] text-[var(--text-subtlest)]">({formatEuro(denom.registerCount * denom.value)})</span>
-                            </div>
-                            <div className="text-center text-xs font-bold text-[var(--text-subtle)]">
-                              {denom.reserveCount} <span className="text-[10px] text-[var(--text-subtlest)]">({formatEuro(denom.reserveCount * denom.value)})</span>
-                            </div>
-                          </div>
-                        );
-                      })}
+                    <div className="w-[1.5px] h-6 bg-[var(--border-subtle)] hidden md:block" />
+                    <div className="flex flex-col gap-0.5">
+                      <span className="text-[9px] font-black text-[var(--text-subtlest)] uppercase tracking-wider">Expected Total</span>
+                      <span className="text-base font-black text-[var(--text-subtle)]">{formatEuro(expectedTotal)}</span>
                     </div>
-                  )}
-
-                  {/* Historical Totals */}
-                  <div className="mt-5 pt-4 border-t border-[var(--border-subtle)] flex flex-col gap-2.5">
-                    <div className="flex justify-between items-center text-xs font-bold text-[var(--text-subtle)]">
-                      <span>Total Counted:</span>
-                      <span className="text-sm font-black text-[var(--text-primary)]">
-                        {formatEuro(isEditingHistory ? editingTotalCounted : currentHistoryEntry.totalCounted)}
-                      </span>
-                    </div>
-                    <div className="flex justify-between items-center text-xs font-bold text-[var(--text-subtle)]">
-                      <span>Expected Total:</span>
-                      <span className="text-sm font-black text-[var(--text-subtle)]">
-                        {formatEuro(currentHistoryEntry.expectedTotal)}
-                      </span>
-                    </div>
-                    <div className="flex justify-between items-center text-xs font-bold text-[var(--text-subtle)]">
-                      <span>Difference:</span>
-                      {Math.abs(isEditingHistory ? editingDifference : currentHistoryEntry.difference) < 0.001 ? (
-                        <span className="text-sm font-black text-[var(--text-success)]">{formatEuro(0.00)}</span>
+                    <div className="w-[1.5px] h-6 bg-[var(--border-subtle)] hidden md:block" />
+                    <div className="flex flex-col gap-0.5">
+                      <span className="text-[9px] font-black text-[var(--text-subtlest)] uppercase tracking-wider">Variance / Difference</span>
+                      {Math.abs(reconciliationDifference) < 0.001 ? (
+                        <span className="text-base font-black text-[var(--text-success)]">
+                          {formatEuro(0.00)}
+                        </span>
                       ) : (
-                        <span className="text-sm font-black text-[var(--text-error)] bg-[var(--background-secondary)] px-2 py-0.5 rounded border border-[var(--border-subtle)]">
-                          {(isEditingHistory ? editingDifference : currentHistoryEntry.difference) > 0 ? '+' : ''}
-                          {formatEuro(isEditingHistory ? editingDifference : currentHistoryEntry.difference)}
+                        <span className="text-base font-black text-[#EF4444] bg-[#FEF2F2] border border-[#FECACA] px-2 py-0.5 rounded animate-pulse">
+                          {reconciliationDifference > 0 ? '+' : ''}{formatEuro(reconciliationDifference)} (Discrepancy)
                         </span>
                       )}
                     </div>
                   </div>
 
-                  {/* Historical Actions */}
-                  <div className="mt-6 flex gap-3 border-t border-[var(--border-subtle)] pt-4 justify-end">
-                    {isEditingHistory ? (
-                      <>
-                        <Button
-                          variant="secondary"
-                          onClick={() => setIsEditingHistory(false)}
-                          className="h-10 text-xs font-extrabold px-4"
-                        >
-                          Cancel
-                        </Button>
-                        <Button
-                          variant="primary"
-                          onClick={handleSaveHistoryChanges}
-                          className="h-10 text-xs font-black px-4"
-                        >
-                          <Check size={14} className="mr-1.5" />
-                          <span>Save Changes</span>
-                        </Button>
-                      </>
-                    ) : (
-                      <Button
-                        variant="secondary"
-                        onClick={() => {
-                          setEditHistoryCounts(currentHistoryEntry.counts);
-                          setIsEditingHistory(true);
-                        }}
-                        className="h-10 text-xs font-black px-4"
-                      >
-                        Edit history entry
-                      </Button>
-                    )}
+                  <div className="flex items-center gap-3">
+                    <Button variant="secondary" onClick={() => {
+                      setDenominations(prev => prev.map(d => ({ ...d, registerCount: 0, reserveCount: 0 })));
+                    }} className="h-10 text-xs font-extrabold px-4">Reset Counts</Button>
+                    
+                    <Button 
+                      variant="primary" 
+                      disabled={Math.abs(reconciliationDifference) >= 0.001} 
+                      onClick={handleSubmitActiveReconciliation}
+                      className="h-10 text-xs font-black px-4"
+                    >
+                      <Check size={14} className="mr-1.5" />
+                      <span>Submit Reconciliation</span>
+                    </Button>
                   </div>
-                </>
-              ) : (
-                /* Empty state when no history entry is found */
-                <div className="flex flex-col items-center justify-center py-12 px-4 border border-dashed border-[var(--border-subtle)] rounded-xl bg-[var(--background-secondary)] my-4 text-center">
-                  <svg className="w-12 h-12 text-[var(--text-subtlest)] mb-3" fill="none" viewBox="0 0 24 24" stroke="currentColor">
-                    <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={1.5} d="M8 7V3m8 4V3m-9 8h10M5 21h14a2 2 0 002-2V7a2 2 0 00-2-2H5a2 2 0 00-2 2v12a2 2 0 002 2z" />
-                  </svg>
-                  <span className="text-xs font-bold text-[var(--text-subtle)] mb-1">No history entry found</span>
-                  <span className="text-[10px] text-[var(--text-subtlest)] max-w-xs mb-4">
-                    There is no recorded reconciliation count for this cashbook on {formattedHistoryDate}.
-                  </span>
-                  <Button
-                    variant="primary"
-                    onClick={handleInitializeHistoryRecord}
-                    className="h-9 px-3 text-[10px] font-extrabold uppercase tracking-wider"
-                  >
-                    Initialize counts
-                  </Button>
                 </div>
-              )}
-            </div>
+              </>
+            ) : (
+
+              <>
+                {/* HISTORY RECORDS GRID */}
+                <div className="bg-[var(--background-primary)] border border-[var(--border-subtle)] rounded-xl p-5 shadow-sm flex flex-col h-fit">
+                  <div className="border-b border-[var(--border-subtle)] pb-4 mb-4">
+                    <h3 className="text-sm font-black text-[var(--text-primary)] uppercase tracking-wider mb-1">Historical Records</h3>
+                  </div>
+
+                  {/* History table view or editing state */}
+                  {currentHistoryEntry ? (
+                    <>
+                      {/* Table headers */}
+                      <div className="grid grid-cols-[100px_1fr_1fr] gap-4 pb-2 border-b border-[var(--border-subtle)] text-[10px] font-black text-[var(--text-subtlest)] uppercase tracking-wider mb-2">
+                        <span>Denomination</span>
+                        <span className="text-center">Kassa</span>
+                        <span className="text-center">Reserve</span>
+                      </div>
+
+                      {isEditingHistory ? (
+                        /* Editing historical counts */
+                        <div className="flex flex-col gap-1.5 divide-y divide-[var(--border-subtlest)]">
+                          {editHistoryCounts.map(denom => {
+                            const originalDenom = mockDenominations.find(d => d.value === denom.value);
+                            const denomLabel = originalDenom ? originalDenom.label : `${denom.value} €`;
+                            return (
+                              <div key={`edit-hist-${denom.value}`} className="grid grid-cols-[100px_1fr_1fr] gap-4 py-2 items-center">
+                                <span className="text-xs font-black text-[var(--text-primary)]">{denomLabel}</span>
+                                
+                                {/* Kassa Column */}
+                                <div className="flex items-center gap-1 justify-center">
+                                  <button
+                                    type="button"
+                                    onClick={() => handleHistoryDecrement(denom.value, 'registerCount')}
+                                    className="w-6 h-6 rounded bg-[var(--background-secondary)] hover:bg-[var(--background-tertiary)] border border-[var(--border-subtle)] flex items-center justify-center text-[var(--text-primary)] transition-colors active:scale-95 cursor-pointer"
+                                  >
+                                    <Minus size={12} />
+                                  </button>
+                                  <input
+                                    type="text"
+                                    inputMode="numeric"
+                                    pattern="[0-9]*"
+                                    value={denom.registerCount === 0 ? '' : denom.registerCount}
+                                    onChange={e => handleHistoryCountChange(denom.value, 'registerCount', e.target.value)}
+                                    className="w-10 h-6 px-1 bg-[var(--background-secondary)] border border-[var(--border-subtle)] rounded text-center text-xs font-bold text-[var(--text-primary)] focus:outline-none focus:border-[var(--border-brand)]"
+                                    placeholder="0"
+                                  />
+                                  <button
+                                    type="button"
+                                    onClick={() => handleHistoryIncrement(denom.value, 'registerCount')}
+                                    className="w-6 h-6 rounded bg-[var(--background-secondary)] hover:bg-[var(--background-tertiary)] border border-[var(--border-subtle)] flex items-center justify-center text-[var(--text-primary)] transition-colors active:scale-95 cursor-pointer"
+                                  >
+                                    <Plus size={12} />
+                                  </button>
+                                  <span className="text-[10px] font-bold text-[var(--text-subtle)] min-w-[50px] text-right">
+                                    {formatEuro(denom.registerCount * denom.value)}
+                                  </span>
+                                </div>
+
+                                {/* Reserve Column */}
+                                <div className="flex items-center gap-1 justify-center">
+                                  <button
+                                    type="button"
+                                    onClick={() => handleHistoryDecrement(denom.value, 'reserveCount')}
+                                    className="w-6 h-6 rounded bg-[var(--background-secondary)] hover:bg-[var(--background-tertiary)] border border-[var(--border-subtle)] flex items-center justify-center text-[var(--text-primary)] transition-colors active:scale-95 cursor-pointer"
+                                  >
+                                    <Minus size={12} />
+                                  </button>
+                                  <input
+                                    type="text"
+                                    inputMode="numeric"
+                                    pattern="[0-9]*"
+                                    value={denom.reserveCount === 0 ? '' : denom.reserveCount}
+                                    onChange={e => handleHistoryCountChange(denom.value, 'reserveCount', e.target.value)}
+                                    className="w-10 h-6 px-1 bg-[var(--background-secondary)] border border-[var(--border-subtle)] rounded text-center text-xs font-bold text-[var(--text-primary)] focus:outline-none focus:border-[var(--border-brand)]"
+                                    placeholder="0"
+                                  />
+                                  <button
+                                    type="button"
+                                    onClick={() => handleHistoryIncrement(denom.value, 'reserveCount')}
+                                    className="w-6 h-6 rounded bg-[var(--background-secondary)] hover:bg-[var(--background-tertiary)] border border-[var(--border-subtle)] flex items-center justify-center text-[var(--text-primary)] transition-colors active:scale-95 cursor-pointer"
+                                  >
+                                    <Plus size={12} />
+                                  </button>
+                                  <span className="text-[10px] font-bold text-[var(--text-subtle)] min-w-[50px] text-right">
+                                    {formatEuro(denom.reserveCount * denom.value)}
+                                  </span>
+                                </div>
+                              </div>
+                            );
+                          })}
+                        </div>
+                      ) : (
+                        /* Read-Only historical counts view */
+                        <div className="flex flex-col gap-1.5 divide-y divide-[var(--border-subtlest)]">
+                          {currentHistoryEntry.counts.map(denom => {
+                            const originalDenom = mockDenominations.find(d => d.value === denom.value);
+                            const denomLabel = originalDenom ? originalDenom.label : `${denom.value} €`;
+                            return (
+                              <div key={`view-hist-${denom.value}`} className="grid grid-cols-[100px_1fr_1fr] gap-4 py-2 items-center">
+                                <span className="text-xs font-black text-[var(--text-primary)]">{denomLabel}</span>
+                                <div className="text-center text-xs font-bold text-[var(--text-subtle)]">
+                                  {denom.registerCount} <span className="text-[10px] text-[var(--text-subtlest)]">({formatEuro(denom.registerCount * denom.value)})</span>
+                                </div>
+                                <div className="text-center text-xs font-bold text-[var(--text-subtle)]">
+                                  {denom.reserveCount} <span className="text-[10px] text-[var(--text-subtlest)]">({formatEuro(denom.reserveCount * denom.value)})</span>
+                                </div>
+                              </div>
+                            );
+                          })}
+                        </div>
+                      )}
+
+                      {/* Historical Totals */}
+                      <div className="mt-5 pt-4 border-t border-[var(--border-subtle)] flex flex-col gap-2.5">
+                        <div className="flex justify-between items-center text-xs font-bold text-[var(--text-subtle)]">
+                          <span>Total Counted:</span>
+                          <span className="text-sm font-black text-[var(--text-primary)]">
+                            {formatEuro(isEditingHistory ? editingTotalCounted : currentHistoryEntry.totalCounted)}
+                          </span>
+                        </div>
+                        <div className="flex justify-between items-center text-xs font-bold text-[var(--text-subtle)]">
+                          <span>Expected Total:</span>
+                          <span className="text-sm font-black text-[var(--text-subtle)]">
+                            {formatEuro(currentHistoryEntry.expectedTotal)}
+                          </span>
+                        </div>
+                        <div className="flex justify-between items-center text-xs font-bold text-[var(--text-subtle)]">
+                          <span>Difference:</span>
+                          {Math.abs(isEditingHistory ? editingDifference : currentHistoryEntry.difference) < 0.001 ? (
+                            <span className="text-sm font-black text-[var(--text-success)]">{formatEuro(0.00)}</span>
+                          ) : (
+                            <span className="text-sm font-black text-[var(--text-error)] bg-[var(--background-secondary)] px-2 py-0.5 rounded border border-[var(--border-subtle)]">
+                              {(isEditingHistory ? editingDifference : currentHistoryEntry.difference) > 0 ? '+' : ''}
+                              {formatEuro(isEditingHistory ? editingDifference : currentHistoryEntry.difference)}
+                            </span>
+                          )}
+                        </div>
+                      </div>
+                    </>
+                  ) : (
+                    /* Empty state when no history entry is found */
+                    <div className="flex flex-col items-center justify-center py-12 px-4 border border-dashed border-[var(--border-subtle)] rounded-xl bg-[var(--background-secondary)] my-4 text-center">
+                      <svg className="w-12 h-12 text-[var(--text-subtlest)] mb-3" fill="none" viewBox="0 0 24 24" stroke="currentColor">
+                        <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={1.5} d="M8 7V3m8 4V3m-9 8h10M5 21h14a2 2 0 002-2V7a2 2 0 00-2-2H5a2 2 0 00-2 2v12a2 2 0 002 2z" />
+                      </svg>
+                      <span className="text-xs font-bold text-[var(--text-subtle)] mb-1">No history entry found</span>
+                      <span className="text-[10px] text-[var(--text-subtlest)] max-w-xs mb-4">
+                        There is no recorded reconciliation count for this cashbook on {formattedHistoryDate}.
+                      </span>
+                      <Button
+                        variant="primary"
+                        onClick={handleInitializeHistoryRecord}
+                        className="h-9 px-3 text-[10px] font-extrabold uppercase tracking-wider"
+                      >
+                        Initialize counts
+                      </Button>
+                    </div>
+                  )}
+                </div>
+              </>
+            )}
             </div>
           )}
         </div>

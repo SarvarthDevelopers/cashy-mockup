@@ -5,7 +5,6 @@ import { motion, AnimatePresence } from 'motion/react';
 import { 
   Plus, 
   Minus,
-  Search, 
   ArrowDownRight, 
   ArrowUpRight, 
   Check, 
@@ -218,7 +217,7 @@ export function CashbookDashboard() {
     setEndDate(formatDateString(range.to));
   };
   const [activeTab, setActiveTab] = useState('ledger');
-  const [searchQuery, setSearchQuery] = useState('');
+
   
   const { showToast } = useToast();
 
@@ -270,12 +269,9 @@ export function CashbookDashboard() {
       // Filter by Date Range
       if (startDate && entry.date < startDate) return false;
       if (endDate && entry.date > endDate) return false;
-
-      // Search Query
-      const searchStr = `${entry.id} ${entry.customerId} ${entry.paymentReference} ${entry.note}`.toLowerCase();
-      return searchStr.includes(searchQuery.toLowerCase());
+      return true;
     });
-  }, [ledgerData, selectedShop, selectedType, startDate, endDate, searchQuery]);
+  }, [ledgerData, selectedShop, selectedType, startDate, endDate]);
 
   const ledgerSummary = useMemo(() => {
     let totalInflow = 0;
@@ -635,19 +631,10 @@ export function CashbookDashboard() {
               <div className="w-32 shrink-0">
                 <Dropdown options={TYPE_OPTIONS} value={selectedType} onChange={setSelectedType} />
               </div>
-              <div className="w-56 shrink-0">
+              <div className="shrink-0">
                 <DateRangePicker value={rangeValue} onChange={handleRangeChange} placeholder="Date range" />
               </div>
-              <div className="relative w-48 shrink-0">
-                <Search className="absolute left-3 top-1/2 -translate-y-1/2 text-[var(--text-subtlest)]" size={14} />
-                <input
-                  type="text"
-                  placeholder="Search..."
-                  value={searchQuery}
-                  onChange={e => setSearchQuery(e.target.value)}
-                  className="w-full pl-9 pr-3 py-1.5 bg-[var(--background-secondary)] border border-[var(--border-subtle)] rounded-lg text-xs text-[var(--text-primary)] focus:outline-none focus:border-[var(--border-brand)] font-semibold h-9"
-                />
-              </div>
+
               <Button onClick={handleExportLedger} variant="secondary" className="h-9 px-3 text-xs flex items-center gap-1.5 shrink-0"><Download size={14}/> Export</Button>
               <Button onClick={() => setIsDrawerOpen(true)} variant="primary" className="h-9 px-3 text-xs flex items-center gap-1.5 shrink-0"><Plus size={14}/> New Entry</Button>
             </>
@@ -655,7 +642,7 @@ export function CashbookDashboard() {
 
           {activeTab === 'reconciliation' && (
             <>
-              <div className="w-48 shrink-0">
+              <div className="shrink-0">
                 <DatePicker 
                   value={historyDate} 
                   onChange={(date) => {

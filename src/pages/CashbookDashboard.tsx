@@ -834,89 +834,101 @@ export function CashbookDashboard() {
             
             {isViewingToday ? (
               <>
-                {/* Active Reconciliation Grid */}
-                <div className="bg-[var(--background-primary)] border border-[var(--border-subtle)] rounded-xl p-5 shadow-sm flex flex-col mb-24">
-                  <div className="flex justify-between items-center mb-5 border-b border-[var(--border-subtle)] pb-3">
+                {/* Active Reconciliation Cards */}
+                <div className="mb-24 flex flex-col gap-5">
+                  <div className="flex justify-between items-end border-b border-[var(--border-subtle)] pb-3">
                     <div>
                       <h3 className="text-sm font-black text-[var(--text-primary)] uppercase tracking-wider">Active Reconciliation</h3>
-                      <span className="text-[10px] font-bold text-[var(--text-subtlest)]">Today's cashbook counts ({formattedToday})</span>
+                      <span className="text-[10px] font-bold text-[var(--text-subtlest)]">Today - {formattedToday}</span>
                     </div>
                   </div>
 
-                  {/* Grid header row */}
-                  <div className="grid grid-cols-[100px_1fr_1fr] gap-4 pb-2 border-b border-[var(--border-subtle)] text-[10px] font-black text-[var(--text-subtlest)] uppercase tracking-wider mb-2">
-                    <span>Denomination</span>
-                    <span className="text-center">Kassa</span>
-                    <span className="text-center">Reserve</span>
-                  </div>
-
-                  {/* Denomination rows */}
-                  <div className="flex flex-col gap-1.5 divide-y divide-[var(--border-subtlest)]">
-                    {denominations.map(denom => (
-                      <div key={`active-${denom.value}`} className="grid grid-cols-[100px_1fr_1fr] gap-4 py-2 items-center">
-                        <span className="text-xs font-black text-[var(--text-primary)]">{denom.label}</span>
-                        
-                        {/* Kassa Column */}
-                        <div className="flex items-center gap-1 justify-center">
-                          <button
-                            type="button"
-                            onClick={() => handleDecrement(denom.value, 'registerCount')}
-                            className="w-6 h-6 rounded bg-[var(--background-secondary)] hover:bg-[var(--background-tertiary)] border border-[var(--border-subtle)] flex items-center justify-center text-[var(--text-primary)] transition-colors active:scale-95 cursor-pointer"
-                          >
-                            <Minus size={12} />
-                          </button>
-                          <input
-                            type="text"
-                            inputMode="numeric"
-                            pattern="[0-9]*"
-                            value={denom.registerCount === 0 ? '' : denom.registerCount}
-                            onChange={e => handleCountChange(denom.value, 'registerCount', e.target.value)}
-                            className="w-10 h-6 px-1 bg-[var(--background-secondary)] border border-[var(--border-subtle)] rounded text-center text-xs font-bold text-[var(--text-primary)] focus:outline-none focus:border-[var(--border-brand)]"
-                            placeholder="0"
-                          />
-                          <button
-                            type="button"
-                            onClick={() => handleIncrement(denom.value, 'registerCount')}
-                            className="w-6 h-6 rounded bg-[var(--background-secondary)] hover:bg-[var(--background-tertiary)] border border-[var(--border-subtle)] flex items-center justify-center text-[var(--text-primary)] transition-colors active:scale-95 cursor-pointer"
-                          >
-                            <Plus size={12} />
-                          </button>
-                          <span className="text-[10px] font-bold text-[var(--text-subtle)] min-w-[50px] text-right">
-                            {formatEuro(denom.registerCount * denom.value)}
-                          </span>
-                        </div>
-
-                        {/* Reserve Column */}
-                        <div className="flex items-center gap-1 justify-center">
-                          <button
-                            type="button"
-                            onClick={() => handleDecrement(denom.value, 'reserveCount')}
-                            className="w-6 h-6 rounded bg-[var(--background-secondary)] hover:bg-[var(--background-tertiary)] border border-[var(--border-subtle)] flex items-center justify-center text-[var(--text-primary)] transition-colors active:scale-95 cursor-pointer"
-                          >
-                            <Minus size={12} />
-                          </button>
-                          <input
-                            type="text"
-                            inputMode="numeric"
-                            pattern="[0-9]*"
-                            value={denom.reserveCount === 0 ? '' : denom.reserveCount}
-                            onChange={e => handleCountChange(denom.value, 'reserveCount', e.target.value)}
-                            className="w-10 h-6 px-1 bg-[var(--background-secondary)] border border-[var(--border-subtle)] rounded text-center text-xs font-bold text-[var(--text-primary)] focus:outline-none focus:border-[var(--border-brand)]"
-                            placeholder="0"
-                          />
-                          <button
-                            type="button"
-                            onClick={() => handleIncrement(denom.value, 'reserveCount')}
-                            className="w-6 h-6 rounded bg-[var(--background-secondary)] hover:bg-[var(--background-tertiary)] border border-[var(--border-subtle)] flex items-center justify-center text-[var(--text-primary)] transition-colors active:scale-95 cursor-pointer"
-                          >
-                            <Plus size={12} />
-                          </button>
-                          <span className="text-[10px] font-bold text-[var(--text-subtle)] min-w-[50px] text-right">
-                            {formatEuro(denom.reserveCount * denom.value)}
-                          </span>
-                        </div>
+                  <div className="grid grid-cols-1 xl:grid-cols-2 gap-6 items-start">
+                    {/* KASSA CARD */}
+                    <div className="bg-[var(--background-primary)] border border-[var(--border-subtle)] rounded-xl shadow-sm flex flex-col overflow-hidden">
+                      <div className="flex justify-between items-center px-5 py-4 border-b border-[var(--border-subtle)] bg-[var(--background-secondary)]">
+                        <h4 className="text-xs font-black text-[var(--text-primary)] uppercase tracking-wider">Kassa</h4>
+                        <span className="text-sm font-black text-[var(--text-primary)]">{formatEuro(registerTotal)}</span>
                       </div>
-                    ))}
+                      <div className="flex flex-col gap-1.5 divide-y divide-[var(--border-subtlest)] p-5">
+                        {denominations.map(denom => (
+                          <div key={`active-kassa-${denom.value}`} className="flex items-center justify-between py-2">
+                            <span className="text-xs font-black text-[var(--text-primary)] w-14">{denom.label}</span>
+                            <div className="flex items-center gap-2">
+                              <button
+                                type="button"
+                                onClick={() => handleDecrement(denom.value, 'registerCount')}
+                                className="w-8 h-8 rounded-lg bg-[var(--background-secondary)] hover:bg-[var(--background-tertiary)] border border-[var(--border-subtle)] flex items-center justify-center text-[var(--text-primary)] transition-colors active:scale-95 cursor-pointer"
+                              >
+                                <Minus size={14} />
+                              </button>
+                              <input
+                                type="text"
+                                inputMode="numeric"
+                                pattern="[0-9]*"
+                                value={denom.registerCount === 0 ? '' : denom.registerCount}
+                                onChange={e => handleCountChange(denom.value, 'registerCount', e.target.value)}
+                                className="w-16 h-8 px-2 bg-[var(--background-secondary)] border border-[var(--border-subtle)] rounded-lg text-center text-sm font-bold text-[var(--text-primary)] focus:outline-none focus:border-[var(--border-brand)] transition-colors"
+                                placeholder="0"
+                              />
+                              <button
+                                type="button"
+                                onClick={() => handleIncrement(denom.value, 'registerCount')}
+                                className="w-8 h-8 rounded-lg bg-[var(--background-secondary)] hover:bg-[var(--background-tertiary)] border border-[var(--border-subtle)] flex items-center justify-center text-[var(--text-primary)] transition-colors active:scale-95 cursor-pointer"
+                              >
+                                <Plus size={14} />
+                              </button>
+                            </div>
+                            <span className="text-xs font-bold text-[var(--text-subtle)] w-24 text-right">
+                              {formatEuro(denom.registerCount * denom.value)}
+                            </span>
+                          </div>
+                        ))}
+                      </div>
+                    </div>
+
+                    {/* RESERVE CARD */}
+                    <div className="bg-[var(--background-primary)] border border-[var(--border-subtle)] rounded-xl shadow-sm flex flex-col overflow-hidden">
+                      <div className="flex justify-between items-center px-5 py-4 border-b border-[var(--border-subtle)] bg-[var(--background-secondary)]">
+                        <h4 className="text-xs font-black text-[var(--text-primary)] uppercase tracking-wider">Reserve</h4>
+                        <span className="text-sm font-black text-[var(--text-primary)]">{formatEuro(reserveTotal)}</span>
+                      </div>
+                      <div className="flex flex-col gap-1.5 divide-y divide-[var(--border-subtlest)] p-5">
+                        {denominations.map(denom => (
+                          <div key={`active-reserve-${denom.value}`} className="flex items-center justify-between py-2">
+                            <span className="text-xs font-black text-[var(--text-primary)] w-14">{denom.label}</span>
+                            <div className="flex items-center gap-2">
+                              <button
+                                type="button"
+                                onClick={() => handleDecrement(denom.value, 'reserveCount')}
+                                className="w-8 h-8 rounded-lg bg-[var(--background-secondary)] hover:bg-[var(--background-tertiary)] border border-[var(--border-subtle)] flex items-center justify-center text-[var(--text-primary)] transition-colors active:scale-95 cursor-pointer"
+                              >
+                                <Minus size={14} />
+                              </button>
+                              <input
+                                type="text"
+                                inputMode="numeric"
+                                pattern="[0-9]*"
+                                value={denom.reserveCount === 0 ? '' : denom.reserveCount}
+                                onChange={e => handleCountChange(denom.value, 'reserveCount', e.target.value)}
+                                className="w-16 h-8 px-2 bg-[var(--background-secondary)] border border-[var(--border-subtle)] rounded-lg text-center text-sm font-bold text-[var(--text-primary)] focus:outline-none focus:border-[var(--border-brand)] transition-colors"
+                                placeholder="0"
+                              />
+                              <button
+                                type="button"
+                                onClick={() => handleIncrement(denom.value, 'reserveCount')}
+                                className="w-8 h-8 rounded-lg bg-[var(--background-secondary)] hover:bg-[var(--background-tertiary)] border border-[var(--border-subtle)] flex items-center justify-center text-[var(--text-primary)] transition-colors active:scale-95 cursor-pointer"
+                              >
+                                <Plus size={14} />
+                              </button>
+                            </div>
+                            <span className="text-xs font-bold text-[var(--text-subtle)] w-24 text-right">
+                              {formatEuro(denom.reserveCount * denom.value)}
+                            </span>
+                          </div>
+                        ))}
+                      </div>
+                    </div>
                   </div>
                 </div>
                 
@@ -969,113 +981,127 @@ export function CashbookDashboard() {
               <>
                 {/* HISTORY RECORDS GRID */}
                 <div className="bg-[var(--background-primary)] border border-[var(--border-subtle)] rounded-xl p-5 shadow-sm flex flex-col h-fit">
-                  <div className="border-b border-[var(--border-subtle)] pb-4 mb-4">
-                    <h3 className="text-sm font-black text-[var(--text-primary)] uppercase tracking-wider mb-1">Historical Records</h3>
+                  <div className="flex justify-between items-end border-b border-[var(--border-subtle)] pb-3 mb-4">
+                    <div>
+                      <h3 className="text-sm font-black text-[var(--text-primary)] uppercase tracking-wider">Historical Records</h3>
+                      <span className="text-[10px] font-bold text-[var(--text-subtlest)]">History - {formattedHistoryDate}</span>
+                    </div>
                   </div>
 
                   {/* History table view or editing state */}
                   {currentHistoryEntry ? (
                     <>
-                      {/* Table headers */}
-                      <div className="grid grid-cols-[100px_1fr_1fr] gap-4 pb-2 border-b border-[var(--border-subtle)] text-[10px] font-black text-[var(--text-subtlest)] uppercase tracking-wider mb-2">
-                        <span>Denomination</span>
-                        <span className="text-center">Kassa</span>
-                        <span className="text-center">Reserve</span>
-                      </div>
-
-                      {isEditingHistory ? (
-                        /* Editing historical counts */
-                        <div className="flex flex-col gap-1.5 divide-y divide-[var(--border-subtlest)]">
-                          {editHistoryCounts.map(denom => {
-                            const originalDenom = mockDenominations.find(d => d.value === denom.value);
-                            const denomLabel = originalDenom ? originalDenom.label : `${denom.value} €`;
-                            return (
-                              <div key={`edit-hist-${denom.value}`} className="grid grid-cols-[100px_1fr_1fr] gap-4 py-2 items-center">
-                                <span className="text-xs font-black text-[var(--text-primary)]">{denomLabel}</span>
-                                
-                                {/* Kassa Column */}
-                                <div className="flex items-center gap-1 justify-center">
-                                  <button
-                                    type="button"
-                                    onClick={() => handleHistoryDecrement(denom.value, 'registerCount')}
-                                    className="w-6 h-6 rounded bg-[var(--background-secondary)] hover:bg-[var(--background-tertiary)] border border-[var(--border-subtle)] flex items-center justify-center text-[var(--text-primary)] transition-colors active:scale-95 cursor-pointer"
-                                  >
-                                    <Minus size={12} />
-                                  </button>
-                                  <input
-                                    type="text"
-                                    inputMode="numeric"
-                                    pattern="[0-9]*"
-                                    value={denom.registerCount === 0 ? '' : denom.registerCount}
-                                    onChange={e => handleHistoryCountChange(denom.value, 'registerCount', e.target.value)}
-                                    className="w-10 h-6 px-1 bg-[var(--background-secondary)] border border-[var(--border-subtle)] rounded text-center text-xs font-bold text-[var(--text-primary)] focus:outline-none focus:border-[var(--border-brand)]"
-                                    placeholder="0"
-                                  />
-                                  <button
-                                    type="button"
-                                    onClick={() => handleHistoryIncrement(denom.value, 'registerCount')}
-                                    className="w-6 h-6 rounded bg-[var(--background-secondary)] hover:bg-[var(--background-tertiary)] border border-[var(--border-subtle)] flex items-center justify-center text-[var(--text-primary)] transition-colors active:scale-95 cursor-pointer"
-                                  >
-                                    <Plus size={12} />
-                                  </button>
-                                  <span className="text-[10px] font-bold text-[var(--text-subtle)] min-w-[50px] text-right">
+                      <div className="grid grid-cols-1 xl:grid-cols-2 gap-6 items-start mb-6">
+                        {/* KASSA CARD */}
+                        <div className="bg-[var(--background-primary)] border border-[var(--border-subtle)] rounded-xl shadow-sm flex flex-col overflow-hidden">
+                          <div className="flex justify-between items-center px-5 py-4 border-b border-[var(--border-subtle)] bg-[var(--background-secondary)]">
+                            <h4 className="text-xs font-black text-[var(--text-primary)] uppercase tracking-wider">Kassa</h4>
+                            <span className="text-sm font-black text-[var(--text-primary)]">
+                              {formatEuro((isEditingHistory ? editHistoryCounts : currentHistoryEntry.counts).reduce((sum, d) => sum + (d.registerCount * d.value), 0))}
+                            </span>
+                          </div>
+                          <div className="flex flex-col gap-1.5 divide-y divide-[var(--border-subtlest)] p-5">
+                            {(isEditingHistory ? editHistoryCounts : currentHistoryEntry.counts).map(denom => {
+                              const originalDenom = mockDenominations.find(d => d.value === denom.value);
+                              const denomLabel = originalDenom ? originalDenom.label : `${denom.value} €`;
+                              return (
+                                <div key={`hist-kassa-${denom.value}`} className="flex items-center justify-between py-2">
+                                  <span className="text-xs font-black text-[var(--text-primary)] w-14">{denomLabel}</span>
+                                  {isEditingHistory ? (
+                                    <div className="flex items-center gap-2">
+                                      <button
+                                        type="button"
+                                        onClick={() => handleHistoryDecrement(denom.value, 'registerCount')}
+                                        className="w-8 h-8 rounded-lg bg-[var(--background-secondary)] hover:bg-[var(--background-tertiary)] border border-[var(--border-subtle)] flex items-center justify-center text-[var(--text-primary)] transition-colors active:scale-95 cursor-pointer"
+                                      >
+                                        <Minus size={14} />
+                                      </button>
+                                      <input
+                                        type="text"
+                                        inputMode="numeric"
+                                        pattern="[0-9]*"
+                                        value={denom.registerCount === 0 ? '' : denom.registerCount}
+                                        onChange={e => handleHistoryCountChange(denom.value, 'registerCount', e.target.value)}
+                                        className="w-16 h-8 px-2 bg-[var(--background-secondary)] border border-[var(--border-subtle)] rounded-lg text-center text-sm font-bold text-[var(--text-primary)] focus:outline-none focus:border-[var(--border-brand)] transition-colors"
+                                        placeholder="0"
+                                      />
+                                      <button
+                                        type="button"
+                                        onClick={() => handleHistoryIncrement(denom.value, 'registerCount')}
+                                        className="w-8 h-8 rounded-lg bg-[var(--background-secondary)] hover:bg-[var(--background-tertiary)] border border-[var(--border-subtle)] flex items-center justify-center text-[var(--text-primary)] transition-colors active:scale-95 cursor-pointer"
+                                      >
+                                        <Plus size={14} />
+                                      </button>
+                                    </div>
+                                  ) : (
+                                    <div className="text-center text-sm font-bold text-[var(--text-primary)]">
+                                      {denom.registerCount}
+                                    </div>
+                                  )}
+                                  <span className="text-xs font-bold text-[var(--text-subtle)] w-24 text-right">
                                     {formatEuro(denom.registerCount * denom.value)}
                                   </span>
                                 </div>
+                              );
+                            })}
+                          </div>
+                        </div>
 
-                                {/* Reserve Column */}
-                                <div className="flex items-center gap-1 justify-center">
-                                  <button
-                                    type="button"
-                                    onClick={() => handleHistoryDecrement(denom.value, 'reserveCount')}
-                                    className="w-6 h-6 rounded bg-[var(--background-secondary)] hover:bg-[var(--background-tertiary)] border border-[var(--border-subtle)] flex items-center justify-center text-[var(--text-primary)] transition-colors active:scale-95 cursor-pointer"
-                                  >
-                                    <Minus size={12} />
-                                  </button>
-                                  <input
-                                    type="text"
-                                    inputMode="numeric"
-                                    pattern="[0-9]*"
-                                    value={denom.reserveCount === 0 ? '' : denom.reserveCount}
-                                    onChange={e => handleHistoryCountChange(denom.value, 'reserveCount', e.target.value)}
-                                    className="w-10 h-6 px-1 bg-[var(--background-secondary)] border border-[var(--border-subtle)] rounded text-center text-xs font-bold text-[var(--text-primary)] focus:outline-none focus:border-[var(--border-brand)]"
-                                    placeholder="0"
-                                  />
-                                  <button
-                                    type="button"
-                                    onClick={() => handleHistoryIncrement(denom.value, 'reserveCount')}
-                                    className="w-6 h-6 rounded bg-[var(--background-secondary)] hover:bg-[var(--background-tertiary)] border border-[var(--border-subtle)] flex items-center justify-center text-[var(--text-primary)] transition-colors active:scale-95 cursor-pointer"
-                                  >
-                                    <Plus size={12} />
-                                  </button>
-                                  <span className="text-[10px] font-bold text-[var(--text-subtle)] min-w-[50px] text-right">
+                        {/* RESERVE CARD */}
+                        <div className="bg-[var(--background-primary)] border border-[var(--border-subtle)] rounded-xl shadow-sm flex flex-col overflow-hidden">
+                          <div className="flex justify-between items-center px-5 py-4 border-b border-[var(--border-subtle)] bg-[var(--background-secondary)]">
+                            <h4 className="text-xs font-black text-[var(--text-primary)] uppercase tracking-wider">Reserve</h4>
+                            <span className="text-sm font-black text-[var(--text-primary)]">
+                              {formatEuro((isEditingHistory ? editHistoryCounts : currentHistoryEntry.counts).reduce((sum, d) => sum + (d.reserveCount * d.value), 0))}
+                            </span>
+                          </div>
+                          <div className="flex flex-col gap-1.5 divide-y divide-[var(--border-subtlest)] p-5">
+                            {(isEditingHistory ? editHistoryCounts : currentHistoryEntry.counts).map(denom => {
+                              const originalDenom = mockDenominations.find(d => d.value === denom.value);
+                              const denomLabel = originalDenom ? originalDenom.label : `${denom.value} €`;
+                              return (
+                                <div key={`hist-reserve-${denom.value}`} className="flex items-center justify-between py-2">
+                                  <span className="text-xs font-black text-[var(--text-primary)] w-14">{denomLabel}</span>
+                                  {isEditingHistory ? (
+                                    <div className="flex items-center gap-2">
+                                      <button
+                                        type="button"
+                                        onClick={() => handleHistoryDecrement(denom.value, 'reserveCount')}
+                                        className="w-8 h-8 rounded-lg bg-[var(--background-secondary)] hover:bg-[var(--background-tertiary)] border border-[var(--border-subtle)] flex items-center justify-center text-[var(--text-primary)] transition-colors active:scale-95 cursor-pointer"
+                                      >
+                                        <Minus size={14} />
+                                      </button>
+                                      <input
+                                        type="text"
+                                        inputMode="numeric"
+                                        pattern="[0-9]*"
+                                        value={denom.reserveCount === 0 ? '' : denom.reserveCount}
+                                        onChange={e => handleHistoryCountChange(denom.value, 'reserveCount', e.target.value)}
+                                        className="w-16 h-8 px-2 bg-[var(--background-secondary)] border border-[var(--border-subtle)] rounded-lg text-center text-sm font-bold text-[var(--text-primary)] focus:outline-none focus:border-[var(--border-brand)] transition-colors"
+                                        placeholder="0"
+                                      />
+                                      <button
+                                        type="button"
+                                        onClick={() => handleHistoryIncrement(denom.value, 'reserveCount')}
+                                        className="w-8 h-8 rounded-lg bg-[var(--background-secondary)] hover:bg-[var(--background-tertiary)] border border-[var(--border-subtle)] flex items-center justify-center text-[var(--text-primary)] transition-colors active:scale-95 cursor-pointer"
+                                      >
+                                        <Plus size={14} />
+                                      </button>
+                                    </div>
+                                  ) : (
+                                    <div className="text-center text-sm font-bold text-[var(--text-primary)]">
+                                      {denom.reserveCount}
+                                    </div>
+                                  )}
+                                  <span className="text-xs font-bold text-[var(--text-subtle)] w-24 text-right">
                                     {formatEuro(denom.reserveCount * denom.value)}
                                   </span>
                                 </div>
-                              </div>
-                            );
-                          })}
+                              );
+                            })}
+                          </div>
                         </div>
-                      ) : (
-                        /* Read-Only historical counts view */
-                        <div className="flex flex-col gap-1.5 divide-y divide-[var(--border-subtlest)]">
-                          {currentHistoryEntry.counts.map(denom => {
-                            const originalDenom = mockDenominations.find(d => d.value === denom.value);
-                            const denomLabel = originalDenom ? originalDenom.label : `${denom.value} €`;
-                            return (
-                              <div key={`view-hist-${denom.value}`} className="grid grid-cols-[100px_1fr_1fr] gap-4 py-2 items-center">
-                                <span className="text-xs font-black text-[var(--text-primary)]">{denomLabel}</span>
-                                <div className="text-center text-xs font-bold text-[var(--text-subtle)]">
-                                  {denom.registerCount} <span className="text-[10px] text-[var(--text-subtlest)]">({formatEuro(denom.registerCount * denom.value)})</span>
-                                </div>
-                                <div className="text-center text-xs font-bold text-[var(--text-subtle)]">
-                                  {denom.reserveCount} <span className="text-[10px] text-[var(--text-subtlest)]">({formatEuro(denom.reserveCount * denom.value)})</span>
-                                </div>
-                              </div>
-                            );
-                          })}
-                        </div>
-                      )}
+                      </div>
 
                       {/* Historical Totals */}
                       <div className="mt-5 pt-4 border-t border-[var(--border-subtle)] flex flex-col gap-2.5">

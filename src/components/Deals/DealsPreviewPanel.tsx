@@ -1,15 +1,35 @@
 import { useState, useEffect } from 'react';
-import { X, ExternalLink, FileWarning, RefreshCw, MessageSquare, ArrowRight, Package } from 'lucide-react';
+import { X, ExternalLink, FileWarning, RefreshCw, MessageSquare, ArrowRight, Package, RotateCcw, ShieldAlert } from 'lucide-react';
 import { motion } from 'motion/react';
 import type { Deal } from '../../data/mockDeals';
 import { STATUS_STYLES } from '../../data/mockDeals';
 import { ShopLabel } from '../Card/ShopLabel';
+
+interface ExtensionMeta {
+  originalDueDate: string;
+  originalPayout: number;
+  extensionDays: number;
+  additionalPayout: number;
+  newDueDate: string;
+  newTotalPayout: number;
+  extendedAt: string;
+}
+
+function parseExtensionMeta(notes: string): ExtensionMeta | null {
+  if (!notes?.startsWith('EXTENSION_META:')) return null;
+  try {
+    return JSON.parse(notes.replace('EXTENSION_META:', ''));
+  } catch {
+    return null;
+  }
+}
 
 interface DealsPreviewPanelProps {
   deal: Deal | null;
   isLoading?: boolean;
   onClose: () => void;
   onOpenWizard: (deal: Deal) => void;
+  onRevertExtension?: (deal: Deal) => void;
 }
 
 function formatEur(value: number): string {
@@ -81,7 +101,7 @@ function PanelSkeleton() {
   );
 }
 
-export function DealsPreviewPanel({ deal, isLoading = false, onClose, onOpenWizard }: DealsPreviewPanelProps) {
+export function DealsPreviewPanel({ deal, isLoading = false, onClose, onOpenWizard, onRevertExtension }: DealsPreviewPanelProps) {
   const [isMobile, setIsMobile] = useState(false);
 
   // Keyboard navigation capturing
@@ -105,8 +125,8 @@ export function DealsPreviewPanel({ deal, isLoading = false, onClose, onOpenWiza
 
   const statusStyle = STATUS_STYLES[deal.status];
   const timeline = generateTimeline(deal);
-
-  const fees = deal.totalMarketValue * 0.05; // 5% fee model
+  const extensionMeta = parseExtensionMeta(deal.notes || '');
+  const fees = deal.totalMarketValue * 0.05;
   const ltv = deal.suggestedPayout / deal.totalMarketValue;
 
   // Swipe handle touch header element for mobile screens
@@ -255,6 +275,49 @@ export function DealsPreviewPanel({ deal, isLoading = false, onClose, onOpenWiza
               </div>
             </div>
 
+            {/* Extension Details Section — shown for EXTENSION_CONFIRMED deals */}
+            {deal.status === 'EXTENSION_CONFIRMED' && extensionMeta && (
+              <div className="px-5 py-4 border-b border-[var(--border-subtle)] flex flex-col gap-3">
+                <h4 className="text-[9px] font-black text-[var(--text-subtlest)] uppercase tracking-wider flex items-center gap-1.5">
+                  <RefreshCw size={10} strokeWidth={2} className="text-[var(--text-brand)]" />
+                  Extension Details
+                </h4>
+                <div className="flex flex-col gap-2">
+                  <div className="flex justify-between text-xs font-semibold">
+                    <span className="text-[var(--text-subtle)]">Extended By</span>
+                    <span className="text-[var(--text-primary)] font-bold">{extensionMeta.extensionDays} days</span>
+                  </div>
+                  <div className="flex justify-between text-xs font-semibold">
+                    <span className="text-[var(--text-subtle)]">Original Due Date</span>
+                    <span className="text-[var(--text-primary)] font-bold">{extensionMeta.originalDueDate}</span>
+                  </div>
+                  <div className="flex justify-between text-xs font-semibold">
+                    <span className="text-[var(--text-subtle)]">New Due Date</span>
+                    <span className="text-[var(--text-brand)] font-bold">{extensionMeta.newDueDate}</span>
+                  </div>
+                  <div className="h-[1px] bg-[var(--border-subtle)]" />
+                  <div className="flex justify-between text-xs font-semibold">
+                    <span className="text-[var(--text-subtle)]">Original Payout</span>
+                    <span className="text-[var(--text-primary)] font-bold">{formatEur(extensionMeta.originalPayout)}</span>
+                  </div>
+                  {extensionMeta.additionalPayout > 0 && (
+                    <div className="flex justify-between text-xs font-semibold">
+                      <span className="text-[var(--text-subtle)]">Additional Payout Disbursed</span>
+                      <span className="text-green-600 font-bold">+ {formatEur(extensionMeta.additionalPayout)}</span>
+                    </div>
+                  )}
+                  <div className="flex justify-between text-xs font-semibold">
+                    <span className="text-[var(--text-subtle)]">New Total Payout</span>
+                    <span className="text-[var(--text-primary)] font-extrabold">{formatEur(extensionMeta.newTotalPayout)}</span>
+                  </div>
+                  <div className="flex justify-between text-xs font-semibold">
+                    <span className="text-[var(--text-subtle)]">Extended On</span>
+                    <span className="text-[var(--text-subtlest)] font-semibold">{formatDate(extensionMeta.extendedAt)}</span>
+                  </div>
+                </div>
+              </div>
+            )}
+
             {/* Warning Flags Section */}
             {(deal.hasMissingDocs || deal.isExtension) && (
               <div className="px-5 py-4 border-b border-[var(--border-subtle)] flex flex-col gap-2">
@@ -348,14 +411,28 @@ export function DealsPreviewPanel({ deal, isLoading = false, onClose, onOpenWiza
           </div>
 
           {/* Sticky footer CTAs section */}
-          <div className="px-5 py-4 border-t border-[var(--border-subtle)] shrink-0 bg-[var(--background-secondary)] sticky bottom-0 z-10">
-            <button 
+          <div className="px-5 py-4 border-t border-[var(--border-subtle)] shrink-0 bg-[var(--background-secondary)] sticky bottom-0 z-10 flex flex-col gap-2">
+            <button
               onClick={() => onOpenWizard(deal)}
               className="w-full h-10 flex items-center justify-center gap-2 px-4 bg-[var(--background-brand-solid)] text-white font-extrabold rounded-lg text-sm hover:bg-[var(--background-brand-solid-hover)] transition-all cursor-pointer focus:outline-none focus-visible:ring-2 focus-visible:ring-[var(--border-brand)]"
             >
               <ExternalLink size={14} strokeWidth={1.5} />
               <span>Open Deal Wizard</span>
             </button>
+
+            {/* Admin Revert Button — only for EXTENSION_CONFIRMED */}
+            {deal.status === 'EXTENSION_CONFIRMED' && onRevertExtension && (
+              <button
+                onClick={() => onRevertExtension(deal)}
+                className="w-full h-9 flex items-center justify-center gap-2 px-4 border border-[var(--border-subtle)] text-[var(--text-subtle)] hover:text-red-600 hover:border-red-300 hover:bg-red-50 font-bold rounded-lg text-xs transition-all cursor-pointer focus:outline-none focus-visible:ring-2 focus-visible:ring-red-400"
+              >
+                <RotateCcw size={13} strokeWidth={1.5} />
+                <span>Revert Extension</span>
+                <span className="ml-auto flex items-center gap-1 px-1.5 py-0.5 bg-red-100 text-red-600 rounded text-[9px] font-black uppercase tracking-wide">
+                  <ShieldAlert size={9} /> Admin
+                </span>
+              </button>
+            )}
           </div>
         </>
       )}

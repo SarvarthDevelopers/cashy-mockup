@@ -64,6 +64,20 @@ function RowActionMenu({ deal, onAction }: { deal: Deal; onAction: (action: stri
   const triggerRef = useRef<HTMLButtonElement>(null);
   const menuItemsRef = useRef<(HTMLButtonElement | null)[]>([]);
 
+  // "Extend" is only valid when the pawn deal is LIVE — item received, loan active.
+  // "Live" statuses per workflow doc: payout has been made and item is stored.
+  const EXTEND_ELIGIBLE_STATUSES = ['PAYED_AND_STORED', 'LOAN_DUE_NOTIFIED', 'LOAN_DUE', 'EXTENSION_CONFIRMED'];
+  const isExtendEligible = deal.mode !== 'custom_deal' && EXTEND_ELIGIBLE_STATUSES.includes(deal.status);
+  const isRevertEligible = deal.status === 'EXTENSION_CONFIRMED' && deal.mode !== 'custom_deal';
+  const menuItems = [
+    { key: 'open', label: 'Open Deal Wizard' },
+    ...(isExtendEligible ? [{ key: 'extend', label: 'Extend Deal' }] : []),
+    ...(isRevertEligible ? [{ key: 'revert_extension', label: 'Revert Extension (Admin)' }] : []),
+    { key: 'comment', label: 'Add Comment' },
+    { key: 'archive', label: 'Mark Archived' },
+    { key: 'export', label: 'Export Row' },
+  ];
+
   useEffect(() => {
     const clickHandler = (e: MouseEvent) => {
       if (ref.current && !ref.current.contains(e.target as Node)) setOpen(false);
@@ -75,10 +89,10 @@ function RowActionMenu({ deal, onAction }: { deal: Deal; onAction: (action: stri
         triggerRef.current?.focus();
       } else if (e.key === 'ArrowDown') {
         e.preventDefault();
-        setFocusIndex((prev) => (prev + 1) % 4);
+        setFocusIndex((prev) => (prev + 1) % menuItems.length);
       } else if (e.key === 'ArrowUp') {
         e.preventDefault();
-        setFocusIndex((prev) => (prev - 1 + 4) % 4);
+        setFocusIndex((prev) => (prev - 1 + menuItems.length) % menuItems.length);
       }
     };
     let frameId: number;
@@ -94,7 +108,7 @@ function RowActionMenu({ deal, onAction }: { deal: Deal; onAction: (action: stri
       document.removeEventListener('mousedown', clickHandler);
       document.removeEventListener('keydown', keyHandler);
     };
-  }, [open]);
+  }, [open, menuItems.length]);
 
   useEffect(() => {
     if (open && focusIndex >= 0 && menuItemsRef.current[focusIndex]) {
@@ -115,12 +129,7 @@ function RowActionMenu({ deal, onAction }: { deal: Deal; onAction: (action: stri
       </button>
       {open && (
         <div className="absolute right-0 top-7 z-50 bg-[var(--background-primary)] border border-[var(--border-subtle)] rounded-lg py-1 w-44 animate-in fade-in zoom-in-95 duration-150" role="menu">
-          {[
-            { key: 'open', label: 'Open Deal Wizard' },
-            { key: 'comment', label: 'Add Comment' },
-            { key: 'archive', label: 'Mark Archived' },
-            { key: 'export', label: 'Export Row' },
-          ].map((action, idx) => (
+          {menuItems.map((action, idx) => (
             <button
               key={action.key}
               ref={(el) => { menuItemsRef.current[idx] = el; }}

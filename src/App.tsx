@@ -10,6 +10,7 @@ import { OrgSettingsPage } from './pages/OrgSettingsPage';
 import { CashbookDashboard } from './pages/CashbookDashboard';
 import { Header } from './components/Header/Header';
 import { DealWizardModal } from './components/DealWizardModal/DealWizardModal';
+import { ExtendDealModal } from './components/ExtendDealModal/ExtendDealModal';
 import { ToastProvider } from './components/Toast/ToastContext';
 import { INITIAL_DEALS } from './data/mockData';
 import type { DealData } from './data/mockData';
@@ -90,6 +91,7 @@ const sortDealsForColumn = (deals: DealData[], sortBy: string, sortOrder: 'asc' 
 
 function App() {
   const [isModalOpen, setIsModalOpen] = useState(false);
+  const [isExtendModalOpen, setIsExtendModalOpen] = useState(false);
   const [selectedDeal, setSelectedDeal] = useState<DealData | null>(null);
   const [isNewDeal, setIsNewDeal] = useState(false);
   const [columns, setColumns] = useState<ColumnConfig[]>(INITIAL_COLUMNS);
@@ -224,6 +226,13 @@ function App() {
     setIsNewDeal(false);
     setSelectedDeal(deal);
     setIsModalOpen(true);
+  };
+
+  const handleExtendDeal = () => {
+    setIsModalOpen(false);
+    setTimeout(() => {
+      setIsExtendModalOpen(true);
+    }, 150);
   };
 
   const handleDealDragOver = (dealId: string, fromColumn: string, toColumn: string, toIndex: number) => {
@@ -453,6 +462,13 @@ function App() {
           isNew={isNewDeal}
           dealData={selectedDeal || undefined}
           onCreateDeal={handleCreateDealSuccess}
+          onUpdateDeal={handleUpdateDeal}
+          onExtend={handleExtendDeal}
+        />
+        <ExtendDealModal
+          isOpen={isExtendModalOpen}
+          onClose={() => setIsExtendModalOpen(false)}
+          dealData={selectedDeal || undefined}
           onUpdateDeal={handleUpdateDeal}
         />
       </div>

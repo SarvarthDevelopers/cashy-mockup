@@ -23,13 +23,32 @@ import { DatePicker } from '../DatePicker/DatePicker';
 
 const parseDateString = (str: string): Date | null => {
   if (!str) return null;
-  // Only handle YYYY-MM-DD format; other formats (like 'Jan 27') are not parseable here
-  if (!/^\d{4}-\d{2}-\d{2}$/.test(str)) return null;
-  const [year, month, day] = str.split('-').map(Number);
-  const d = new Date(year, month - 1, day);
-  // Verify the date is valid (guards against e.g. Feb 31)
-  if (isNaN(d.getTime())) return null;
-  return d;
+  // Handle YYYY-MM-DD
+  if (/^\d{4}-\d{2}-\d{2}$/.test(str)) {
+    const [year, month, day] = str.split('-').map(Number);
+    const d = new Date(year, month - 1, day);
+    if (!isNaN(d.getTime())) return d;
+  }
+  // Try standard parsing
+  const parsed = Date.parse(str);
+  if (!isNaN(parsed)) return new Date(parsed);
+
+  // Handle "Jan 20" style format
+  const months: Record<string, number> = {
+    jan: 0, feb: 1, mar: 2, apr: 3, may: 4, jun: 5,
+    jul: 6, aug: 7, sep: 8, oct: 9, nov: 10, dec: 11
+  };
+  const parts = str.trim().split(/\s+/);
+  if (parts.length === 2) {
+    const monthStr = parts[0].toLowerCase().slice(0, 3);
+    const day = parseInt(parts[1], 10);
+    if (monthStr in months && !isNaN(day)) {
+      const today = new Date();
+      const d = new Date(today.getFullYear(), months[monthStr], day);
+      if (!isNaN(d.getTime())) return d;
+    }
+  }
+  return null;
 };
 
 const formatDateString = (date: Date | null): string => {
@@ -57,6 +76,7 @@ export interface DealWizardModalProps {
     isNew?: boolean;
     onCreateDeal?: (deal: DealData) => void;
     onUpdateDeal?: (deal: DealData) => void;
+    onExtend?: (deal: DealData) => void;
 }
 
 export const DealWizardModal: React.FC<DealWizardModalProps> = ({ 
@@ -66,7 +86,8 @@ export const DealWizardModal: React.FC<DealWizardModalProps> = ({
     initialStep = 'step2',
     isNew = false,
     onCreateDeal,
-    onUpdateDeal
+    onUpdateDeal,
+    onExtend
 }) => {
     const [activeStep, setActiveStep] = useState(isNew ? 'step1' : initialStep);
     const [isCreated, setIsCreated] = useState(!isNew);
@@ -147,11 +168,18 @@ export const DealWizardModal: React.FC<DealWizardModalProps> = ({
                 firstName: dealData.firstName,
                 lastName: dealData.lastName
             });
+            const parsedD = dealData.dueDate ? parseDateString(dealData.dueDate) : null;
+            const finalD = parsedD ? formatDateString(parsedD) : (() => {
+                const durationDays = parseInt(dealData.wizardData?.dealDuration?.split(' ')[0] || '180', 10) || 180;
+                const d = new Date();
+                d.setDate(d.getDate() + durationDays);
+                return formatDateString(d);
+            })();
             setMetadata({
                 company: dealData.wizardData?.company || 'CASHY_AUT',
                 branch: dealData.wizardData?.branch || 'Vienna Main',
                 duration: dealData.wizardData?.dealDuration?.split(' ')[0] || '180',
-                dueDate: dealData.dueDate || new Date(Date.now() + 180 * 24 * 60 * 60 * 1000).toISOString().split('T')[0],
+                dueDate: finalD,
                 payoutMethod: dealData.wizardData?.payoutType || 'Bank Transfer'
             });
             if (dealData.items && dealData.items.length > 0) {
@@ -210,13 +238,25 @@ export const DealWizardModal: React.FC<DealWizardModalProps> = ({
             const displayCategory = CATEGORY_DISPLAY_NAMES[firstCategory] || firstCategory;
 
             // Convert YYYY-MM-DD → "Mon DD" format that the priority system parses
-            let formattedDueDate: string | undefined;
+            let formattedDueDate: string;
+            let targetDate: Date;
             if (metadata.dueDate) {
-                const d = new Date(metadata.dueDate + 'T00:00:00');
-                if (!isNaN(d.getTime())) {
-                    const monthNames = ['Jan', 'Feb', 'Mar', 'Apr', 'May', 'Jun', 'Jul', 'Aug', 'Sep', 'Oct', 'Nov', 'Dec'];
-                    formattedDueDate = `${monthNames[d.getMonth()]} ${d.getDate()}`;
-                }
+                targetDate = parseDateString(metadata.dueDate) || new Date();
+            } else {
+                const durationDays = parseInt(metadata.duration, 10) || 30;
+                targetDate = new Date();
+                targetDate.setDate(targetDate.getDate() + durationDays);
+            }
+
+            if (!isNaN(targetDate.getTime())) {
+                const monthNames = ['Jan', 'Feb', 'Mar', 'Apr', 'May', 'Jun', 'Jul', 'Aug', 'Sep', 'Oct', 'Nov', 'Dec'];
+                formattedDueDate = `${monthNames[targetDate.getMonth()]} ${targetDate.getDate()}`;
+            } else {
+                const durationDays = parseInt(metadata.duration, 10) || 30;
+                const fallback = new Date();
+                fallback.setDate(fallback.getDate() + durationDays);
+                const monthNames = ['Jan', 'Feb', 'Mar', 'Apr', 'May', 'Jun', 'Jul', 'Aug', 'Sep', 'Oct', 'Nov', 'Dec'];
+                formattedDueDate = `${monthNames[fallback.getMonth()]} ${fallback.getDate()}`;
             }
 
             const newDeal: DealData = {
@@ -572,7 +612,18 @@ export const DealWizardModal: React.FC<DealWizardModalProps> = ({
                         {isCreated ? (
                             <>
                                 <Button variant="secondary" size="small" className={`${isMobile ? 'flex-1' : ''} font-bold`}>Payback</Button>
-                                <Button variant="secondary" size="small" className={`${isMobile ? 'flex-1' : ''} font-bold`}>Extend</Button>
+                                {dealMode === 'Pawn' && (
+                                    <Button 
+                                        variant="secondary" 
+                                        size="small" 
+                                        className={`${isMobile ? 'flex-1' : ''} font-bold`}
+                                        onClick={() => {
+                                            if (dealData && onExtend) onExtend(dealData);
+                                        }}
+                                    >
+                                        Extend
+                                    </Button>
+                                )}
                                 <Button variant="primary" size="small" className={`${isMobile ? 'flex-1' : ''} font-bold`} onClick={onClose}>Close</Button>
                             </>
                         ) : (
@@ -1137,7 +1188,17 @@ export const DealWizardModal: React.FC<DealWizardModalProps> = ({
                                                     label="Duration (Days)" 
                                                     type="number" 
                                                     value={metadata.duration}
-                                                    onChange={(e) => setMetadata({...metadata, duration: e.target.value})}
+                                                    onChange={(e) => {
+                                                        const newDur = e.target.value;
+                                                        const numDays = parseInt(newDur, 10) || 180;
+                                                        const d = new Date();
+                                                        d.setDate(d.getDate() + numDays);
+                                                        setMetadata({
+                                                            ...metadata,
+                                                            duration: newDur,
+                                                            dueDate: formatDateString(d)
+                                                        });
+                                                    }}
                                                 />
                                                 <DatePicker 
                                                     label="Due Date (for staff)" 

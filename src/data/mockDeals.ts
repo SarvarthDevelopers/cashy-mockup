@@ -81,6 +81,27 @@ function daysAgo(days: number): Date {
   return d;
 }
 
+export function calculateContractDueDate(createdAtStr: string, durationDays: number, status: string, notes?: string): string {
+  if (notes?.startsWith('EXTENSION_META:')) {
+    try {
+      const meta = JSON.parse(notes.replace('EXTENSION_META:', ''));
+      if (meta.newDueDate) return meta.newDueDate;
+    } catch { /* ignore */ }
+  }
+
+  const baseDate = new Date(createdAtStr);
+  let totalDays = durationDays || 30;
+
+  if (status === 'EXTENSION_CONFIRMED') {
+    totalDays += 30;
+  }
+
+  baseDate.setDate(baseDate.getDate() + totalDays);
+
+  const monthNames = ['Jan', 'Feb', 'Mar', 'Apr', 'May', 'Jun', 'Jul', 'Aug', 'Sep', 'Oct', 'Nov', 'Dec'];
+  return `${monthNames[baseDate.getMonth()]} ${baseDate.getDate()}`;
+}
+
 // ---- Constants ----
 
 const STATUSES: Deal['status'][] = [
@@ -345,7 +366,10 @@ const SAMPLE_ROWS: Deal[] = [
 // ---- Main Generator ----
 
 export function generateMockDeals(count = 100): Deal[] {
-  const deals: Deal[] = [...SAMPLE_ROWS];
+  const deals: Deal[] = SAMPLE_ROWS.map(deal => ({
+    ...deal,
+    dueDate: deal.mode === 'deal' ? calculateContractDueDate(deal.createdAt, deal.durationDays, deal.status, deal.notes) : '—'
+  }));
   const usedIds = new Set(['000001', '000023', '000077']);
 
   // Indices for distribution tracking
@@ -462,6 +486,9 @@ export function generateMockDeals(count = 100): Deal[] {
     const columnDaysAgo = randomInt(0, Math.min(createdDaysAgo, 90));
     const lastColumnDate = daysAgo(columnDaysAgo);
 
+    const notes = randomChoice(NOTES_POOL);
+    const calculatedDueDate = mode === 'deal' ? calculateContractDueDate(createdDate.toISOString(), durationDays, status, notes) : '—';
+
     deals.push({
       dealId,
       mode,
@@ -476,7 +503,7 @@ export function generateMockDeals(count = 100): Deal[] {
       totalRequestedPayout,
       suggestedPayout,
       durationDays,
-      dueDate: '—',
+      dueDate: calculatedDueDate,
       createdAt: createdDate.toISOString(),
       labels: [],
       priority,
@@ -486,7 +513,7 @@ export function generateMockDeals(count = 100): Deal[] {
       assignedTo: 'Unassigned',
       column,
       lastColumnLabelAssignedAt: lastColumnDate.toISOString(),
-      notes: randomChoice(NOTES_POOL),
+      notes,
     });
   }
 

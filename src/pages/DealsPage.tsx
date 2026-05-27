@@ -9,6 +9,8 @@ import type { SortConfig, ColumnDef } from '../components/Deals/DealsTable';
 import { DealsPreviewPanel } from '../components/Deals/DealsPreviewPanel';
 import type { DealData } from '../data/mockData';
 import { getBusinessAreaForDeal } from '../data/businessAreaMapping';
+import { ExtendDealModal } from '../components/ExtendDealModal/ExtendDealModal';
+import { ConfirmationModal } from '../components/Modal/ConfirmationModal';
 
 // Apply filters to deals dataset
 function applyFilters(deals: Deal[], filters: FilterState): Deal[] {
@@ -256,6 +258,14 @@ export function DealsPage({ onSelectDeal }: DealsPageProps) {
   const [pageSize, setPageSize] = useState(25);
   const [currentPage, setCurrentPage] = useState(1);
 
+  // Extend Deal Modal State
+  const [isExtendModalOpen, setIsExtendModalOpen] = useState(false);
+  const [dealToExtend, setDealToExtend] = useState<DealData | null>(null);
+
+  // Revert Extension Confirmation Modal State
+  const [isRevertConfirmOpen, setIsRevertConfirmOpen] = useState(false);
+  const [dealToRevert, setDealToRevert] = useState<Deal | null>(null);
+
   // Redesign Action Progress variables
   const [exportStatus, setExportStatus] = useState<'idle' | 'processing' | 'success' | 'error'>('idle');
   const [exportProgress, setExportProgress] = useState(0);
@@ -439,15 +449,73 @@ export function DealsPage({ onSelectDeal }: DealsPageProps) {
     onSelectDeal(dealData);
   }, [onSelectDeal]);
 
+  const triggerRevertConfirmation = useCallback((deal: Deal) => {
+    setDealToRevert(deal);
+    setIsRevertConfirmOpen(true);
+  }, []);
+
   const handleRowAction = useCallback((action: string, deal: Deal) => {
     if (action === 'open') {
       handleOpenWizard(deal);
+    } else if (action === 'extend') {
+      const dealData = mapDealToDealData(deal);
+      setDealToExtend(dealData);
+      setIsExtendModalOpen(true);
+    } else if (action === 'revert_extension') {
+      triggerRevertConfirmation(deal);
     } else if (action === 'archive') {
       executeBulkAction('archive');
     } else if (action === 'export') {
       triggerSimulatedExport([deal], `cashy-deal-${deal.dealId}.csv`);
     }
-  }, [handleOpenWizard, triggerSimulatedExport, executeBulkAction]);
+  }, [handleOpenWizard, triggerSimulatedExport, executeBulkAction, triggerRevertConfirmation]);
+
+  const handleExtendDealUpdate = useCallback((updatedDealData: DealData) => {
+    setAllDeals(prevDeals => prevDeals.map(d => {
+      if (d.dealId === updatedDealData.id) {
+        return {
+          ...d,
+          status: 'EXTENSION_CONFIRMED' as Deal['status'],
+          isExtension: true,
+          dueDate: updatedDealData.dueDate || d.dueDate,
+          suggestedPayout: parseFloat(
+            (updatedDealData.amount || '0').replace(/[€\s.]/g, '').replace(',', '.')
+          ) || d.suggestedPayout,
+          // Store full metadata in notes for display + revert
+          notes: updatedDealData.specialNote || d.notes,
+        };
+      }
+      return d;
+    }));
+  }, []);
+
+  // Revert an extension: restore original values from stored metadata
+  const handleRevertExtension = useCallback((deal: Deal) => {
+    let originalDueDate = deal.dueDate;
+    let originalPayout = deal.suggestedPayout;
+    if (deal.notes?.startsWith('EXTENSION_META:')) {
+      try {
+        const meta = JSON.parse(deal.notes.replace('EXTENSION_META:', ''));
+        originalDueDate = meta.originalDueDate ?? deal.dueDate;
+        originalPayout = meta.originalPayout ?? deal.suggestedPayout;
+      } catch { /* malformed meta — use current values */ }
+    }
+    setAllDeals(prevDeals => prevDeals.map(d => {
+      if (d.dealId === deal.dealId) {
+        return {
+          ...d,
+          status: 'PAYED_AND_STORED' as Deal['status'],
+          isExtension: false,
+          dueDate: originalDueDate,
+          suggestedPayout: originalPayout,
+          notes: '',
+        };
+      }
+      return d;
+    }));
+    // Close preview panel if it was showing this deal
+    setActiveDeal(prev => prev?.dealId === deal.dealId ? null : prev);
+  }, []);
 
   if (isLoading) {
     return (
@@ -576,6 +644,36 @@ export function DealsPage({ onSelectDeal }: DealsPageProps) {
               isLoading={isPreviewLoading}
               onClose={() => setActiveDeal(null)}
               onOpenWizard={handleOpenWizard}
+              onRevertExtension={triggerRevertConfirmation}
+            />
+          )}
+
+          {/* Extend Deal Modal */}
+          <ExtendDealModal
+            isOpen={isExtendModalOpen}
+            onClose={() => {
+              setIsExtendModalOpen(false);
+              setDealToExtend(null);
+            }}
+            dealData={dealToExtend || undefined}
+            onUpdateDeal={handleExtendDealUpdate}
+          />
+
+          {/* Revert Extension Confirmation Modal */}
+          {dealToRevert && (
+            <ConfirmationModal
+              isOpen={isRevertConfirmOpen}
+              onOpenChange={setIsRevertConfirmOpen}
+              title="Revert Deal Extension"
+              description={`Are you sure you want to revert the extension for deal ${dealToRevert.dealId}? This will restore the original pawn due date and payout amount.`}
+              variant="danger"
+              confirmText="Revert Extension"
+              cancelText="Cancel"
+              onConfirm={() => {
+                handleRevertExtension(dealToRevert);
+                setIsRevertConfirmOpen(false);
+                setDealToRevert(null);
+              }}
             />
           )}
         </div>

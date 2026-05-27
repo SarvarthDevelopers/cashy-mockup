@@ -6,7 +6,6 @@ import { DealsFilterRail, INITIAL_FILTERS } from '../components/Deals/DealsFilte
 import type { FilterState } from '../components/Deals/DealsFilterRail';
 import { DealsTable, DEFAULT_COLUMNS } from '../components/Deals/DealsTable';
 import type { SortConfig, ColumnDef } from '../components/Deals/DealsTable';
-import { DealsPreviewPanel } from '../components/Deals/DealsPreviewPanel';
 import type { DealData } from '../data/mockData';
 import { getBusinessAreaForDeal } from '../data/businessAreaMapping';
 import { ExtendDealModal } from '../components/ExtendDealModal/ExtendDealModal';
@@ -273,7 +272,6 @@ export function DealsPage({ onSelectDeal }: DealsPageProps) {
   const [bulkActionStatus, setBulkActionStatus] = useState<'idle' | 'processing' | 'success' | 'error'>('idle');
   const [bulkErrorMessage, setBulkErrorMessage] = useState('');
 
-  const [isPreviewLoading, setIsPreviewLoading] = useState(false);
   const [isLoading, setIsLoading] = useState(true);
 
   useEffect(() => {
@@ -363,22 +361,15 @@ export function DealsPage({ onSelectDeal }: DealsPageProps) {
     setCurrentPage(1);
   }, []);
 
-  // Progressive simulated lazy loading for side previews
-  const handleRowClick = useCallback((deal: Deal) => {
-    if (activeDeal?.dealId === deal.dealId) {
-      setActiveDeal(null);
-      return;
-    }
-    
-    setIsPreviewLoading(true);
-    setActiveDeal(deal);
-    
-    const loader = setTimeout(() => {
-      setIsPreviewLoading(false);
-    }, 350);
+  const handleOpenWizard = useCallback((deal: Deal) => {
+    const dealData = mapDealToDealData(deal);
+    onSelectDeal(dealData);
+  }, [onSelectDeal]);
 
-    return () => clearTimeout(loader);
-  }, [activeDeal]);
+  const handleRowClick = useCallback((deal: Deal) => {
+    setActiveDeal(deal);
+    handleOpenWizard(deal);
+  }, [handleOpenWizard]);
 
   // Dynamic simulated CSV Stream export progress
   const triggerSimulatedExport = useCallback((dealsToExport: Deal[], filename: string) => {
@@ -443,11 +434,6 @@ export function DealsPage({ onSelectDeal }: DealsPageProps) {
   }, [selectedRows, allDeals]);
 
   const handleBulkArchive = useCallback(() => executeBulkAction('archive'), [executeBulkAction]);
-
-  const handleOpenWizard = useCallback((deal: Deal) => {
-    const dealData = mapDealToDealData(deal);
-    onSelectDeal(dealData);
-  }, [onSelectDeal]);
 
   const triggerRevertConfirmation = useCallback((deal: Deal) => {
     setDealToRevert(deal);
@@ -636,17 +622,6 @@ export function DealsPage({ onSelectDeal }: DealsPageProps) {
               onColumnsChange={setColumns}
             />
           </div>
-
-          {/* Progressive slide-in timeline preview */}
-          {activeDeal && (
-            <DealsPreviewPanel
-              deal={activeDeal}
-              isLoading={isPreviewLoading}
-              onClose={() => setActiveDeal(null)}
-              onOpenWizard={handleOpenWizard}
-              onRevertExtension={triggerRevertConfirmation}
-            />
-          )}
 
           {/* Extend Deal Modal */}
           <ExtendDealModal

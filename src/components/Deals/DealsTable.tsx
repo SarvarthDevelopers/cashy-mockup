@@ -442,7 +442,7 @@ export function DealsTable({
             <thead className="sticky top-0 z-30 shadow-[0_1px_0_0_var(--border-subtle)]">
               <tr className="bg-[var(--background-secondary)] border-b border-[var(--border-subtle)]">
                 {/* Select all checkbox */}
-                <th className="w-10 px-3 py-3.5 text-left sticky top-0 left-0 bg-[var(--background-secondary)] z-20">
+                <th className="w-10 px-3 py-3.5 text-left sticky top-0 left-0 bg-[var(--background-secondary)] z-20 border-l-4 border-l-transparent">
                 <div
                   className={`w-4 h-4 rounded border flex items-center justify-center cursor-pointer transition-colors ${
                     allPageSelected 
@@ -503,6 +503,9 @@ export function DealsTable({
                             {/* Capability Indicator Dot */}
                             <span 
                               className={`w-1.5 h-1.5 rounded-full shrink-0 ${isColServerSorted ? 'bg-emerald-500' : 'bg-blue-500'}`}
+                              style={{
+                                boxShadow: '0 0 6px rgba(0,0,0,0.1)'
+                              }}
                             />
                           </span>
                         )}
@@ -534,7 +537,7 @@ export function DealsTable({
                   onKeyDown={(e) => handleRowKeyDown(e, deal, idx)}
                   className={`border-b border-[var(--border-subtle)] transition-colors cursor-pointer group/row outline-none focus:bg-[var(--background-secondary)] focus-visible:ring-2 focus-visible:ring-[var(--border-brand)] focus-visible:ring-inset ${
                     isActive 
-                      ? 'bg-[var(--background-brand-primary)] border-l-2 border-l-[var(--border-brand)] font-medium' 
+                      ? 'bg-[var(--background-brand-primary)] font-medium' 
                       : isSelected 
                         ? 'bg-[var(--background-brand-primary)]/40 hover:bg-[var(--background-brand-primary)]/60' 
                         : 'odd:bg-[var(--background-primary)] even:bg-[var(--background-secondary)]/10 hover:bg-[var(--background-secondary)]'
@@ -543,7 +546,12 @@ export function DealsTable({
                   aria-selected={isActive}
                 >
                   {/* Checkbox */}
-                  <td className="px-3 py-5 sticky left-0 z-10 transition-colors" style={{ backgroundColor: isActive ? 'var(--background-brand-primary)' : isSelected ? 'rgba(70, 73, 229, 0.05)' : 'var(--background-primary)' }}>
+                  <td 
+                    className={`px-3 py-5 sticky left-0 z-10 transition-colors border-l-4 ${
+                      isActive ? 'border-l-[var(--border-brand)]' : 'border-l-transparent'
+                    }`} 
+                    style={{ backgroundColor: isActive ? 'var(--background-brand-primary)' : isSelected ? 'rgba(70, 73, 229, 0.05)' : 'var(--background-primary)' }}
+                  >
                     <div
                       className={`w-4 h-4 rounded border flex items-center justify-center cursor-pointer transition-colors ${
                         isSelected 

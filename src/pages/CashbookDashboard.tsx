@@ -381,7 +381,7 @@ export function CashbookDashboard() {
       }));
       showToast('Counts loaded from last reconciliation values.', 'success');
     } else {
-      showToast('No previous reconciliation counts found to load.', 'warning');
+      showToast('No previous reconciliation counts found to load.', 'error');
     }
   };
 
@@ -833,6 +833,7 @@ export function CashbookDashboard() {
                 </table>
               </div>
             </div>
+            </div>
           )}
 
           {/* RECONCILIATION TAB */}
@@ -986,6 +987,7 @@ export function CashbookDashboard() {
                   <span>Submit Reconciliation</span>
                 </Button>
               </div>
+            </div>
             </div>
           )}
 
@@ -1208,6 +1210,7 @@ export function CashbookDashboard() {
                   </Button>
                 </div>
               )}
+            </div>
             </div>
           )}
         </div>

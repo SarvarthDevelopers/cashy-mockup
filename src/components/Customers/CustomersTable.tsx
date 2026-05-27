@@ -337,7 +337,7 @@ export function CustomersTable({
             <thead className="sticky top-0 z-30 shadow-[0_1px_0_0_var(--border-subtle)]">
               <tr className="bg-[var(--background-secondary)] border-b border-[var(--border-subtle)]">
                 {/* Select all checkbox */}
-                <th className="w-10 px-3 py-3.5 text-left sticky top-0 left-0 bg-[var(--background-secondary)] z-20 border-l-4 border-l-transparent">
+                <th className="w-10 px-3 py-3.5 text-left sticky top-0 left-0 bg-[var(--background-secondary)] z-20">
                   <div
                     className={`w-4 h-4 rounded border flex items-center justify-center cursor-pointer transition-colors ${
                       allPageSelected 
@@ -402,7 +402,7 @@ export function CustomersTable({
                     data-row-index={idx}
                     tabIndex={0}
                     onKeyDown={(e) => handleRowKeyDown(e, customer, idx)}
-                    className={`border-b border-[var(--border-subtle)] transition-colors cursor-pointer group/row outline-none focus:bg-[var(--background-secondary)] focus-visible:ring-2 focus-visible:ring-[var(--border-brand)] focus-visible:ring-inset ${
+                    className={`border-b border-[var(--border-subtle)] cursor-pointer group/row outline-none focus:bg-[var(--background-secondary)] focus-visible:ring-2 focus-visible:ring-[var(--border-brand)] focus-visible:ring-inset ${
                       isActive 
                         ? 'bg-[var(--background-brand-primary)] font-medium' 
                         : isSelected 
@@ -414,10 +414,12 @@ export function CustomersTable({
                   >
                     {/* Checkbox */}
                     <td 
-                      className={`px-3 py-5 sticky left-0 z-10 transition-colors border-l-4 ${
-                        isActive ? 'border-l-[var(--border-brand)]' : 'border-l-transparent'
-                      }`} 
-                      style={{ backgroundColor: isActive ? 'var(--background-brand-primary)' : isSelected ? 'rgba(70, 73, 229, 0.05)' : 'var(--background-primary)' }}
+                      className="px-3 py-5 sticky left-0 z-10"
+                      style={{ 
+                        backgroundColor: isActive ? 'var(--background-brand-primary)' : isSelected ? 'rgba(70, 73, 229, 0.05)' : 'var(--background-primary)',
+                        transition: 'background-color 150ms ease',
+                        boxShadow: isActive ? 'inset 4px 0 0 var(--border-brand)' : 'none'
+                      }}
                     >
                       <div
                         className={`w-4 h-4 rounded border flex items-center justify-center cursor-pointer transition-colors ${

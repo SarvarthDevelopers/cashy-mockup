@@ -984,7 +984,7 @@ export function CashbookDashboard() {
                   <div className="flex justify-between items-end border-b border-[var(--border-subtle)] pb-3 mb-4">
                     <div>
                       <h3 className="text-sm font-black text-[var(--text-primary)] uppercase tracking-wider">Historical Records</h3>
-                      <span className="text-[10px] font-bold text-[var(--text-subtlest)]">History - {formattedHistoryDate}</span>
+                      <span className="text-[10px] font-bold text-[var(--text-subtlest)]">History - {formattedHistoryDate ? formattedHistoryDate : 'No date selected'}</span>
                     </div>
                   </div>
 
@@ -1130,6 +1130,17 @@ export function CashbookDashboard() {
                         </div>
                       </div>
                     </>
+                  ) : !historyDate ? (
+                    /* Empty state when no date is selected */
+                    <div className="flex flex-col items-center justify-center py-12 px-4 border border-dashed border-[var(--border-subtle)] rounded-xl bg-[var(--background-secondary)] my-4 text-center">
+                      <svg className="w-12 h-12 text-[var(--text-subtlest)] mb-3" fill="none" viewBox="0 0 24 24" stroke="currentColor">
+                        <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={1.5} d="M8 7V3m8 4V3m-9 8h10M5 21h14a2 2 0 002-2V7a2 2 0 00-2-2H5a2 2 0 00-2 2v12a2 2 0 002 2z" />
+                      </svg>
+                      <span className="text-xs font-bold text-[var(--text-subtle)] mb-1">Select a Date</span>
+                      <span className="text-[10px] text-[var(--text-subtlest)] max-w-xs mb-4">
+                        Please select a past date to view its historical reconciliation records.
+                      </span>
+                    </div>
                   ) : (
                     /* Empty state when no history entry is found */
                     <div className="flex flex-col items-center justify-center py-12 px-4 border border-dashed border-[var(--border-subtle)] rounded-xl bg-[var(--background-secondary)] my-4 text-center">

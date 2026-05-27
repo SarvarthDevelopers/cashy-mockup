@@ -838,8 +838,7 @@ export function CashbookDashboard() {
                 <div className="mb-24 flex flex-col gap-5">
                   <div className="flex justify-between items-end border-b border-[var(--border-subtle)] pb-3">
                     <div>
-                      <h3 className="text-sm font-black text-[var(--text-primary)] uppercase tracking-wider">Active Reconciliation</h3>
-                      <span className="text-[10px] font-bold text-[var(--text-subtlest)]">Today - {formattedToday}</span>
+                      <h3 className="text-sm font-black text-[var(--text-primary)] uppercase tracking-wider">Today - {formattedToday}</h3>
                     </div>
                   </div>
 
@@ -983,8 +982,7 @@ export function CashbookDashboard() {
                 <div className="bg-[var(--background-primary)] border border-[var(--border-subtle)] rounded-xl p-5 shadow-sm flex flex-col h-fit">
                   <div className="flex justify-between items-end border-b border-[var(--border-subtle)] pb-3 mb-4">
                     <div>
-                      <h3 className="text-sm font-black text-[var(--text-primary)] uppercase tracking-wider">Historical Records</h3>
-                      <span className="text-[10px] font-bold text-[var(--text-subtlest)]">History - {formattedHistoryDate ? formattedHistoryDate : 'No date selected'}</span>
+                      <h3 className="text-sm font-black text-[var(--text-primary)] uppercase tracking-wider">History - {formattedHistoryDate ? formattedHistoryDate : 'No date selected'}</h3>
                     </div>
                   </div>
 

@@ -684,8 +684,8 @@ export function CashbookDashboard() {
           {activeTab === 'ledger' && (
             <div className="absolute inset-0 flex flex-col p-6 min-h-0">
             {/* Ledger Table Spreadsheet */}
-            <div className="flex-1 bg-[var(--background-primary)] border border-[var(--border-subtle)] rounded-xl flex flex-col overflow-hidden shadow-sm mb-20">
-              <div className="flex-1 overflow-auto slick-scrollbar bg-[var(--background-primary)]">
+            <div className="bg-[var(--background-primary)] border border-[var(--border-subtle)] rounded-xl flex flex-col overflow-hidden shadow-sm mb-20 shrink min-h-0 h-fit">
+              <div className="overflow-auto slick-scrollbar bg-[var(--background-primary)] min-h-0">
                 <table className="w-full border-collapse text-left text-sm select-text bg-[var(--background-primary)]">
                   <thead>
                     <tr className="bg-[var(--background-secondary)] border-b border-[var(--border-subtle)] select-none">

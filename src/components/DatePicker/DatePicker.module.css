@@ -120,7 +120,7 @@
     width: 18px;
     height: 18px;
     border-radius: var(--radius-100) !important;
-    color: var(--text-subtlest) !important;
+    color: var(--text-error) !important;
     cursor: pointer;
     transition: color 0.15s ease, background-color 0.15s ease;
     z-index: 1;
@@ -128,7 +128,7 @@
 
 .clearButton:hover {
     background-color: var(--background-hover) !important;
-    color: var(--text-primary) !important;
+    color: var(--text-error) !important;
 }
 
 /* --- Calendar Panel --- */

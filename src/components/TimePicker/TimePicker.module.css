@@ -103,10 +103,6 @@
 }
 
 .clearButton {
-    position: absolute;
-    right: 32px;
-    top: 50%;
-    transform: translateY(-50%);
     display: flex;
     align-items: center;
     justify-content: center;
@@ -117,7 +113,7 @@
     width: 18px;
     height: 18px;
     border-radius: var(--radius-100) !important;
-    color: var(--text-subtlest) !important;
+    color: var(--text-error) !important;
     cursor: pointer;
     transition: color 0.15s ease, background-color 0.15s ease;
     z-index: 1;
@@ -125,7 +121,7 @@
 
 .clearButton:hover {
     background-color: var(--background-hover) !important;
-    color: var(--text-primary) !important;
+    color: var(--text-error) !important;
 }
 
 /* --- Popover & Columns --- */

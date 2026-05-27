@@ -141,11 +141,13 @@ export const TimePicker = forwardRef<HTMLButtonElement, TimePickerProps>(
                     {/* Wrap trigger + clear button in a div so the clear button is a sibling, not nested */}
                     <div className={styles.triggerWrapper}>
                         <Popover.Trigger asChild>
-                            <button
-                                ref={ref}
+                            <div
+                                // eslint-disable-next-line @typescript-eslint/no-explicit-any
+                                ref={ref as any}
                                 id={triggerId}
-                                type="button"
-                                disabled={disabled}
+                                role="button"
+                                tabIndex={0}
+                                aria-disabled={disabled}
                                 aria-invalid={error}
                                 aria-describedby={describedBy}
                                 className={`
@@ -154,7 +156,8 @@ export const TimePicker = forwardRef<HTMLButtonElement, TimePickerProps>(
                                     ${disabled ? styles.disabled : ''}
                                     ${error ? styles.error : ''}
                                 `}
-                                {...props}
+                                // eslint-disable-next-line @typescript-eslint/no-explicit-any
+                                {...props as any}
                             >
                                 <span className={styles.leftSection}>
                                     <span className={styles.icon}>
@@ -172,28 +175,32 @@ export const TimePicker = forwardRef<HTMLButtonElement, TimePickerProps>(
                                 </span>
 
                                 <span className={styles.rightSection}>
+                                    {activeTime && !disabled && (
+                                        <button
+                                            type="button"
+                                            onClick={(e) => {
+                                                e.preventDefault();
+                                                e.stopPropagation();
+                                                handleClear();
+                                            }}
+                                            onPointerDown={(e) => e.stopPropagation()}
+                                            className={styles.clearButton}
+                                            aria-label="Clear time"
+                                        >
+                                            <svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round">
+                                                <line x1="18" y1="6" x2="6" y2="18"></line>
+                                                <line x1="6" y1="6" x2="18" y2="18"></line>
+                                            </svg>
+                                        </button>
+                                    )}
                                     <span className={styles.chevronIcon}>
                                         <svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round">
                                             <polyline points="6 9 12 15 18 9"></polyline>
                                         </svg>
                                     </span>
                                 </span>
-                            </button>
+                            </div>
                         </Popover.Trigger>
-                        {/* Clear button lives outside the Popover.Trigger to avoid nested <button> */}
-                        {activeTime && !disabled && (
-                            <button
-                                type="button"
-                                onClick={(e) => { e.stopPropagation(); handleClear(); }}
-                                className={styles.clearButton}
-                                aria-label="Clear time"
-                            >
-                                <svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round">
-                                    <line x1="18" y1="6" x2="6" y2="18"></line>
-                                    <line x1="6" y1="6" x2="18" y2="18"></line>
-                                </svg>
-                            </button>
-                        )}
                     </div>
 
                     <Popover.Portal>

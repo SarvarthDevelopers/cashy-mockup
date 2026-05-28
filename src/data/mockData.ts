@@ -26,6 +26,14 @@ export interface WizardDisplayData {
   payoutType: string;
   amount?: string;
   item: string;
+  secondaryCustomer?: {
+    firstName: string;
+    lastName: string;
+    email: string;
+    phone: string;
+  };
+  pawnDueDate?: string;
+  createdAt?: string;
 }
 
 export interface DealData {

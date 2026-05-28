@@ -149,12 +149,23 @@ export const DealWizardModal: React.FC<DealWizardModalProps> = ({
         firstName: 'Franz',
         lastName: 'Kürsten'
     });
+    const [secondaryCustomerData, setSecondaryCustomerData] = useState<{
+        mode?: 'Registered' | 'Guest' | 'Create New';
+        firstName: string;
+        lastName: string;
+        email: string;
+        phone: string;
+    } | null>(null);
+    const [showSecondaryCustomer, setShowSecondaryCustomer] = useState(false);
+    const [showPawnDueDate, setShowPawnDueDate] = useState(false);
+    
     const [metadata, setMetadata] = useState(() => ({
         company: 'CASHY_AUT',
         branch: 'Vienna Main',
         duration: '180',
         dueDate: new Date(Date.now() + 180 * 24 * 60 * 60 * 1000).toISOString().split('T')[0],
-        payoutMethod: 'Bank Transfer'
+        payoutMethod: 'Bank Transfer',
+        createdAt: new Date().toISOString()
     }));
 
     const [lastSyncedId, setLastSyncedId] = useState<string | null>(null);
@@ -168,6 +179,19 @@ export const DealWizardModal: React.FC<DealWizardModalProps> = ({
                 firstName: dealData.firstName,
                 lastName: dealData.lastName
             });
+            if (dealData.wizardData?.secondaryCustomer) {
+                setSecondaryCustomerData({
+                    firstName: dealData.wizardData.secondaryCustomer.firstName,
+                    lastName: dealData.wizardData.secondaryCustomer.lastName,
+                    email: dealData.wizardData.secondaryCustomer.email,
+                    phone: dealData.wizardData.secondaryCustomer.phone,
+                });
+                setShowSecondaryCustomer(true);
+            } else {
+                setSecondaryCustomerData(null);
+                setShowSecondaryCustomer(false);
+            }
+            setShowPawnDueDate(false);
             const parsedD = dealData.dueDate ? parseDateString(dealData.dueDate) : null;
             const finalD = parsedD ? formatDateString(parsedD) : (() => {
                 const durationDays = parseInt(dealData.wizardData?.dealDuration?.split(' ')[0] || '180', 10) || 180;
@@ -180,7 +204,8 @@ export const DealWizardModal: React.FC<DealWizardModalProps> = ({
                 branch: dealData.wizardData?.branch || 'Vienna Main',
                 duration: dealData.wizardData?.dealDuration?.split(' ')[0] || '180',
                 dueDate: finalD,
-                payoutMethod: dealData.wizardData?.payoutType || 'Bank Transfer'
+                payoutMethod: dealData.wizardData?.payoutType || 'Bank Transfer',
+                createdAt: dealData.wizardData?.createdAt || new Date(Date.now() - 5 * 24 * 60 * 60 * 1000).toISOString()
             });
             if (dealData.items && dealData.items.length > 0) {
                 setItems(dealData.items.map((it, idx) => ({
@@ -208,6 +233,24 @@ export const DealWizardModal: React.FC<DealWizardModalProps> = ({
             setCreationFinalized(!isNew);
             if (isNew) {
                 setLastSyncedId(null);
+                setCustomerData({
+                    mode: 'Guest',
+                    email: 'franz.k@example.com',
+                    phone: '+43 660 123 456',
+                    firstName: 'Franz',
+                    lastName: 'Kürsten'
+                });
+                setSecondaryCustomerData(null);
+                setShowSecondaryCustomer(false);
+                setShowPawnDueDate(false);
+                setMetadata({
+                    company: 'CASHY_AUT',
+                    branch: 'Vienna Main',
+                    duration: '180',
+                    dueDate: new Date(Date.now() + 180 * 24 * 60 * 60 * 1000).toISOString().split('T')[0],
+                    payoutMethod: 'Bank Transfer',
+                    createdAt: new Date().toISOString()
+                });
             } else {
                 // Defer scroll to ensure elements are mounted and layout has finished
                 setTimeout(() => {
@@ -259,6 +302,12 @@ export const DealWizardModal: React.FC<DealWizardModalProps> = ({
                 formattedDueDate = `${monthNames[fallback.getMonth()]} ${fallback.getDate()}`;
             }
 
+            const createdAtVal = new Date().toISOString();
+            const durationDays = parseInt(metadata.duration, 10) || 180;
+            const pawnDueObj = new Date(createdAtVal);
+            pawnDueObj.setDate(pawnDueObj.getDate() + durationDays);
+            const pawnDueDate = pawnDueObj.toISOString();
+
             const newDeal: DealData = {
                 id: Math.floor(100000 + Math.random() * 900000).toString(),
                 countryCode: 'AT',
@@ -281,7 +330,10 @@ export const DealWizardModal: React.FC<DealWizardModalProps> = ({
                     dealDuration: `${metadata.duration} days`,
                     payoutType: dealMode,
                     amount: `€${formattedTotal}`,
-                    item: items[0]?.title || 'Unknown Item'
+                    item: items[0]?.title || 'Unknown Item',
+                    createdAt: createdAtVal,
+                    pawnDueDate: pawnDueDate,
+                    secondaryCustomer: (showSecondaryCustomer && secondaryCustomerData) ? secondaryCustomerData : undefined
                 }
             };
             
@@ -299,6 +351,12 @@ export const DealWizardModal: React.FC<DealWizardModalProps> = ({
              const resolvedArea = getBusinessAreaForDeal(items);
              const firstCategory = items[0]?.category || 'car';
              const displayCategory = CATEGORY_DISPLAY_NAMES[firstCategory] || firstCategory;
+
+             const createdAtVal = dealData.wizardData?.createdAt || metadata.createdAt || new Date(Date.now() - 5 * 24 * 60 * 60 * 1000).toISOString();
+             const durationDays = parseInt(metadata.duration, 10) || 180;
+             const pawnDueObj = new Date(createdAtVal);
+             pawnDueObj.setDate(pawnDueObj.getDate() + durationDays);
+             const pawnDueDate = pawnDueObj.toISOString();
 
              const updatedDeal: DealData = {
                  ...dealData,
@@ -320,13 +378,29 @@ export const DealWizardModal: React.FC<DealWizardModalProps> = ({
                      categoryPath: `${resolvedArea} > ${displayCategory}`,
                      dealDuration: `${metadata.duration} days`,
                      amount: `€${formattedTotal}`,
-                     item: items[0]?.title || 'Unknown Item'
+                     item: items[0]?.title || 'Unknown Item',
+                     createdAt: createdAtVal,
+                     pawnDueDate: pawnDueDate,
+                     secondaryCustomer: (showSecondaryCustomer && secondaryCustomerData) ? secondaryCustomerData : undefined
                  }
              };
              onUpdateDeal(updatedDeal);
          }
-     }, [customerData, metadata, items, isCreated, creationFinalized]);
+     }, [customerData, secondaryCustomerData, showSecondaryCustomer, metadata, items, isCreated, creationFinalized]);
 
+     const getFormattedPawnDueDate = () => {
+         const createdAtVal = dealData?.wizardData?.createdAt || metadata.createdAt || '';
+         if (!createdAtVal) return '';
+         const durationDays = parseInt(metadata.duration, 10) || 180;
+         const d = new Date(createdAtVal);
+         d.setDate(d.getDate() + durationDays);
+         
+         const day = d.getDate();
+         const monthNames = ["Jan", "Feb", "Mar", "Apr", "May", "Jun", "Jul", "Aug", "Sep", "Oct", "Nov", "Dec"];
+         const month = monthNames[d.getMonth()];
+         const year = d.getFullYear();
+         return `${day} ${month}, ${year}`;
+     };
 
     const addItem = () => {
         setItems([...items, { 
@@ -803,17 +877,36 @@ export const DealWizardModal: React.FC<DealWizardModalProps> = ({
                             </div>
                         ) : (
                             <div className="flex items-center" style={{ gap: 'var(--space-600)' }}>
-                                <div className="flex items-center gap-3">
+                                <div className="flex flex-col items-start gap-1">
                                     <ShopLabel country={dealData?.countryCode || 'AT'} branch={dealData?.branch || 'Wien'} />
-                                    <div>
-                                        <h2 className="text-xl font-bold m-0 leading-tight" style={{ color: 'var(--brand-500)' }}>{`${customerData.firstName} ${customerData.lastName}`}</h2>
-                                        <p className="text-sm font-medium m-0" style={{ color: 'var(--gray-400)' }}>Primary Customer</p>
+                                    <div className="flex flex-col gap-0.5">
+                                        <h2 className="text-sm font-bold m-0 leading-normal" style={{ color: 'var(--brand-500)' }}>
+                                            {`${customerData.firstName} ${customerData.lastName}`}
+                                        </h2>
+                                        <span className="text-[10px] font-extrabold uppercase tracking-widest" style={{ color: 'var(--gray-400)' }}>
+                                            Primary Customer
+                                        </span>
                                     </div>
+                                    {showSecondaryCustomer && secondaryCustomerData && (
+                                        <div className="flex flex-col gap-0.5 mt-0.5 pt-0.5 border-t border-gray-100 w-full">
+                                            <h2 className="text-sm font-semibold m-0 leading-normal" style={{ color: 'var(--lilac-600)' }}>
+                                                {`${secondaryCustomerData.firstName} ${secondaryCustomerData.lastName}`}
+                                            </h2>
+                                            <span className="text-[10px] font-extrabold uppercase tracking-widest" style={{ color: 'var(--gray-400)' }}>
+                                                Secondary Customer
+                                            </span>
+                                        </div>
+                                    )}
                                 </div>
-                                <div className="h-10 w-[1px] bg-gray-100" style={{ margin: '0 var(--space-200)' }} />
+                                <div className="w-[1px] bg-gray-100 align-self-stretch self-stretch" style={{ margin: '0 var(--space-200)' }} />
                                 <div className="flex" style={{ gap: 'var(--space-800)' }}>
                                     <DetailItem label="Deal ID" value={dealId} />
-                                    <DetailItem label="Pawn Duration" value={`${metadata.duration} Days`} />
+                                    <DetailItem 
+                                        label="Pawn Duration" 
+                                        value={dealMode === 'Pawn' && showPawnDueDate ? getFormattedPawnDueDate() : `${metadata.duration} Days`} 
+                                        isInteractive={dealMode === 'Pawn'}
+                                        onClick={() => dealMode === 'Pawn' && setShowPawnDueDate(!showPawnDueDate)}
+                                    />
                                     <DetailItem label="Total Items" value={String(items.length)} />
                                     <DetailItem label="Business Area" value={currentBusinessArea} />
                                 </div>
@@ -961,9 +1054,23 @@ export const DealWizardModal: React.FC<DealWizardModalProps> = ({
                                         <div className="bg-white rounded-2xl border border-[var(--border-subtlest)] shadow-sm overflow-hidden transition-all duration-300 hover:shadow-md">
                                             <div className="px-6 md:px-8 py-4 md:py-5 border-b border-[var(--border-subtlest)] bg-[var(--background-secondary)]/40 flex items-center justify-between">
                                                 <h3 className="text-[11px] font-bold text-[var(--text-subtle)] uppercase tracking-wider m-0">Customer Profile</h3>
-                                                <div className="flex items-center gap-2 text-[#4649E5] text-[12px] font-bold cursor-pointer hover:opacity-70 transition-opacity">
-                                                    <Plus size={14} /> Add Secondary
-                                                </div>
+                                                {!showSecondaryCustomer && (
+                                                    <div 
+                                                        onClick={() => {
+                                                            setShowSecondaryCustomer(true);
+                                                            setSecondaryCustomerData({
+                                                                mode: 'Guest',
+                                                                firstName: '',
+                                                                lastName: '',
+                                                                email: '',
+                                                                phone: ''
+                                                            });
+                                                        }}
+                                                        className="flex items-center gap-2 text-[#4649E5] text-[12px] font-bold cursor-pointer hover:opacity-70 transition-opacity"
+                                                    >
+                                                        <Plus size={14} /> Add Secondary
+                                                    </div>
+                                                )}
                                             </div>
                                             <div className="p-6 md:p-8 space-y-6 md:space-y-8">
                                                 <RadioGroup 
@@ -978,6 +1085,20 @@ export const DealWizardModal: React.FC<DealWizardModalProps> = ({
                                                 </RadioGroup>
 
                                                 <div className="grid grid-cols-1 md:grid-cols-2 gap-6">
+                                                    <Input 
+                                                        label="First Name" 
+                                                        placeholder="Franz" 
+                                                        value={customerData.firstName}
+                                                        onChange={(e) => setCustomerData({...customerData, firstName: e.target.value})}
+                                                        required
+                                                    />
+                                                    <Input 
+                                                        label="Last Name" 
+                                                        placeholder="Kürsten" 
+                                                        value={customerData.lastName}
+                                                        onChange={(e) => setCustomerData({...customerData, lastName: e.target.value})}
+                                                        required
+                                                    />
                                                     <Input 
                                                         label="Email Address" 
                                                         placeholder="customer@example.com" 
@@ -994,6 +1115,80 @@ export const DealWizardModal: React.FC<DealWizardModalProps> = ({
                                                         onChange={(e) => setCustomerData({...customerData, phone: e.target.value})}
                                                     />
                                                 </div>
+
+                                                {showSecondaryCustomer && (
+                                                    <div className="mt-8 pt-8 border-t border-[var(--border-subtlest)] space-y-6">
+                                                        <div className="flex items-center justify-between">
+                                                            <h4 className="text-[11px] font-bold text-[var(--text-subtle)] uppercase tracking-wider m-0">Secondary Customer Profile</h4>
+                                                            <button 
+                                                                type="button"
+                                                                onClick={() => {
+                                                                    setShowSecondaryCustomer(false);
+                                                                    setSecondaryCustomerData(null);
+                                                                }}
+                                                                className="text-xs text-red-500 hover:text-red-700 font-semibold transition-colors"
+                                                            >
+                                                                Remove Secondary
+                                                            </button>
+                                                        </div>
+                                                        <RadioGroup 
+                                                            direction="horizontal" 
+                                                            value={secondaryCustomerData?.mode || 'Guest'} 
+                                                            onChange={(val) => setSecondaryCustomerData(prev => ({
+                                                                ...(prev || { firstName: '', lastName: '', email: '', phone: '' }),
+                                                                mode: val as any
+                                                            }))}
+                                                            className="gap-4 md:gap-8 flex-wrap"
+                                                        >
+                                                            <Radio value="Registered" label="Registered" />
+                                                            <Radio value="Guest" label="Guest" />
+                                                            <Radio value="Create New" label="Create New" />
+                                                        </RadioGroup>
+                                                        <div className="grid grid-cols-1 md:grid-cols-2 gap-6">
+                                                            <Input 
+                                                                label="First Name" 
+                                                                placeholder="e.g. Maria" 
+                                                                value={secondaryCustomerData?.firstName || ''}
+                                                                onChange={(e) => setSecondaryCustomerData(prev => ({
+                                                                    ...(prev || { email: '', phone: '', lastName: '' }),
+                                                                    firstName: e.target.value
+                                                                }))}
+                                                                required
+                                                            />
+                                                            <Input 
+                                                                label="Last Name" 
+                                                                placeholder="e.g. Schmidt" 
+                                                                value={secondaryCustomerData?.lastName || ''}
+                                                                onChange={(e) => setSecondaryCustomerData(prev => ({
+                                                                    ...(prev || { email: '', phone: '', firstName: '' }),
+                                                                    lastName: e.target.value
+                                                                }))}
+                                                                required
+                                                            />
+                                                            <Input 
+                                                                label="Email Address" 
+                                                                placeholder="secondary@example.com" 
+                                                                type="email" 
+                                                                value={secondaryCustomerData?.email || ''}
+                                                                onChange={(e) => setSecondaryCustomerData(prev => ({
+                                                                    ...(prev || { phone: '', firstName: '', lastName: '' }),
+                                                                    email: e.target.value
+                                                                }))}
+                                                                required
+                                                            />
+                                                            <Input 
+                                                                label="Phone Number" 
+                                                                placeholder="+43 660 789 012" 
+                                                                type="tel" 
+                                                                value={secondaryCustomerData?.phone || ''}
+                                                                onChange={(e) => setSecondaryCustomerData(prev => ({
+                                                                    ...(prev || { email: '', firstName: '', lastName: '' }),
+                                                                    phone: e.target.value
+                                                                }))}
+                                                            />
+                                                        </div>
+                                                    </div>
+                                                    )}
                                             </div>
                                         </div>
 
@@ -1439,13 +1634,33 @@ export const DealWizardModal: React.FC<DealWizardModalProps> = ({
                                         <span className="text-[10px] font-medium text-[var(--text-placeholder)] block uppercase">Primary Customer</span>
                                     </div>
                                 </div>
+                                {showSecondaryCustomer && secondaryCustomerData && (
+                                    <div className="flex justify-between items-start border-t border-[var(--border-subtlest)] pt-3">
+                                        <span className="text-xs font-medium text-[var(--text-subtlest)] mt-0.5">Secondary</span>
+                                        <div className="text-right">
+                                            <span className="text-xs font-bold text-[var(--text-primary)] block">
+                                                {`${secondaryCustomerData.firstName} ${secondaryCustomerData.lastName}`}
+                                            </span>
+                                            <span className="text-[10px] font-medium text-[var(--text-placeholder)] block uppercase">Secondary Customer</span>
+                                        </div>
+                                    </div>
+                                )}
                                 <div className="flex justify-between items-center">
                                     <span className="text-xs font-medium text-[var(--text-subtlest)]">Deal ID</span>
                                     <span className="text-xs font-mono font-bold text-[var(--text-subtle)] bg-[var(--background-primary)] px-2 py-0.5 rounded border border-[var(--border-subtlest)]">{dealId}</span>
                                 </div>
                                 <div className="flex justify-between items-center">
                                     <span className="text-xs font-medium text-[var(--text-subtlest)]">Duration</span>
-                                    <span className="text-xs font-bold text-[var(--text-subtle)]">{metadata.duration} Days</span>
+                                    {dealMode === 'Pawn' ? (
+                                        <span 
+                                            onClick={() => setShowPawnDueDate(!showPawnDueDate)}
+                                            className="text-xs font-bold text-[var(--text-subtle)] underline decoration-dotted underline-offset-[3px] cursor-pointer hover:opacity-80 transition-opacity"
+                                        >
+                                            {showPawnDueDate ? getFormattedPawnDueDate() : `${metadata.duration} Days`}
+                                        </span>
+                                    ) : (
+                                        <span className="text-xs font-bold text-[var(--text-subtle)]">{metadata.duration} Days</span>
+                                    )}
                                 </div>
                                 <div className="flex justify-between items-center">
                                     <span className="text-xs font-medium text-[var(--text-subtlest)]">Total Items</span>
@@ -1600,13 +1815,18 @@ const SimulationStep = ({ active, done, text }: { active: boolean; done: boolean
 );
 
 
-const DetailItem = ({ label, value, isBadge }: any) => (
+const DetailItem = ({ label, value, isBadge, isInteractive, onClick }: any) => (
     <div className="flex flex-col gap-1">
         <span className="text-[10px] uppercase font-extrabold tracking-widest text-gray-400">{label}</span>
         {isBadge ? (
             <div className="inline-flex px-2 py-1 rounded-md bg-blue-50 border border-blue-100 text-[#4649E5] text-[11px] font-bold w-fit leading-none">{value}</div>
         ) : (
-            <span className="text-[14px] font-bold text-[#131518]">{value}</span>
+            <span 
+                onClick={onClick}
+                className={`text-[14px] font-bold text-[#131518] ${isInteractive ? 'underline decoration-dotted underline-offset-[3px] cursor-pointer hover:opacity-80 transition-opacity' : ''}`}
+            >
+                {value}
+            </span>
         )}
     </div>
 );

@@ -902,7 +902,7 @@ export const DealWizardModal: React.FC<DealWizardModalProps> = ({
                                 <div className="flex" style={{ gap: 'var(--space-800)' }}>
                                     <DetailItem label="Deal ID" value={dealId} />
                                     <DetailItem 
-                                        label="Pawn Duration" 
+                                        label={dealMode === 'Pawn' && showPawnDueDate ? 'Pawn Due' : 'Pawn Duration'} 
                                         value={dealMode === 'Pawn' && showPawnDueDate ? getFormattedPawnDueDate() : `${metadata.duration} Days`} 
                                         isInteractive={dealMode === 'Pawn'}
                                         onClick={() => dealMode === 'Pawn' && setShowPawnDueDate(!showPawnDueDate)}
@@ -1650,7 +1650,9 @@ export const DealWizardModal: React.FC<DealWizardModalProps> = ({
                                     <span className="text-xs font-mono font-bold text-[var(--text-subtle)] bg-[var(--background-primary)] px-2 py-0.5 rounded border border-[var(--border-subtlest)]">{dealId}</span>
                                 </div>
                                 <div className="flex justify-between items-center">
-                                    <span className="text-xs font-medium text-[var(--text-subtlest)]">Duration</span>
+                                    <span className="text-xs font-medium text-[var(--text-subtlest)]">
+                                        {dealMode === 'Pawn' && showPawnDueDate ? 'Pawn Due' : 'Duration'}
+                                    </span>
                                     {dealMode === 'Pawn' ? (
                                         <span 
                                             onClick={() => setShowPawnDueDate(!showPawnDueDate)}

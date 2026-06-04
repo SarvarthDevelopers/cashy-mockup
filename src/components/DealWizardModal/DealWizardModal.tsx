@@ -787,7 +787,7 @@ export const DealWizardModal: React.FC<DealWizardModalProps> = ({
     );
 
     return (
-        <div className="fixed inset-0 z-[200] flex items-center justify-center bg-[#131518]/60 backdrop-blur-sm animate-in fade-in duration-200 p-0 md:p-8" onClick={(e: React.MouseEvent) => { e.stopPropagation(); onClose(); }}>
+        <div className="fixed inset-0 z-[200] flex items-center justify-center bg-[#131518]/60 backdrop-blur-sm animate-in fade-in duration-200 p-0 md:p-8" onClick={(e: React.MouseEvent) => { e.stopPropagation(); }}>
             <div 
                 className="w-full md:max-w-[1400px] h-full md:h-[95vh] flex flex-col bg-white overflow-hidden rounded-none md:rounded-[32px] shadow-[0_32px_64px_-16px_rgba(0,0,0,0.3)] border-none md:border md:border-white/20 animate-in slide-in-from-bottom duration-300" 
                 onClick={(e: React.MouseEvent) => e.stopPropagation()}

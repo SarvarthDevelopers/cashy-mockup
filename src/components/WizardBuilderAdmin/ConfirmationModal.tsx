@@ -37,7 +37,6 @@ export const ConfirmationModal: React.FC<ConfirmationModalProps> = ({
             {/* Backdrop */}
             <div 
                 className="absolute inset-0 bg-black/40 backdrop-blur-sm transition-opacity" 
-                onClick={onClose}
             />
             
             {/* Modal Content */}

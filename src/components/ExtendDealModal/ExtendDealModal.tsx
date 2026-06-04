@@ -484,7 +484,7 @@ export const ExtendDealModal: React.FC<ExtendDealModalProps> = ({
     return (
         <div
             className="fixed inset-0 z-[250] flex items-center justify-center bg-[#131518]/60 backdrop-blur-sm animate-in fade-in duration-200 p-4"
-            onClick={(e) => { e.stopPropagation(); onClose(); }}
+            onClick={(e) => { e.stopPropagation(); }}
         >
             <div
                 className="w-full max-w-[560px] flex flex-col bg-[var(--background-primary)] overflow-hidden rounded-[24px] shadow-[0_32px_64px_-16px_rgba(0,0,0,0.3)] animate-in slide-in-from-bottom-8 duration-300 max-h-[90vh]"

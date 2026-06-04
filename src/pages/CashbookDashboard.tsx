@@ -38,6 +38,7 @@ interface LedgerEntry {
   isManual?: boolean;
   shop?: string;
   type?: string;
+  createdBy?: string;
 }
 
 interface DenominationConfig {
@@ -59,13 +60,13 @@ interface HistoricalReconciliation {
 
 // Mock Data
 const mockLedgerEntries: LedgerEntry[] = [
-  { id: '163867', date: '2026-05-21', customerId: '2030397', paymentReference: 'Payback', note: '', inflow: 425.00, outflow: 0, feesAndInterest: 25.00, balance: 103655.13, shop: 'vienna', type: 'BANK' },
-  { id: '163866', date: '2026-05-20', customerId: '2030397', paymentReference: 'Payout', note: '', inflow: 0, outflow: 400.00, feesAndInterest: 0, balance: 103229.13, shop: 'vienna', type: 'BANK' },
-  { id: '162042', date: '2026-04-23', customerId: '2031878', paymentReference: 'Extension Payout', note: '', inflow: 0, outflow: 2000.00, feesAndInterest: 0, balance: 103629.13, shop: 'vienna', type: 'CARD' },
-  { id: '159963', date: '2026-04-23', customerId: '2031878', paymentReference: 'Extension Payback', note: '', inflow: 2097.00, outflow: 0, feesAndInterest: 97.00, balance: 105629.13, shop: 'vienna', type: 'BANK' },
-  { id: '162015', date: '2026-04-22', customerId: '2018376', paymentReference: 'Payout', note: '', inflow: 0, outflow: 400.00, feesAndInterest: 0, balance: 103532.13, shop: 'graz', type: 'BANK' },
-  { id: '161408', date: '2026-04-13', customerId: '', paymentReference: 'Miscellaneous', note: 'Verlängerung - Kundin Wien', inflow: 43.15, outflow: 0, feesAndInterest: 0, balance: 103932.13, isManual: true, shop: 'vienna', type: 'BANK' },
-  { id: '158294', date: '2026-04-13', customerId: '2030397', paymentReference: 'Payback', note: '', inflow: 442.00, outflow: 0, feesAndInterest: 42.00, balance: 103888.98, shop: 'berlin', type: 'BANK' }
+  { id: '163867', date: '2026-05-21', customerId: '2030397', paymentReference: 'Payback', note: '', inflow: 425.00, outflow: 0, feesAndInterest: 25.00, balance: 103655.13, shop: 'vienna', type: 'BANK', createdBy: 'System' },
+  { id: '163866', date: '2026-05-20', customerId: '2030397', paymentReference: 'Payout', note: '', inflow: 0, outflow: 400.00, feesAndInterest: 0, balance: 103229.13, shop: 'vienna', type: 'BANK', createdBy: 'System' },
+  { id: '162042', date: '2026-04-23', customerId: '2031878', paymentReference: 'Extension Payout', note: '', inflow: 0, outflow: 2000.00, feesAndInterest: 0, balance: 103629.13, shop: 'vienna', type: 'CARD', createdBy: 'Stefan' },
+  { id: '159963', date: '2026-04-23', customerId: '2031878', paymentReference: 'Extension Payback', note: '', inflow: 2097.00, outflow: 0, feesAndInterest: 97.00, balance: 105629.13, shop: 'vienna', type: 'BANK', createdBy: 'Stefan' },
+  { id: '162015', date: '2026-04-22', customerId: '2018376', paymentReference: 'Payout', note: '', inflow: 0, outflow: 400.00, feesAndInterest: 0, balance: 103532.13, shop: 'graz', type: 'BANK', createdBy: 'System' },
+  { id: '161408', date: '2026-04-13', customerId: '', paymentReference: 'Miscellaneous', note: 'Verlängerung - Kundin Wien', inflow: 43.15, outflow: 0, feesAndInterest: 0, balance: 103932.13, isManual: true, shop: 'vienna', type: 'BANK', createdBy: 'Gregor' },
+  { id: '158294', date: '2026-04-13', customerId: '2030397', paymentReference: 'Payback', note: '', inflow: 442.00, outflow: 0, feesAndInterest: 42.00, balance: 103888.98, shop: 'berlin', type: 'BANK', createdBy: 'System' }
 ];
 
 const mockDenominations: DenominationConfig[] = [
@@ -250,7 +251,7 @@ export function CashbookDashboard() {
   const [entryType, setEntryType] = useState<'inflow' | 'outflow'>('inflow');
   const [entryReference, setEntryReference] = useState('');
   const [entryCustomerId, setEntryCustomerId] = useState('');
-  const [entryFeesAndInterest, setEntryFeesAndInterest] = useState('');
+  const [entryBookingNumber, setEntryBookingNumber] = useState('');
   const [entryAmount, setEntryAmount] = useState('');
   const [entryNote, setEntryNote] = useState('');
   const [uploadedFiles, setUploadedFiles] = useState<File[]>([]);
@@ -495,27 +496,14 @@ export function CashbookDashboard() {
       errors.amount = 'Please enter a valid amount greater than 0';
     }
 
-    // Customer ID Validation (Required except for Miscellaneous booking)
-    if (entryReference !== 'Miscellaneous booking') {
-      if (!entryCustomerId) {
-        errors.customerId = 'Please enter a Customer ID';
-      } else if (!/^\d{7}$/.test(entryCustomerId)) {
-        errors.customerId = 'Customer ID must be a 7-digit number';
-      }
-    } else {
-      if (entryCustomerId && !/^\d{7}$/.test(entryCustomerId)) {
-        errors.customerId = 'Customer ID must be a 7-digit number';
-      }
+    // Customer ID Validation (Optional)
+    if (entryCustomerId && !/^\d{7}$/.test(entryCustomerId)) {
+      errors.customerId = 'Customer ID must be a 7-digit number';
     }
 
-    // Fees + Interest Validation
-    if (entryType === 'inflow' && entryFeesAndInterest) {
-      const feesVal = parseFloat(entryFeesAndInterest);
-      if (isNaN(feesVal) || feesVal < 0) {
-        errors.fees = 'Please enter a valid positive fees amount';
-      } else if (entryAmount && feesVal > parseFloat(entryAmount)) {
-        errors.fees = 'Fees + Interest cannot exceed inflow amount';
-      }
+    // Booking Number Validation (Optional)
+    if (entryBookingNumber && !/^\d+$/.test(entryBookingNumber)) {
+      errors.bookingNumber = 'Booking number must be digits only';
     }
 
     if (Object.keys(errors).length > 0) {
@@ -535,18 +523,19 @@ export function CashbookDashboard() {
     }
 
     const newEntry: LedgerEntry = {
-      id: `${Math.floor(100000 + Math.random() * 900000)}`,
+      id: entryBookingNumber || `${Math.floor(100000 + Math.random() * 900000)}`,
       date: new Date().toISOString().substring(0, 10),
       customerId: entryCustomerId,
       paymentReference: entryReference,
       note: entryNote,
       inflow: isFlowIn ? numericAmount : 0,
       outflow: !isFlowIn ? numericAmount : 0,
-      feesAndInterest: isFlowIn ? (parseFloat(entryFeesAndInterest) || 0) : 0,
+      feesAndInterest: 0,
       balance: newBalance,
       isManual: true,
       shop: selectedShop,
-      type: selectedType
+      type: selectedType,
+      createdBy: 'Gregor'
     };
 
     setLedgerData(prev => [newEntry, ...prev]);
@@ -556,7 +545,7 @@ export function CashbookDashboard() {
     setEntryType('inflow');
     setEntryReference('');
     setEntryCustomerId('');
-    setEntryFeesAndInterest('');
+    setEntryBookingNumber('');
     setEntryAmount('');
     setEntryNote('');
     setUploadedFiles([]);
@@ -568,7 +557,7 @@ export function CashbookDashboard() {
     const headers = [
       'Cashbook #', 'Booking ID', 'Date', 'Customer ID',
       'Payment Reference', 'Note', 'Inflow', 'Fees + Interest',
-      'Outflow', 'Balance'
+      'Outflow', 'Balance', 'Created By'
     ];
 
     const rows = filteredLedger.map((entry, index) => [
@@ -581,7 +570,8 @@ export function CashbookDashboard() {
       entry.inflow || 0,
       entry.feesAndInterest || 0,
       entry.outflow || 0,
-      entry.balance
+      entry.balance,
+      entry.createdBy || 'System'
     ]);
 
     const csv = [headers, ...rows]
@@ -742,13 +732,14 @@ export function CashbookDashboard() {
                         </Tooltip>
                       </th>
                       <th className="px-2.5 py-3.5 text-[10px] font-black uppercase text-[var(--text-subtlest)] tracking-wider text-right">Balance</th>
+                      <th className="px-2.5 py-3.5 text-[10px] font-black uppercase text-[var(--text-subtlest)] tracking-wider text-right">Created By</th>
                       <th className="px-2.5 py-3.5 text-[10px] font-black uppercase text-[var(--text-subtlest)] tracking-wider text-center w-16">Actions</th>
                     </tr>
                   </thead>
                   <tbody className="divide-y divide-[var(--border-subtle)]">
                     {filteredLedger.length === 0 ? (
                       <tr>
-                        <td colSpan={11} className="px-2.5 py-12 text-center text-[var(--text-subtlest)] font-semibold">
+                        <td colSpan={12} className="px-2.5 py-12 text-center text-[var(--text-subtlest)] font-semibold">
                           No transactions match your search query.
                         </td>
                       </tr>
@@ -784,6 +775,9 @@ export function CashbookDashboard() {
                           </td>
                           <td className="px-2.5 py-5 text-right font-semibold text-[13px] tabular-nums text-[var(--text-primary)]">
                             {formatEuro(entry.balance)}
+                          </td>
+                          <td className="px-2.5 py-5 text-right font-medium text-[12px] text-[var(--text-subtle)]">
+                            {entry.createdBy || 'System'}
                           </td>
                           <td className="px-2.5 py-5 text-center">
                             {entry.isManual ? (
@@ -1237,21 +1231,6 @@ export function CashbookDashboard() {
                   </div>
                 </div>
 
-                {/* Customer ID input instead of Storage label dropdown */}
-                <Input
-                  type="text"
-                  label="Customer ID"
-                  placeholder="e.g. 2030397"
-                  value={entryCustomerId}
-                  onChange={e => {
-                    setEntryCustomerId(e.target.value);
-                    setFormErrors(prev => ({ ...prev, customerId: '' }));
-                  }}
-                  error={!!formErrors.customerId}
-                  errorMessage={formErrors.customerId}
-                  required={entryReference !== 'Miscellaneous booking'}
-                />
-
                 {/* Payment Reference */}
                 <Dropdown
                   options={MANUAL_REFERENCE_OPTIONS}
@@ -1265,6 +1244,34 @@ export function CashbookDashboard() {
                   error={!!formErrors.reference}
                   errorMessage={formErrors.reference}
                   required
+                />
+
+                {/* Customer ID input */}
+                <Input
+                  type="text"
+                  label="Customer ID"
+                  placeholder="e.g. 2030397 (Optional)"
+                  value={entryCustomerId}
+                  onChange={e => {
+                    setEntryCustomerId(e.target.value);
+                    setFormErrors(prev => ({ ...prev, customerId: '' }));
+                  }}
+                  error={!!formErrors.customerId}
+                  errorMessage={formErrors.customerId}
+                />
+
+                {/* Booking Number input */}
+                <Input
+                  type="text"
+                  label="Booking Number"
+                  placeholder="e.g. 163867 (Optional)"
+                  value={entryBookingNumber}
+                  onChange={e => {
+                    setEntryBookingNumber(e.target.value);
+                    setFormErrors(prev => ({ ...prev, bookingNumber: '' }));
+                  }}
+                  error={!!formErrors.bookingNumber}
+                  errorMessage={formErrors.bookingNumber}
                 />
 
                 {/* Amount input */}
@@ -1284,25 +1291,6 @@ export function CashbookDashboard() {
                   required
                   leftIcon={<DollarSign size={14} className="text-gray-400" />}
                 />
-
-                {/* Fees + Interest input (Visible only for inflows) */}
-                {entryType === 'inflow' && (
-                  <Input
-                    type="number"
-                    step="0.01"
-                    min="0"
-                    label="Fees + Interest (€)"
-                    placeholder="0.00"
-                    value={entryFeesAndInterest}
-                    onChange={e => {
-                      setEntryFeesAndInterest(e.target.value);
-                      setFormErrors(prev => ({ ...prev, fees: '' }));
-                    }}
-                    error={!!formErrors.fees}
-                    errorMessage={formErrors.fees}
-                    leftIcon={<DollarSign size={14} className="text-gray-400" />}
-                  />
-                )}
 
                 {/* Note */}
                 <TextArea

@@ -9,7 +9,13 @@ interface ExtensionMeta {
   originalDueDate: string;
   originalPayout: number;
   extensionDays: number;
-  additionalPayout: number;
+  additionalPayout?: number; // legacy fallback
+  adjustmentAmount?: number; // can be negative (payout) or positive (payback)
+  overwrittenParentFees?: number;
+  childFeeRate?: number;
+  allowOnlineExtension?: boolean;
+  paymentType?: string;
+  cashBookName?: string;
   newDueDate: string;
   newTotalPayout: number;
   extendedAt: string;
@@ -300,16 +306,72 @@ export function DealsPreviewPanel({ deal, isLoading = false, onClose, onOpenWiza
                     <span className="text-[var(--text-subtle)]">Original Payout</span>
                     <span className="text-[var(--text-primary)] font-bold">{formatEur(extensionMeta.originalPayout)}</span>
                   </div>
-                  {extensionMeta.additionalPayout > 0 && (
-                    <div className="flex justify-between text-xs font-semibold">
-                      <span className="text-[var(--text-subtle)]">Additional Payout Disbursed</span>
-                      <span className="text-green-600 font-bold">+ {formatEur(extensionMeta.additionalPayout)}</span>
-                    </div>
+                  {/* Payout Adjustment Display */}
+                  {extensionMeta.adjustmentAmount !== undefined ? (
+                    extensionMeta.adjustmentAmount > 0 ? (
+                      <div className="flex justify-between text-xs font-semibold">
+                        <span className="text-[var(--text-subtle)]">Principal Payback</span>
+                        <span className="text-[var(--text-success)] font-bold">- {formatEur(extensionMeta.adjustmentAmount)}</span>
+                      </div>
+                    ) : extensionMeta.adjustmentAmount < 0 ? (
+                      <div className="flex justify-between text-xs font-semibold">
+                        <span className="text-[var(--text-subtle)]">Additional Payout Disbursed</span>
+                        <span className="text-blue-600 font-bold">+ {formatEur(Math.abs(extensionMeta.adjustmentAmount))}</span>
+                      </div>
+                    ) : null
+                  ) : (
+                    (extensionMeta.additionalPayout ?? 0) > 0 && (
+                      <div className="flex justify-between text-xs font-semibold">
+                        <span className="text-[var(--text-subtle)]">Additional Payout Disbursed</span>
+                        <span className="text-green-600 font-bold">+ {formatEur(extensionMeta.additionalPayout || 0)}</span>
+                      </div>
+                    )
                   )}
+                  
                   <div className="flex justify-between text-xs font-semibold">
                     <span className="text-[var(--text-subtle)]">New Total Payout</span>
                     <span className="text-[var(--text-primary)] font-extrabold">{formatEur(extensionMeta.newTotalPayout)}</span>
                   </div>
+                  
+                  {/* Custom Parent Fees Override */}
+                  <div className="flex justify-between text-xs font-semibold">
+                    <span className="text-[var(--text-subtle)]">Parent Fees Charged</span>
+                    <span className="text-[var(--text-primary)] font-bold">
+                      {formatEur(extensionMeta.overwrittenParentFees !== undefined ? extensionMeta.overwrittenParentFees : (extensionMeta.originalPayout * 0.05))}
+                    </span>
+                  </div>
+
+                  {/* Child Fee Rate Override */}
+                  <div className="flex justify-between text-xs font-semibold">
+                    <span className="text-[var(--text-subtle)]">Next Contract Fee Rate</span>
+                    <span className="text-[var(--text-primary)] font-bold">
+                      {extensionMeta.childFeeRate !== undefined ? `${extensionMeta.childFeeRate}%` : '4.0%'}
+                    </span>
+                  </div>
+
+                  {/* Online Extension toggle */}
+                  <div className="flex justify-between text-xs font-semibold">
+                    <span className="text-[var(--text-subtle)]">Allow Online Extension</span>
+                    <span className="text-[var(--text-primary)] font-bold">
+                      {extensionMeta.allowOnlineExtension !== false ? 'Yes' : 'No'}
+                    </span>
+                  </div>
+
+                  {/* Payment Details */}
+                  {extensionMeta.paymentType && (
+                    <div className="flex justify-between text-xs font-semibold">
+                      <span className="text-[var(--text-subtle)]">Payment Type</span>
+                      <span className="text-[var(--text-primary)] font-bold">{extensionMeta.paymentType}</span>
+                    </div>
+                  )}
+                  {extensionMeta.cashBookName && (
+                    <div className="flex justify-between text-xs font-semibold">
+                      <span className="text-[var(--text-subtle)]">Selected Cash Book</span>
+                      <span className="text-[var(--text-primary)] font-bold">{extensionMeta.cashBookName}</span>
+                    </div>
+                  )}
+
+                  <div className="h-[1px] bg-[var(--border-subtle)]" />
                   <div className="flex justify-between text-xs font-semibold">
                     <span className="text-[var(--text-subtle)]">Extended On</span>
                     <span className="text-[var(--text-subtlest)] font-semibold">{formatDate(extensionMeta.extendedAt)}</span>

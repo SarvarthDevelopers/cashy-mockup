@@ -11,6 +11,7 @@ import { CashbookDashboard } from './pages/CashbookDashboard';
 import { Header } from './components/Header/Header';
 import { DealWizardModal } from './components/DealWizardModal/DealWizardModal';
 import { ExtendDealModal } from './components/ExtendDealModal/ExtendDealModal';
+import { PaybackDealModal } from './components/PaybackDealModal/PaybackDealModal';
 import { ToastProvider } from './components/Toast/ToastContext';
 import { INITIAL_DEALS } from './data/mockData';
 import type { DealData } from './data/mockData';
@@ -92,6 +93,7 @@ const sortDealsForColumn = (deals: DealData[], sortBy: string, sortOrder: 'asc' 
 function App() {
   const [isModalOpen, setIsModalOpen] = useState(false);
   const [isExtendModalOpen, setIsExtendModalOpen] = useState(false);
+  const [isPaybackModalOpen, setIsPaybackModalOpen] = useState(false);
   const [selectedDeal, setSelectedDeal] = useState<DealData | null>(null);
   const [isNewDeal, setIsNewDeal] = useState(false);
   const [columns, setColumns] = useState<ColumnConfig[]>(INITIAL_COLUMNS);
@@ -235,6 +237,13 @@ function App() {
     }, 150);
   };
 
+  const handlePaybackDeal = () => {
+    setIsModalOpen(false);
+    setTimeout(() => {
+      setIsPaybackModalOpen(true);
+    }, 150);
+  };
+
   const handleDealDragOver = (dealId: string, fromColumn: string, toColumn: string, toIndex: number) => {
     setDealsByColumn(prev => {
       const sourceDeals = prev[fromColumn] || [];
@@ -291,21 +300,38 @@ function App() {
 
     setDealsByColumn(prev => {
       const newDeals = { ...prev };
-      let updatedColId: string | null = null;
+      let foundColId: string | null = null;
+      let dealIndex = -1;
+      
       for (const colId in newDeals) {
-        const index = newDeals[colId].findIndex(d => d.id === resolvedDeal.id);
-        if (index !== -1) {
-          const updatedCol = [...newDeals[colId]];
-          updatedCol[index] = resolvedDeal;
-          newDeals[colId] = updatedCol;
-          updatedColId = colId;
+        const idx = newDeals[colId].findIndex(d => d.id === resolvedDeal.id);
+        if (idx !== -1) {
+          foundColId = colId;
+          dealIndex = idx;
           break;
         }
       }
-      if (updatedColId) {
-        const colConfig = columns.find(c => c.id === updatedColId);
-        if (colConfig && colConfig.sortBy && colConfig.sortBy !== 'manual') {
-          newDeals[updatedColId] = sortDealsForColumn(newDeals[updatedColId], colConfig.sortBy, colConfig.sortOrder || 'desc');
+
+      if (foundColId !== null && dealIndex !== -1) {
+        const isClosed = resolvedDeal.specialNote?.startsWith('PAYBACK_META:');
+        if (isClosed && foundColId !== 'archive') {
+          // Remove from old column
+          newDeals[foundColId] = newDeals[foundColId].filter(d => d.id !== resolvedDeal.id);
+          // Add to archive
+          newDeals['archive'] = [resolvedDeal, ...(newDeals['archive'] || [])];
+          const colConfig = columns.find(c => c.id === 'archive');
+          if (colConfig && colConfig.sortBy && colConfig.sortBy !== 'manual') {
+            newDeals['archive'] = sortDealsForColumn(newDeals['archive'], colConfig.sortBy, colConfig.sortOrder || 'desc');
+          }
+        } else {
+          // Update in place
+          const updatedCol = [...newDeals[foundColId]];
+          updatedCol[dealIndex] = resolvedDeal;
+          newDeals[foundColId] = updatedCol;
+          const colConfig = columns.find(c => c.id === foundColId);
+          if (colConfig && colConfig.sortBy && colConfig.sortBy !== 'manual') {
+            newDeals[foundColId] = sortDealsForColumn(newDeals[foundColId], colConfig.sortBy, colConfig.sortOrder || 'desc');
+          }
         }
       }
       return newDeals;
@@ -464,10 +490,18 @@ function App() {
           onCreateDeal={handleCreateDealSuccess}
           onUpdateDeal={handleUpdateDeal}
           onExtend={handleExtendDeal}
+          onPayback={handlePaybackDeal}
         />
         <ExtendDealModal
           isOpen={isExtendModalOpen}
           onClose={() => setIsExtendModalOpen(false)}
+          dealData={selectedDeal || undefined}
+          onUpdateDeal={handleUpdateDeal}
+        />
+        <PaybackDealModal
+          key={selectedDeal?.id ? `payback-${selectedDeal.id}` : 'payback-closed'}
+          isOpen={isPaybackModalOpen}
+          onClose={() => setIsPaybackModalOpen(false)}
           dealData={selectedDeal || undefined}
           onUpdateDeal={handleUpdateDeal}
         />

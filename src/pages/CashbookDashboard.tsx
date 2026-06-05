@@ -1,4 +1,4 @@
-import { useState, useMemo } from 'react';
+import { useState, useMemo, useEffect } from 'react';
 import { Tabs } from '../components/Tabs/Tabs';
 import { Tab } from '../components/Tabs/Tab';
 import { motion, AnimatePresence } from 'motion/react';
@@ -223,7 +223,26 @@ export function CashbookDashboard() {
   const { showToast } = useToast();
 
   // Ledger and Denominations States
-  const [ledgerData, setLedgerData] = useState<LedgerEntry[]>(mockLedgerEntries);
+  const [ledgerData, setLedgerData] = useState<LedgerEntry[]>(() => {
+    const saved = localStorage.getItem('cashy_ledger_entries');
+    return saved ? JSON.parse(saved) : mockLedgerEntries;
+  });
+
+  useEffect(() => {
+    localStorage.setItem('cashy_ledger_entries', JSON.stringify(ledgerData));
+  }, [ledgerData]);
+
+  useEffect(() => {
+    const handleUpdate = () => {
+      const saved = localStorage.getItem('cashy_ledger_entries');
+      if (saved) {
+        setLedgerData(JSON.parse(saved));
+      }
+    };
+    window.addEventListener('cashy_ledger_updated', handleUpdate);
+    return () => window.removeEventListener('cashy_ledger_updated', handleUpdate);
+  }, []);
+
   const [denominations, setDenominations] = useState<DenominationConfig[]>(mockDenominations);
 
   // History states

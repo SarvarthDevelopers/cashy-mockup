@@ -9,6 +9,7 @@ import type { SortConfig, ColumnDef } from '../components/Deals/DealsTable';
 import type { DealData } from '../data/mockData';
 import { getBusinessAreaForDeal } from '../data/businessAreaMapping';
 import { ExtendDealModal } from '../components/ExtendDealModal/ExtendDealModal';
+import { PaybackDealModal } from '../components/PaybackDealModal/PaybackDealModal';
 import { ConfirmationModal } from '../components/Modal/ConfirmationModal';
 
 // Apply filters to deals dataset
@@ -224,6 +225,7 @@ function mapDealToDealData(deal: Deal): DealData {
     businessArea: fallbackArea,
     flags: deal.hasMissingDocs ? ['Missing Docs'] : [],
     specialNote: deal.notes || '',
+    pickupType: deal.pickupType,
     wizardData: {
       customerName: fallbackCustomerName,
       email: fallbackEmail,
@@ -260,6 +262,10 @@ export function DealsPage({ onSelectDeal }: DealsPageProps) {
   // Extend Deal Modal State
   const [isExtendModalOpen, setIsExtendModalOpen] = useState(false);
   const [dealToExtend, setDealToExtend] = useState<DealData | null>(null);
+
+  // Payback Deal Modal State
+  const [isPaybackModalOpen, setIsPaybackModalOpen] = useState(false);
+  const [dealToPayback, setDealToPayback] = useState<DealData | null>(null);
 
   // Revert Extension Confirmation Modal State
   const [isRevertConfirmOpen, setIsRevertConfirmOpen] = useState(false);
@@ -447,6 +453,10 @@ export function DealsPage({ onSelectDeal }: DealsPageProps) {
       const dealData = mapDealToDealData(deal);
       setDealToExtend(dealData);
       setIsExtendModalOpen(true);
+    } else if (action === 'payback') {
+      const dealData = mapDealToDealData(deal);
+      setDealToPayback(dealData);
+      setIsPaybackModalOpen(true);
     } else if (action === 'revert_extension') {
       triggerRevertConfirmation(deal);
     } else if (action === 'archive') {
@@ -473,6 +483,31 @@ export function DealsPage({ onSelectDeal }: DealsPageProps) {
       }
       return d;
     }));
+  }, []);
+
+  const handlePaybackDealUpdate = useCallback((updatedDealData: DealData) => {
+    setAllDeals(prevDeals => prevDeals.map(d => {
+      if (d.dealId === updatedDealData.id) {
+        let newStatus: Deal['status'] = 'CLOSED';
+        if (updatedDealData.specialNote?.startsWith('PAYBACK_META:')) {
+          try {
+            const meta = JSON.parse(updatedDealData.specialNote.replace('PAYBACK_META:', ''));
+            const isOnlinePayment = !['Cash', 'Debit/Credit Card'].includes(meta.paymentType);
+            const isShipmentOrLockbox = d.pickupType === 'STANDARD_SHIPMENT' || d.pickupType === 'STOREBOX';
+            if (isOnlinePayment && isShipmentOrLockbox && meta.itemsRemovedFromStorage) {
+              newStatus = 'PAYED_SHIPMENT_PENDING';
+            }
+          } catch { /* use default CLOSED */ }
+        }
+        return {
+          ...d,
+          status: newStatus,
+          notes: updatedDealData.specialNote || d.notes,
+        };
+      }
+      return d;
+    }));
+    setActiveDeal(prev => prev?.dealId === updatedDealData.id ? null : prev);
   }, []);
 
   // Revert an extension: restore original values from stored metadata
@@ -632,6 +667,17 @@ export function DealsPage({ onSelectDeal }: DealsPageProps) {
             }}
             dealData={dealToExtend || undefined}
             onUpdateDeal={handleExtendDealUpdate}
+          />
+
+          <PaybackDealModal
+            key={dealToPayback?.id ? `payback-${dealToPayback.id}` : 'payback-closed'}
+            isOpen={isPaybackModalOpen}
+            onClose={() => {
+              setIsPaybackModalOpen(false);
+              setDealToPayback(null);
+            }}
+            dealData={dealToPayback || undefined}
+            onUpdateDeal={handlePaybackDealUpdate}
           />
 
           {/* Revert Extension Confirmation Modal */}

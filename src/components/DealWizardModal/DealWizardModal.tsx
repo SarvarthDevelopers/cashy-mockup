@@ -77,6 +77,7 @@ export interface DealWizardModalProps {
     onCreateDeal?: (deal: DealData) => void;
     onUpdateDeal?: (deal: DealData) => void;
     onExtend?: (deal: DealData) => void;
+    onPayback?: (deal: DealData) => void;
 }
 
 export const DealWizardModal: React.FC<DealWizardModalProps> = ({ 
@@ -87,7 +88,8 @@ export const DealWizardModal: React.FC<DealWizardModalProps> = ({
     isNew = false,
     onCreateDeal,
     onUpdateDeal,
-    onExtend
+    onExtend,
+    onPayback
 }) => {
     const [activeStep, setActiveStep] = useState(isNew ? 'step1' : initialStep);
     const [isCreated, setIsCreated] = useState(!isNew);
@@ -685,7 +687,16 @@ export const DealWizardModal: React.FC<DealWizardModalProps> = ({
                         </button>
                         {isCreated ? (
                             <>
-                                <Button variant="secondary" size="small" className={`${isMobile ? 'flex-1' : ''} font-bold`}>Payback</Button>
+                                <Button 
+                                    variant="secondary" 
+                                    size="small" 
+                                    className={`${isMobile ? 'flex-1' : ''} font-bold`}
+                                    onClick={() => {
+                                        if (dealData && onPayback) onPayback(dealData);
+                                    }}
+                                >
+                                    Payback
+                                </Button>
                                 {dealMode === 'Pawn' && (
                                     <Button 
                                         variant="secondary" 

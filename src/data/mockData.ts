@@ -51,6 +51,7 @@ export interface DealData {
   flags?: string[];
   specialNote?: string;
   wizardData: WizardDisplayData;
+  pickupType?: string;
 }
 
 /**

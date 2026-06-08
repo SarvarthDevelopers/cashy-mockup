@@ -5,7 +5,10 @@ export interface WizardField {
   placeholder?: string;
   options?: string[];
   stepId: string;
+  required?: boolean;
 }
+
+export type AssociatedAction = 'NONE' | 'SET_REVIEWING' | 'VERIFY_DEAL' | 'EXECUTE_PAYOUT' | 'DECLINE_DEAL';
 
 export interface WizardConfig {
   id: string;
@@ -15,9 +18,11 @@ export interface WizardConfig {
   active: boolean;
   fields: WizardField[];
   stepNames: Record<string, string>; // Maps step ID to custom display name
+  stepActions?: Record<string, AssociatedAction>; // Maps step ID to associated action
   updatedAt: string;
   updatedBy: string;
 }
+
 
 export const GLOBAL_STEPS = [
   { id: 'step2', defaultTitle: 'Research' },
@@ -42,6 +47,13 @@ export const MOCK_WIZARDS: WizardConfig[] = [
       step4: 'Technical Verification',
       step6: 'Payout Management',
       step7: 'Warehouse Storage'
+    },
+    stepActions: {
+      step2: 'SET_REVIEWING',
+      step3: 'NONE',
+      step4: 'VERIFY_DEAL',
+      step6: 'EXECUTE_PAYOUT',
+      step7: 'NONE'
     },
     fields: [
       { id: 'f1', stepId: 'step2', type: 'text', label: 'Manufacturer & Model', placeholder: 'e.g. BMW 320d' },
@@ -74,6 +86,13 @@ export const MOCK_WIZARDS: WizardConfig[] = [
       step6: 'Disbursement',
       step7: 'Safe Storage'
     },
+    stepActions: {
+      step2: 'NONE',
+      step3: 'NONE',
+      step4: 'VERIFY_DEAL',
+      step6: 'EXECUTE_PAYOUT',
+      step7: 'NONE'
+    },
     fields: [
       { id: 'f14', stepId: 'step2', type: 'text', label: 'Brand & Collection', placeholder: 'e.g. Rolex Submariner' },
       { id: 'f15', stepId: 'step2', type: 'text', label: 'Reference Number', placeholder: '126610LN' },
@@ -103,6 +122,13 @@ export const MOCK_WIZARDS: WizardConfig[] = [
       step6: 'Payment Setup',
       step7: 'Inventory Placement'
     },
+    stepActions: {
+      step2: 'NONE',
+      step3: 'NONE',
+      step4: 'VERIFY_DEAL',
+      step6: 'EXECUTE_PAYOUT',
+      step7: 'NONE'
+    },
     fields: [
       { id: 'f25', stepId: 'step2', type: 'select', label: 'Device Category', options: ['Smartphone', 'Laptop', 'Tablet', 'Console'] },
       { id: 'f26', stepId: 'step2', type: 'text', label: 'Manufacturer', placeholder: 'e.g. Apple' },
@@ -131,6 +157,13 @@ export const MOCK_WIZARDS: WizardConfig[] = [
       step4: 'Authentication',
       step6: 'Settlement',
       step7: 'Showroom Placement'
+    },
+    stepActions: {
+      step2: 'NONE',
+      step3: 'NONE',
+      step4: 'VERIFY_DEAL',
+      step6: 'EXECUTE_PAYOUT',
+      step7: 'NONE'
     },
     fields: [
       { id: 'f36', stepId: 'step2', type: 'text', label: 'Designer/Brand', placeholder: 'e.g. Hermes' },

@@ -8,6 +8,7 @@ interface FileUploadProps {
     accept?: string;
     multiple?: boolean;
     onUpload?: (files: File[]) => void;
+    disabled?: boolean;
 }
 
 interface UploadingFile {
@@ -22,22 +23,26 @@ export const FileUpload: React.FC<FileUploadProps> = ({
     description,
     accept,
     multiple = false,
-    onUpload
+    onUpload,
+    disabled = false
 }) => {
     const [isDragging, setIsDragging] = useState(false);
     const [uploadingFiles, setUploadingFiles] = useState<UploadingFile[]>([]);
     const fileInputRef = useRef<HTMLInputElement>(null);
 
     const handleDragOver = (e: React.DragEvent) => {
+        if (disabled) return;
         e.preventDefault();
         setIsDragging(true);
     };
 
     const handleDragLeave = () => {
+        if (disabled) return;
         setIsDragging(false);
     };
 
     const handleDrop = (e: React.DragEvent) => {
+        if (disabled) return;
         e.preventDefault();
         setIsDragging(false);
         const files = Array.from(e.dataTransfer.files);
@@ -45,6 +50,7 @@ export const FileUpload: React.FC<FileUploadProps> = ({
     };
 
     const handleFileSelect = (e: React.ChangeEvent<HTMLInputElement>) => {
+        if (disabled) return;
         if (e.target.files) {
             const files = Array.from(e.target.files);
             startUpload(files);
@@ -52,6 +58,7 @@ export const FileUpload: React.FC<FileUploadProps> = ({
     };
 
     const startUpload = (files: File[]) => {
+        if (disabled) return;
         const newFiles = files.map(file => ({
             id: Math.random().toString(36).substr(2, 9),
             file,
@@ -83,6 +90,7 @@ export const FileUpload: React.FC<FileUploadProps> = ({
     };
 
     const removeFile = (id: string) => {
+        if (disabled) return;
         setUploadingFiles(prev => prev.filter(f => f.id !== id));
     };
 
@@ -98,13 +106,15 @@ export const FileUpload: React.FC<FileUploadProps> = ({
                 onDragOver={handleDragOver}
                 onDragLeave={handleDragLeave}
                 onDrop={handleDrop}
-                onClick={() => fileInputRef.current?.click()}
+                onClick={() => !disabled && fileInputRef.current?.click()}
                 className={`
-                    relative group cursor-pointer
+                    relative group
                     border-2 border-dashed rounded-2xl p-8
                     flex flex-col items-center justify-center gap-3
                     transition-all duration-300
-                    ${isDragging ? 'border-[#4649E5] bg-[#eeeffe]' : 'border-gray-200 bg-gray-50/30 hover:border-[#4649E5] hover:bg-white'}
+                    ${disabled ? 'border-gray-200 bg-gray-100/50 cursor-not-allowed opacity-60' : 
+                      isDragging ? 'border-[#4649E5] bg-[#eeeffe] cursor-pointer' : 
+                      'border-gray-200 bg-gray-50/30 hover:border-[#4649E5] hover:bg-white cursor-pointer'}
                 `}
             >
                 <input
@@ -113,6 +123,7 @@ export const FileUpload: React.FC<FileUploadProps> = ({
                     onChange={handleFileSelect}
                     accept={accept}
                     multiple={multiple}
+                    disabled={disabled}
                     className="hidden"
                 />
 

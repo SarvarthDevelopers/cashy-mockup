@@ -314,7 +314,8 @@ function App() {
 
       if (foundColId !== null && dealIndex !== -1) {
         const isClosed = resolvedDeal.specialNote?.startsWith('PAYBACK_META:');
-        if (isClosed && foundColId !== 'archive') {
+        const isPayedAndStored = resolvedDeal.status === 'PAYED_AND_STORED';
+        if ((isClosed || isPayedAndStored) && foundColId !== 'archive') {
           // Remove from old column
           newDeals[foundColId] = newDeals[foundColId].filter(d => d.id !== resolvedDeal.id);
           // Add to archive

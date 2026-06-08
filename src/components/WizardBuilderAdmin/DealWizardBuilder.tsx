@@ -5,8 +5,9 @@ import { HTML5Backend } from 'react-dnd-html5-backend';
 import { Sidebar } from './Sidebar';
 import { MainContent } from './MainContent';
 import { AssignmentsPanel } from './AssignmentsPanel';
+import { ConfirmationModal } from './ConfirmationModal';
 import { GLOBAL_STEPS } from '../../data/wizardData';
-import type { WizardConfig } from '../../data/wizardData';
+import type { WizardConfig, AssociatedAction } from '../../data/wizardData';
 
 export interface FieldType {
   id: string;
@@ -19,6 +20,7 @@ export interface Step {
   id: string;
   name: string;
   order: number;
+  associatedAction: AssociatedAction;
 }
 
 export interface Field {
@@ -66,7 +68,8 @@ export function DealWizardBuilder({ wizardConfig, onBack, onSave, onDelete }: De
     steps: GLOBAL_STEPS.map((s, idx) => ({
       id: s.id,
       name: s.defaultTitle,
-      order: idx + 1
+      order: idx + 1,
+      associatedAction: (wizardConfig.stepActions?.[s.id] || 'NONE') as AssociatedAction
     })),
     fields: wizardConfig.fields.map(f => ({
       id: f.id,
@@ -78,7 +81,7 @@ export function DealWizardBuilder({ wizardConfig, onBack, onSave, onDelete }: De
       },
       label: f.label,
       placeholder: f.placeholder || '',
-      required: false,
+      required: f.required || false,
       stepId: f.stepId,
       expanded: false,
       options: f.options
@@ -86,20 +89,29 @@ export function DealWizardBuilder({ wizardConfig, onBack, onSave, onDelete }: De
     currentStep: GLOBAL_STEPS[0].id
   });
 
-  const handleSave = () => {
+  const [showDeactivateConfirmation, setShowDeactivateConfirmation] = useState(false);
+
+  const executeSave = () => {
+    const stepActions: Record<string, AssociatedAction> = {};
+    wizardState.steps.forEach(s => {
+      stepActions[s.id] = s.associatedAction || 'NONE';
+    });
+
     const updatedWizard: WizardConfig = {
       ...wizardConfig,
       name: wizardState.name,
       active: wizardState.active,
       category: wizardState.category,
       updatedAt: new Date().toLocaleDateString('en-US', { month: 'short', day: 'numeric', year: 'numeric' }),
+      stepActions,
       fields: wizardState.fields.map(f => ({
         id: f.id,
         type: f.fieldType.type as WizardConfig['fields'][number]['type'],
         label: f.label,
         placeholder: f.placeholder,
         stepId: f.stepId,
-        options: f.options
+        options: f.options,
+        required: f.required
       })),
       stepNames: wizardState.steps.reduce((acc, step) => {
         acc[step.id] = step.name;
@@ -107,6 +119,14 @@ export function DealWizardBuilder({ wizardConfig, onBack, onSave, onDelete }: De
       }, {} as Record<string, string>)
     };
     onSave(updatedWizard);
+  };
+
+  const handleSave = () => {
+    if (wizardConfig.active && !wizardState.active) {
+      setShowDeactivateConfirmation(true);
+      return;
+    }
+    executeSave();
   };
 
   const addField = (fieldType: FieldType) => {
@@ -179,6 +199,13 @@ export function DealWizardBuilder({ wizardConfig, onBack, onSave, onDelete }: De
     }));
   };
 
+  const updateStepAction = (stepId: string, associatedAction: AssociatedAction) => {
+    setWizardState(prev => ({
+      ...prev,
+      steps: prev.steps.map(s => s.id === stepId ? { ...s, associatedAction } : s)
+    }));
+  };
+
   const reorderFields = (dragIndex: number, hoverIndex: number, stepId: string) => {
     setWizardState(prev => {
       const stepFields = prev.fields.filter(f => f.stepId === stepId);
@@ -210,7 +237,7 @@ export function DealWizardBuilder({ wizardConfig, onBack, onSave, onDelete }: De
               onUpdateWizardName={updateWizardName}
               onBack={onBack}
             />
-            <AssignmentsPanel
+             <AssignmentsPanel
               wizardId={wizardConfig.id}
               category={wizardState.category}
               shop={wizardState.shop}
@@ -219,10 +246,24 @@ export function DealWizardBuilder({ wizardConfig, onBack, onSave, onDelete }: De
               onSave={handleSave}
               onDelete={onDelete}
               isActive={wizardState.active}
+              steps={wizardState.steps}
+              onUpdateStepAction={updateStepAction}
             />
           </div>
         </div>
       </div>
+      <ConfirmationModal
+        isOpen={showDeactivateConfirmation}
+        onClose={() => setShowDeactivateConfirmation(false)}
+        onConfirm={() => {
+          setShowDeactivateConfirmation(false);
+          executeSave();
+        }}
+        title="Deactivate Active Wizard?"
+        description="Warning: This wizard template is currently active and assigned to a category. Deactivating it will leave that category layout disabled, which will affect step progress validations for active deals in that category."
+        confirmText="Yes, Deactivate"
+        confirmVariant="danger"
+      />
     </DndProvider>
   );
 }

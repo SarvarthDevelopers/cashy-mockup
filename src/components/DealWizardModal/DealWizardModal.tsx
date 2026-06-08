@@ -1,6 +1,7 @@
 /* eslint-disable react-hooks/set-state-in-effect, @typescript-eslint/no-explicit-any, react-hooks/refs, react-hooks/exhaustive-deps */
 import React, { useState, useEffect } from 'react';
-import { Package, MessageSquare, History, ChevronUp, ChevronDown, Plus, Trash2, AlertCircle, Loader2, X, Menu, Info } from 'lucide-react';
+import { Package, MessageSquare, History, ChevronUp, ChevronDown, Plus, Trash2, AlertCircle, Loader2, X, Menu, Info, CheckCircle2, Lock } from 'lucide-react';
+import { useToast } from '../Toast/useToast';
 import { 
     Button, 
     Tabs, 
@@ -97,6 +98,296 @@ export const DealWizardModal: React.FC<DealWizardModalProps> = ({
     const [isCreating, setIsCreating] = useState(false);
     const [creationStep, setCreationStep] = useState(0);
     const [sidebarTab, setSidebarTab] = useState('comments');
+    const { showToast } = useToast();
+
+    // Form inputs and status/action state
+    const [dynamicFormValues, setDynamicFormValues] = useState<Record<string, any>>({});
+    const [completedStepActions, setCompletedStepActions] = useState<Record<string, boolean>>({});
+    const [loadingStepActions, setLoadingStepActions] = useState<Record<string, boolean>>({});
+    const [stepErrors, setStepErrors] = useState<Record<string, string>>({});
+    const [fieldErrors, setFieldErrors] = useState<Record<string, string>>({});
+    const [allWizards, setAllWizards] = useState<any[]>(() => {
+        const saved = localStorage.getItem('cashy_wizards_v2');
+        return saved ? JSON.parse(saved) : MOCK_WIZARDS;
+    });
+
+    useEffect(() => {
+        if (isOpen) {
+            const saved = localStorage.getItem('cashy_wizards_v2');
+            if (saved) setAllWizards(JSON.parse(saved));
+        }
+    }, [isOpen]);
+
+    const getWizardForCategory = (category: string) => {
+        const norm = category.toLowerCase();
+        const match = allWizards.find(w => {
+            const wCat = w.category.toLowerCase();
+            return norm === wCat || norm.startsWith(wCat + '.') || wCat.startsWith(norm + '.');
+        });
+        if (match) return match;
+
+        if (norm === 'car') return allWizards.find(w => w.category === 'Car') || allWizards[0];
+        if (norm.startsWith('electronics')) return allWizards.find(w => w.category === 'General Electronics') || allWizards[0];
+        if (norm === 'watches') return allWizards.find(w => w.category === 'Watches') || allWizards[0];
+        if (norm === 'bags' || norm === 'jewelry') return allWizards.find(w => w.category === 'Luxury') || allWizards[0];
+        return allWizards.find(w => w.category.toLowerCase() === norm) 
+            || allWizards.find(w => w.category === category) 
+            || allWizards[0];
+    };
+
+    const [timelineEvents, setTimelineEvents] = useState<any[]>(() => [
+        { id: 't1', iconType: 'package', title: "Deal Created", user: "Thomas Weber", time: "10 May, 14:20", color: "blue" },
+        { id: 't2', iconType: 'history', title: "Item Added: Rolex Datejust", user: "Maria Schmidt", time: "10 May, 14:45", color: "indigo" },
+        { id: 't3', iconType: 'alert-circle', title: "Condition Verified: Used", user: "Thomas Weber", time: "Today, 09:15", color: "green" },
+        { id: 't4', iconType: 'plus', title: "Payout Updated: € 1.200,00", user: "Admin Kernel", time: "Today, 10:30", color: "purple" }
+    ]);
+
+    const renderTimelineIcon = (iconType: string, size: number) => {
+        switch (iconType) {
+            case 'package': return <Package size={size} />;
+            case 'history': return <History size={size} />;
+            case 'alert-circle': return <AlertCircle size={size} />;
+            case 'plus': return <Plus size={size} />;
+            case 'check-circle': return <CheckCircle2 size={size} />;
+            case 'x': return <X size={size} />;
+            default: return <Info size={size} />;
+        }
+    };
+
+    const validateStepFields = (stepId: string): boolean => {
+        if (!dealData) return true;
+        const category = dealData.items[0] ? getCategoryFromItemTitle(dealData.items[0]) : 'car';
+        const wizard = getWizardForCategory(category);
+        const fields = (wizard?.fields || []).filter((f: any) => f.stepId === stepId);
+        
+        // Return true if there are no custom fields for this step
+        if (fields.length === 0) return true;
+
+        const newFieldErrors: Record<string, string> = { ...fieldErrors };
+        let isValid = true;
+
+        for (const f of fields) {
+            const fieldKey = `${stepId}-${f.id}`;
+            // Remove previous error for this field
+            delete newFieldErrors[fieldKey];
+
+            if (f.required) {
+                const val = dynamicFormValues[fieldKey];
+                let isFieldEmpty = false;
+
+                if (f.type === 'checkbox') {
+                    if (!val) isFieldEmpty = true;
+                } else if (f.type === 'file' || f.type === 'fileUpload' || f.type === 'image' || f.type === 'imageUpload') {
+                    if (!val || val.length === 0) isFieldEmpty = true;
+                } else {
+                    if (!val || String(val).trim() === '') isFieldEmpty = true;
+                }
+
+                if (isFieldEmpty) {
+                    newFieldErrors[fieldKey] = `${f.label} is required.`;
+                    isValid = false;
+                }
+            }
+        }
+
+        setFieldErrors(newFieldErrors);
+        return isValid;
+    };
+
+    const handleTriggerStepAction = (stepId: string, action: string) => {
+        if (!validateStepFields(stepId)) {
+            setStepErrors(prev => ({
+                ...prev,
+                [stepId]: "Please fill out all required fields in this step before triggering this workflow gate."
+            }));
+            showToast("Please fill out all required fields.", "error");
+            return;
+        }
+
+        setStepErrors(prev => {
+            const next = { ...prev };
+            delete next[stepId];
+            return next;
+        });
+
+        setLoadingStepActions(prev => ({ ...prev, [stepId]: true }));
+
+        setTimeout(() => {
+            setLoadingStepActions(prev => ({ ...prev, [stepId]: false }));
+            setCompletedStepActions(prev => ({ ...prev, [stepId]: true }));
+
+            let statusText = '';
+            let nextStatus = '';
+            switch (action) {
+                case 'SET_REVIEWING':
+                    statusText = 'Review started and Issuance Certificate generated!';
+                    nextStatus = 'REVIEWING';
+                    break;
+                case 'VERIFY_DEAL':
+                    statusText = 'Deal verified and legal contract generated!';
+                    nextStatus = 'VERIFIED';
+                    break;
+                case 'EXECUTE_PAYOUT':
+                    statusText = 'Payout processed and item moved to storage!';
+                    nextStatus = 'PAYED_AND_STORED';
+                    break;
+                case 'DECLINE_DEAL':
+                    statusText = 'Deal declined and archived.';
+                    nextStatus = 'DECLINED';
+                    break;
+                default:
+                    break;
+            }
+
+            showToast(statusText);
+
+            const newEvent = {
+                id: `t-action-${stepId}-${Date.now()}`,
+                iconType: action === 'DECLINE_DEAL' ? 'x' : 'check-circle',
+                title: `Workflow Gate: ${
+                    action === 'SET_REVIEWING' ? 'Started Item Review' :
+                    action === 'VERIFY_DEAL' ? 'Deal Verified' :
+                    action === 'EXECUTE_PAYOUT' ? 'Payout & Storage Confirmed' :
+                    action === 'DECLINE_DEAL' ? 'Deal Declined' : 'Action Executed'
+                }`,
+                user: "Staff",
+                time: "Just now",
+                color: action === 'DECLINE_DEAL' ? 'amber' : 'green'
+            };
+            setTimelineEvents(prev => [...prev, newEvent]);
+
+            if (dealData && onUpdateDeal) {
+                onUpdateDeal({
+                    ...dealData,
+                    status: nextStatus,
+                    wizardData: {
+                        ...dealData.wizardData,
+                        customFieldValues: dynamicFormValues
+                    }
+                });
+            }
+        }, 1500);
+    };
+
+    useEffect(() => {
+        if (isOpen && dealData) {
+            setDynamicFormValues(dealData.wizardData?.customFieldValues || {});
+            setStepErrors({});
+            setFieldErrors({});
+            setLoadingStepActions({});
+
+            const completed: Record<string, boolean> = {};
+            const category = dealData.items[0] ? getCategoryFromItemTitle(dealData.items[0]) : 'car';
+            const wizard = getWizardForCategory(category);
+            const stepActions = wizard?.stepActions || {};
+            const status = dealData.status || 'BOOKED';
+
+            Object.entries(stepActions).forEach(([stepId, action]) => {
+                if (action === 'NONE') return;
+                if (status === 'REVIEWING') {
+                    if (action === 'SET_REVIEWING') completed[stepId] = true;
+                } else if (status === 'VERIFIED') {
+                    if (action === 'SET_REVIEWING' || action === 'VERIFY_DEAL') completed[stepId] = true;
+                } else if (status === 'PAYED_AND_STORED') {
+                    if (action === 'SET_REVIEWING' || action === 'VERIFY_DEAL' || action === 'EXECUTE_PAYOUT') completed[stepId] = true;
+                } else if (status === 'DECLINED') {
+                    if (action === 'DECLINE_DEAL') completed[stepId] = true;
+                }
+            });
+            setCompletedStepActions(completed);
+
+            const baseTimeline = [
+                { id: 't1', iconType: 'package', title: "Deal Created", user: "Thomas Weber", time: "10 May, 14:20", color: "blue" },
+                { id: 't2', iconType: 'history', title: "Item Added: Rolex Datejust", user: "Maria Schmidt", time: "10 May, 14:45", color: "indigo" },
+                { id: 't3', iconType: 'alert-circle', title: "Condition Verified: Used", user: "Thomas Weber", time: "Today, 09:15", color: "green" },
+                { id: 't4', iconType: 'plus', title: "Payout Updated: € 1.200,00", user: "Admin Kernel", time: "Today, 10:30", color: "purple" }
+            ];
+
+            const extraTimeline: any[] = [];
+            Object.entries(stepActions).forEach(([stepId, action]) => {
+                if (action === 'NONE') return;
+                const stepName = wizard?.stepNames?.[stepId] || stepId;
+                
+                if (status === 'REVIEWING') {
+                    if (action === 'SET_REVIEWING') {
+                        extraTimeline.push({
+                            id: `t-action-${stepId}`,
+                            iconType: 'check-circle',
+                            title: `Workflow Gate: Started Item Review (${stepName})`,
+                            user: "Staff",
+                            time: "Previous Session",
+                            color: "green"
+                        });
+                    }
+                } else if (status === 'VERIFIED') {
+                    if (action === 'SET_REVIEWING') {
+                        extraTimeline.push({
+                            id: `t-action-${stepId}`,
+                            iconType: 'check-circle',
+                            title: `Workflow Gate: Started Item Review (${stepName})`,
+                            user: "Staff",
+                            time: "Previous Session",
+                            color: "green"
+                        });
+                    }
+                    if (action === 'VERIFY_DEAL') {
+                        extraTimeline.push({
+                            id: `t-action-${stepId}`,
+                            iconType: 'check-circle',
+                            title: `Workflow Gate: Deal Verified (${stepName})`,
+                            user: "Staff",
+                            time: "Previous Session",
+                            color: "green"
+                        });
+                    }
+                } else if (status === 'PAYED_AND_STORED') {
+                    if (action === 'SET_REVIEWING') {
+                        extraTimeline.push({
+                            id: `t-action-${stepId}`,
+                            iconType: 'check-circle',
+                            title: `Workflow Gate: Started Item Review (${stepName})`,
+                            user: "Staff",
+                            time: "Previous Session",
+                            color: "green"
+                        });
+                    }
+                    if (action === 'VERIFY_DEAL') {
+                        extraTimeline.push({
+                            id: `t-action-${stepId}`,
+                            iconType: 'check-circle',
+                            title: `Workflow Gate: Deal Verified (${stepName})`,
+                            user: "Staff",
+                            time: "Previous Session",
+                            color: "green"
+                        });
+                    }
+                    if (action === 'EXECUTE_PAYOUT') {
+                        extraTimeline.push({
+                            id: `t-action-${stepId}`,
+                            iconType: 'check-circle',
+                            title: `Workflow Gate: Payout & Storage Confirmed (${stepName})`,
+                            user: "Staff",
+                            time: "Previous Session",
+                            color: "green"
+                        });
+                    }
+                } else if (status === 'DECLINED') {
+                    if (action === 'DECLINE_DEAL') {
+                        extraTimeline.push({
+                            id: `t-action-${stepId}`,
+                            iconType: 'x',
+                            title: `Workflow Gate: Deal Declined (${stepName})`,
+                            user: "Staff",
+                            time: "Previous Session",
+                            color: "amber"
+                        });
+                    }
+                }
+            });
+
+            setTimelineEvents([...baseTimeline, ...extraTimeline]);
+        }
+    }, [isOpen, dealData]);
     const [activeItemIndex, setActiveItemIndex] = useState(0);
     const [isLeftSidebarOpen, setIsLeftSidebarOpen] = useState(false);
     const [isRightSidebarOpen, setIsRightSidebarOpen] = useState(false);
@@ -383,12 +674,13 @@ export const DealWizardModal: React.FC<DealWizardModalProps> = ({
                      item: items[0]?.title || 'Unknown Item',
                      createdAt: createdAtVal,
                      pawnDueDate: pawnDueDate,
-                     secondaryCustomer: (showSecondaryCustomer && secondaryCustomerData) ? secondaryCustomerData : undefined
+                     secondaryCustomer: (showSecondaryCustomer && secondaryCustomerData) ? secondaryCustomerData : undefined,
+                     customFieldValues: dynamicFormValues
                  }
              };
              onUpdateDeal(updatedDeal);
          }
-     }, [customerData, secondaryCustomerData, showSecondaryCustomer, metadata, items, isCreated, creationFinalized]);
+     }, [customerData, secondaryCustomerData, showSecondaryCustomer, metadata, items, isCreated, creationFinalized, dynamicFormValues]);
 
      const getFormattedPawnDueDate = () => {
          const createdAtVal = dealData?.wizardData?.createdAt || metadata.createdAt || '';
@@ -464,19 +756,6 @@ export const DealWizardModal: React.FC<DealWizardModalProps> = ({
     const toggleItem = (id: string) => {
         setItems(items.map(item => item.id === id ? { ...item, expanded: !item.expanded } : item));
     };
-
-    const [allWizards, setAllWizards] = useState<any[]>(() => {
-        const saved = localStorage.getItem('cashy_wizards_v2');
-        return saved ? JSON.parse(saved) : MOCK_WIZARDS;
-    });
-
-    useEffect(() => {
-        if (isOpen) {
-            const saved = localStorage.getItem('cashy_wizards_v2');
-            if (saved) setAllWizards(JSON.parse(saved));
-        }
-    }, [isOpen]);
-
     useEffect(() => {
         const handleKeyDown = (e: KeyboardEvent) => {
             if (e.key === 'Escape') onClose();
@@ -488,24 +767,6 @@ export const DealWizardModal: React.FC<DealWizardModalProps> = ({
     }, [isOpen, onClose]);
 
     if (!isOpen) return null;
-
-    const getWizardForCategory = (category: string) => {
-        const norm = category.toLowerCase();
-        const match = allWizards.find(w => {
-            const wCat = w.category.toLowerCase();
-            return norm === wCat || norm.startsWith(wCat + '.') || wCat.startsWith(norm + '.');
-        });
-        if (match) return match;
-
-        if (norm === 'car') return allWizards.find(w => w.category === 'Car') || allWizards[0];
-        if (norm.startsWith('electronics')) return allWizards.find(w => w.category === 'General Electronics') || allWizards[0];
-        if (norm === 'watches') return allWizards.find(w => w.category === 'Watches') || allWizards[0];
-        if (norm === 'bags' || norm === 'jewelry') return allWizards.find(w => w.category === 'Luxury') || allWizards[0];
-        return allWizards.find(w => w.category.toLowerCase() === norm) 
-            || allWizards.find(w => w.category === category) 
-            || allWizards[0];
-    };
-
     const steps = [
         { id: 'step1', title: 'Basic Info' },
         ...GLOBAL_STEPS.map(s => ({
@@ -518,8 +779,9 @@ export const DealWizardModal: React.FC<DealWizardModalProps> = ({
         const item = items[itemIdx];
         const wizard = getWizardForCategory(item?.category || 'car');
         const fields = (wizard?.fields || []).filter((f: { stepId: string }) => f.stepId === stepId);
+        const stepAction = wizard?.stepActions?.[stepId] || 'NONE';
 
-        if (fields.length === 0) {
+        if (fields.length === 0 && stepAction === 'NONE') {
             return (
                 <div className="h-full flex flex-col items-center justify-center text-center p-6 md:p-12 bg-[var(--background-primary)] rounded-2xl border border-dashed border-[var(--border-subtlest)] min-h-[400px]">
                     <div className="w-16 h-16 bg-gray-50 rounded-full flex items-center justify-center mb-6">
@@ -547,62 +809,261 @@ export const DealWizardModal: React.FC<DealWizardModalProps> = ({
                 </div>
                 
                 <div className="p-6 md:p-8">
-                    <div className="grid grid-cols-1 md:grid-cols-2 gap-x-8 gap-y-10">
-                        {fields.map((field: any) => (
-                            <div 
-                                key={field.id} 
-                                className={
-                                    field.type === 'checkbox' || 
-                                    field.type === 'textarea' || 
-                                    field.type === 'file' || 
-                                    field.type === 'image' || 
-                                    field.type === 'url' 
-                                        ? 'col-span-1 md:col-span-2' 
-                                        : 'col-span-1'
-                                 }
-                            >
-                                {field.type === 'checkbox' ? (
-                                    <Checkbox 
-                                        label={field.label} 
-                                    />
-                                ) : field.type === 'select' || field.type === 'dropdown' ? (
-                                    <Dropdown 
-                                        label={field.label} 
-                                        options={(field.options || []).map((opt: string) => ({ label: opt, value: opt }))} 
-                                    />
-                                ) : field.type === 'textarea' ? (
-                                    <TextArea 
-                                        label={field.label} 
-                                        placeholder={field.placeholder || `Enter ${field.label}...`}
-                                        rows={4}
-                                    />
-                                ) : (field.type === 'file' || field.type === 'fileUpload') ? (
-                                    (field.label.toLowerCase().includes('image') || 
-                                     field.label.toLowerCase().includes('photo') || 
-                                     field.label.toLowerCase().includes('picture')) ? (
-                                        <ImageUpload 
-                                            label={field.label}
-                                        />
-                                    ) : (
-                                        <FileUpload 
-                                            label={field.label}
-                                            description={field.placeholder}
-                                        />
-                                    )
-                                ) : field.type === 'image' || field.type === 'imageUpload' ? (
-                                    <ImageUpload 
-                                        label={field.label}
-                                    />
+                            {fields.map((field: any) => {
+                                const fieldKey = `${stepId}-${field.id}`;
+                                const hasError = !!fieldErrors[fieldKey];
+                                const errorMsg = fieldErrors[fieldKey];
+                                return (
+                                    <div 
+                                        key={field.id} 
+                                        className={
+                                            field.type === 'checkbox' || 
+                                            field.type === 'textarea' || 
+                                            field.type === 'file' || 
+                                            field.type === 'image' || 
+                                            field.type === 'url' 
+                                                ? 'col-span-1 md:col-span-2' 
+                                                : 'col-span-1'
+                                         }
+                                    >
+                                        {field.type === 'checkbox' ? (
+                                            <div className={hasError ? "border border-red-500/20 rounded-xl p-1 bg-red-50/10 transition-all" : ""}>
+                                                <Checkbox 
+                                                    label={
+                                                        <span className="flex items-center gap-1.5">
+                                                            {field.label}
+                                                            {field.required && <span className="text-red-500 font-bold text-xs" title="Required">*</span>}
+                                                        </span>
+                                                    } 
+                                                    checked={!!dynamicFormValues[fieldKey]}
+                                                    onChange={(e) => {
+                                                        setDynamicFormValues(prev => ({ ...prev, [fieldKey]: e.target.checked }));
+                                                        if (fieldErrors[fieldKey]) {
+                                                            setFieldErrors(prev => {
+                                                                const next = { ...prev };
+                                                                delete next[fieldKey];
+                                                                return next;
+                                                            });
+                                                        }
+                                                    }}
+                                                    disabled={completedStepActions[stepId]}
+                                                />
+                                            </div>
+                                        ) : field.type === 'select' || field.type === 'dropdown' ? (
+                                            <Dropdown 
+                                                label={field.label + (field.required ? ' *' : '')} 
+                                                options={(field.options || []).map((opt: string) => ({ label: opt, value: opt }))} 
+                                                value={dynamicFormValues[fieldKey] || ''}
+                                                error={hasError}
+                                                errorMessage={errorMsg}
+                                                onChange={(val) => {
+                                                    setDynamicFormValues(prev => ({ ...prev, [fieldKey]: val }));
+                                                    if (fieldErrors[fieldKey]) {
+                                                        setFieldErrors(prev => {
+                                                            const next = { ...prev };
+                                                            delete next[fieldKey];
+                                                            return next;
+                                                        });
+                                                    }
+                                                }}
+                                                disabled={completedStepActions[stepId]}
+                                            />
+                                        ) : field.type === 'textarea' ? (
+                                            <TextArea 
+                                                label={field.label + (field.required ? ' *' : '')} 
+                                                placeholder={field.placeholder || `Enter ${field.label}...`}
+                                                rows={4}
+                                                value={dynamicFormValues[fieldKey] || ''}
+                                                error={hasError}
+                                                errorMessage={errorMsg}
+                                                onChange={(e) => {
+                                                    setDynamicFormValues(prev => ({ ...prev, [fieldKey]: e.target.value }));
+                                                    if (fieldErrors[fieldKey]) {
+                                                        setFieldErrors(prev => {
+                                                            const next = { ...prev };
+                                                            delete next[fieldKey];
+                                                            return next;
+                                                        });
+                                                    }
+                                                }}
+                                                disabled={completedStepActions[stepId]}
+                                            />
+                                        ) : (field.type === 'file' || field.type === 'fileUpload') ? (
+                                            (field.label.toLowerCase().includes('image') || 
+                                             field.label.toLowerCase().includes('photo') || 
+                                             field.label.toLowerCase().includes('picture')) ? (
+                                                <div className={hasError ? "border border-red-500/20 rounded-xl p-2 bg-red-50/10 transition-all" : ""}>
+                                                    <ImageUpload 
+                                                        label={field.label + (field.required ? ' *' : '')}
+                                                        onUpload={(imgs) => {
+                                                            setDynamicFormValues(prev => ({ ...prev, [fieldKey]: imgs }));
+                                                            if (fieldErrors[fieldKey]) {
+                                                                setFieldErrors(prev => {
+                                                                    const next = { ...prev };
+                                                                    delete next[fieldKey];
+                                                                    return next;
+                                                                });
+                                                            }
+                                                        }}
+                                                        disabled={completedStepActions[stepId]}
+                                                    />
+                                                    {hasError && (
+                                                        <p className="text-[10px] font-bold text-red-500 mt-1 flex items-center gap-1">
+                                                            <AlertCircle size={11} /> {errorMsg}
+                                                        </p>
+                                                    )}
+                                                </div>
+                                            ) : (
+                                                <div className={hasError ? "border border-red-500/20 rounded-xl p-2 bg-red-50/10 transition-all" : ""}>
+                                                    <FileUpload 
+                                                        label={field.label + (field.required ? ' *' : '')}
+                                                        description={field.placeholder}
+                                                        onUpload={(files) => {
+                                                            setDynamicFormValues(prev => ({ ...prev, [fieldKey]: files }));
+                                                            if (fieldErrors[fieldKey]) {
+                                                                setFieldErrors(prev => {
+                                                                    const next = { ...prev };
+                                                                    delete next[fieldKey];
+                                                                    return next;
+                                                                });
+                                                            }
+                                                        }}
+                                                        disabled={completedStepActions[stepId]}
+                                                    />
+                                                    {hasError && (
+                                                        <p className="text-[10px] font-bold text-red-500 mt-1 flex items-center gap-1">
+                                                            <AlertCircle size={11} /> {errorMsg}
+                                                        </p>
+                                                    )}
+                                                </div>
+                                            )
+                                        ) : field.type === 'image' || field.type === 'imageUpload' ? (
+                                            <div className={hasError ? "border border-red-500/20 rounded-xl p-2 bg-red-50/10 transition-all" : ""}>
+                                                <ImageUpload 
+                                                    label={field.label + (field.required ? ' *' : '')}
+                                                    onUpload={(imgs) => {
+                                                        setDynamicFormValues(prev => ({ ...prev, [fieldKey]: imgs }));
+                                                        if (fieldErrors[fieldKey]) {
+                                                            setFieldErrors(prev => {
+                                                                const next = { ...prev };
+                                                                delete next[fieldKey];
+                                                                return next;
+                                                            });
+                                                        }
+                                                    }}
+                                                    disabled={completedStepActions[stepId]}
+                                                />
+                                                {hasError && (
+                                                    <p className="text-[10px] font-bold text-red-500 mt-1 flex items-center gap-1">
+                                                        <AlertCircle size={11} /> {errorMsg}
+                                                    </p>
+                                                )}
+                                            </div>
+                                        ) : (
+                                            <Input 
+                                                label={field.label + (field.required ? ' *' : '')} 
+                                                placeholder={field.placeholder || `Enter ${field.label}...`}
+                                                type={field.type === 'url' ? 'text' : field.type} 
+                                                value={dynamicFormValues[fieldKey] || ''}
+                                                error={hasError}
+                                                errorMessage={errorMsg}
+                                                onChange={(e) => {
+                                                    setDynamicFormValues(prev => ({ ...prev, [fieldKey]: e.target.value }));
+                                                    if (fieldErrors[fieldKey]) {
+                                                        setFieldErrors(prev => {
+                                                            const next = { ...prev };
+                                                            delete next[fieldKey];
+                                                            return next;
+                                                        });
+                                                    }
+                                                }}
+                                                disabled={completedStepActions[stepId]}
+                                            />
+                                        )}
+                                        {hasError && field.type === 'checkbox' && (
+                                            <p className="text-[10px] font-bold text-red-500 mt-1 flex items-center gap-1 pl-1">
+                                                <AlertCircle size={11} /> {errorMsg}
+                                            </p>
+                                        )}
+                                    </div>
+                                );
+                            })}
+
+                    {/* Workflow Action Gate Card */}
+                    {stepAction && stepAction !== 'NONE' && (
+                        <div className={`
+                            ${fields.length > 0 ? 'mt-8 pt-6 border-t border-[var(--border-subtlest)]' : ''}
+                        `}>
+                            <div className={`
+                                rounded-xl p-5 border flex flex-col md:flex-row md:items-center justify-between gap-4 transition-all duration-300
+                                ${completedStepActions[stepId] 
+                                    ? 'bg-green-50/40 border-green-100 text-green-800' 
+                                    : 'bg-indigo-50/35 border-indigo-100/50 text-indigo-900'}
+                            `}>
+                                <div className="flex items-start gap-3">
+                                    <div className={`
+                                        w-8 h-8 rounded-full flex items-center justify-center shrink-0 mt-0.5
+                                        ${completedStepActions[stepId] ? 'bg-green-100 text-green-600' : 'bg-indigo-100 text-[#4649E5]'}
+                                    `}>
+                                        {completedStepActions[stepId] ? <CheckCircle2 size={16} /> : <Lock size={16} />}
+                                    </div>
+                                    <div>
+                                        <h4 className="text-[13px] font-bold m-0 flex items-center gap-2">
+                                            Workflow Gate: {
+                                                stepAction === 'SET_REVIEWING' ? 'Start Item Review' :
+                                                stepAction === 'VERIFY_DEAL' ? 'Verify Calculations' :
+                                                stepAction === 'EXECUTE_PAYOUT' ? 'Execute Payout' :
+                                                stepAction === 'DECLINE_DEAL' ? 'Decline Deal' : 'Workflow Gate'
+                                            }
+                                            {completedStepActions[stepId] && (
+                                                <span className="text-[10px] font-bold uppercase tracking-wider px-2 py-0.5 rounded bg-green-100 text-green-700">
+                                                    Completed
+                                                </span>
+                                            )}
+                                        </h4>
+                                        <p className="text-xs text-gray-400 mt-1 mb-0 leading-relaxed max-w-xl">
+                                            {stepAction === 'SET_REVIEWING' && 'Ready to start the review process and transition the status to REVIEWING.'}
+                                            {stepAction === 'VERIFY_DEAL' && 'Validates all input data, locks appraisal/pricing, and marks the deal as VERIFIED.'}
+                                            {stepAction === 'EXECUTE_PAYOUT' && 'Processes the cashbook entry and marks the deal as PAYED_AND_STORED (Live).'}
+                                            {stepAction === 'DECLINE_DEAL' && 'Marks the deal as DECLINED. This terminates the wizard process.'}
+                                        </p>
+                                        {stepErrors[stepId] && (
+                                            <p className="text-[11px] font-bold text-red-500 mt-2 flex items-center gap-1.5 animate-pulse">
+                                                <AlertCircle size={12} /> {stepErrors[stepId]}
+                                            </p>
+                                        )}
+                                    </div>
+                                </div>
+                                
+                                {!completedStepActions[stepId] ? (
+                                    <Button
+                                        onClick={() => handleTriggerStepAction(stepId, stepAction)}
+                                        disabled={loadingStepActions[stepId]}
+                                        variant="primary"
+                                        className="md:self-center font-bold px-5 h-9 shrink-0 flex items-center justify-center gap-2 bg-[#4649E5] hover:bg-[#3b3db8] text-white border-none text-xs rounded-lg shadow-sm hover:shadow"
+                                    >
+                                        {loadingStepActions[stepId] ? (
+                                            <>
+                                                <Loader2 size={14} className="animate-spin" />
+                                                Processing...
+                                            </>
+                                        ) : (
+                                            <>
+                                                {stepAction === 'SET_REVIEWING' ? 'Start Review' :
+                                                 stepAction === 'VERIFY_DEAL' ? 'Verify & Lock' :
+                                                 stepAction === 'EXECUTE_PAYOUT' ? 'Confirm Payout' :
+                                                 stepAction === 'DECLINE_DEAL' ? 'Decline Deal' : 'Unlock Gate'}
+                                            </>
+                                        )}
+                                    </Button>
                                 ) : (
-                                    <Input 
-                                        label={field.label} 
-                                        placeholder={field.placeholder || `Enter ${field.label}...`}
-                                        type={field.type === 'url' ? 'text' : field.type} 
-                                    />
+                                    <div className="text-xs font-bold text-green-600 flex items-center gap-1.5 shrink-0 self-center bg-green-100/60 px-3.5 py-1.5 rounded-lg border border-green-200">
+                                        <CheckCircle2 size={14} /> Gate Unlocked
+                                    </div>
                                 )}
                             </div>
-                        ))}
-                    </div>
+                        </div>
+                    )}
                 </div>
             </div>
         );
@@ -1530,35 +1991,18 @@ export const DealWizardModal: React.FC<DealWizardModalProps> = ({
                                         </>
                                     ) : (
                                         <div className="space-y-0">
-                                            <TimelineItem 
-                                                icon={<Package size={14} />} 
-                                                title="Deal Created" 
-                                                user="Thomas Weber" 
-                                                time="10 May, 14:20" 
-                                                color="blue"
-                                            />
-                                            <TimelineItem 
-                                                icon={<History size={14} />} 
-                                                title="Item Added: Rolex Datejust" 
-                                                user="Maria Schmidt" 
-                                                time="10 May, 14:45" 
-                                                color="indigo"
-                                            />
-                                            <TimelineItem 
-                                                icon={<AlertCircle size={14} />} 
-                                                title="Condition Verified: Used" 
-                                                user="Thomas Weber" 
-                                                time="Today, 09:15" 
-                                                color="green"
-                                            />
-                                            <TimelineItem 
-                                                icon={<Plus size={14} />} 
-                                                title="Payout Updated: € 1.200,00" 
-                                                user="Admin Kernel" 
-                                                time="Today, 10:30" 
-                                                color="purple"
-                                            />
+                                            {timelineEvents.map((evt) => (
+                                                <TimelineItem 
+                                                    key={evt.id}
+                                                    icon={renderTimelineIcon(evt.iconType, 14)} 
+                                                    title={evt.title} 
+                                                    user={evt.user} 
+                                                    time={evt.time} 
+                                                    color={evt.color}
+                                                />
+                                            ))}
                                         </div>
+
                                     )}
                                 </div>
                                 <div className="p-6 border-t border-gray-100 bg-gray-50/30">
@@ -1736,34 +2180,16 @@ export const DealWizardModal: React.FC<DealWizardModalProps> = ({
                                             </div>
                                         ) : (
                                             <div className="space-y-0">
-                                                <TimelineItem 
-                                                    icon={<Package size={12} />} 
-                                                    title="Deal Created" 
-                                                    user="Thomas Weber" 
-                                                    time="10 May, 14:20" 
-                                                    color="blue"
-                                                />
-                                                <TimelineItem 
-                                                    icon={<History size={12} />} 
-                                                    title="Item Added: Rolex Datejust" 
-                                                    user="Maria Schmidt" 
-                                                    time="10 May, 14:45" 
-                                                    color="indigo"
-                                                />
-                                                <TimelineItem 
-                                                    icon={<AlertCircle size={12} />} 
-                                                    title="Condition Verified: Used" 
-                                                    user="Thomas Weber" 
-                                                    time="Today, 09:15" 
-                                                    color="green"
-                                                />
-                                                <TimelineItem 
-                                                    icon={<Plus size={12} />} 
-                                                    title="Payout Updated: € 1.200,00" 
-                                                    user="Admin Kernel" 
-                                                    time="Today, 10:30" 
-                                                    color="purple"
-                                                />
+                                                {timelineEvents.map((evt) => (
+                                                    <TimelineItem 
+                                                        key={evt.id}
+                                                        icon={renderTimelineIcon(evt.iconType, 12)} 
+                                                        title={evt.title} 
+                                                        user={evt.user} 
+                                                        time={evt.time} 
+                                                        color={evt.color}
+                                                    />
+                                                ))}
                                             </div>
                                         )}
                                     </div>

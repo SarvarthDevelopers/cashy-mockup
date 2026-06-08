@@ -82,10 +82,6 @@ export function Sidebar({ onAddField }: SidebarProps) {
             <FieldButton key={field.id} field={field} onAdd={onAddField} />
           ))}
         </SidebarSection>
-
-        <SidebarSection title="Dynamic Fields" defaultExpanded={false}>
-          {/* Dynamic fields would go here */}
-        </SidebarSection>
       </div>
     </div>
   );

@@ -6,8 +6,6 @@ import { Tooltip } from '../Tooltip/Tooltip';
 
 interface CustomersTableProps {
   customers: Customer[];
-  selectedRows: Set<string>; // Set of Customer IDs
-  onSelectionChange: (selected: Set<string>) => void;
   onRowClick: (customer: Customer) => void;
   activeCustomerId: string | null;
   pageSize: number;
@@ -115,8 +113,6 @@ function RowActionMenu({ customer, onAction }: { customer: Customer; onAction: (
 
 export function CustomersTable({
   customers,
-  selectedRows,
-  onSelectionChange,
   onRowClick,
   activeCustomerId,
   pageSize,
@@ -192,25 +188,7 @@ export function CustomersTable({
 
   const totalPages = Math.ceil(customers.length / pageSize);
   const paginatedCustomers = customers.slice((currentPage - 1) * pageSize, currentPage * pageSize);
-  const allPageSelected = paginatedCustomers.length > 0 && paginatedCustomers.every(c => selectedRows.has(c.customerId));
-  const somePageSelected = paginatedCustomers.some(c => selectedRows.has(c.customerId));
 
-  const handleSelectAll = () => {
-    const newSet = new Set(selectedRows);
-    if (allPageSelected) {
-      paginatedCustomers.forEach(c => newSet.delete(c.customerId));
-    } else {
-      paginatedCustomers.forEach(c => newSet.add(c.customerId));
-    }
-    onSelectionChange(newSet);
-  };
-
-  const toggleRow = (customerId: string) => {
-    const newSet = new Set(selectedRows);
-    if (newSet.has(customerId)) newSet.delete(customerId);
-    else newSet.add(customerId);
-    onSelectionChange(newSet);
-  };
 
   const visibleColumns = columns.filter(c => c.visible);
 
@@ -229,9 +207,6 @@ export function CustomersTable({
       e.preventDefault();
       const prevRow = document.querySelector(`[data-row-index="${idx - 1}"]`) as HTMLElement;
       if (prevRow) prevRow.focus();
-    } else if (e.key === ' ') {
-      e.preventDefault();
-      toggleRow(customer.customerId);
     } else if (e.key === 'Enter') {
       e.preventDefault();
       onRowClick(customer);
@@ -279,7 +254,7 @@ export function CustomersTable({
   };
 
   return (
-    <div className="flex flex-col flex-1 min-w-0 h-full" role="grid" aria-colcount={visibleColumns.length + 2}>
+    <div className="flex flex-col flex-1 min-w-0 h-full" role="grid" aria-colcount={visibleColumns.length + 1}>
       <div className="flex-1 flex flex-col min-h-0 bg-[var(--background-primary)] border border-[var(--border-subtle)] rounded-xl overflow-hidden">
         
         {/* Desktop Search bar */}
@@ -331,36 +306,12 @@ export function CustomersTable({
           <table 
             className="w-full border-collapse bg-[var(--background-primary)]" 
             style={{ 
-              minWidth: (visibleColumns.reduce((sum, c) => sum + c.width, 0) + 95) + 'px'
+              minWidth: (visibleColumns.reduce((sum, c) => sum + c.width, 0) + 55) + 'px'
             }}
           >
             <thead className="sticky top-0 z-30 shadow-[0_1px_0_0_var(--border-subtle)]">
               <tr className="bg-[var(--background-secondary)] border-b border-[var(--border-subtle)]">
-                {/* Select all checkbox */}
-                <th className="w-10 px-3 py-3.5 text-left sticky top-0 left-0 bg-[var(--background-secondary)] z-20">
-                  <div
-                    className={`w-4 h-4 rounded border flex items-center justify-center cursor-pointer transition-colors ${
-                      allPageSelected 
-                        ? 'bg-[var(--background-brand-solid)] border-[var(--border-brand)] text-white' 
-                        : somePageSelected 
-                          ? 'bg-[var(--background-brand-primary)] border-[var(--border-brand)] text-[var(--text-brand)]' 
-                          : 'border-[var(--border-subtle)] bg-[var(--background-primary)] hover:border-[var(--border-brand-hover)]'
-                    }`}
-                    onClick={handleSelectAll}
-                    role="checkbox"
-                    aria-checked={allPageSelected}
-                    aria-label="Select all customers on this page"
-                  >
-                    {allPageSelected && (
-                      <svg width="10" height="8" viewBox="0 0 10 8" fill="none">
-                        <path d="M1 4L3.5 6.5L9 1" stroke="white" strokeWidth="1.5" strokeLinecap="round" strokeLinejoin="round" />
-                      </svg>
-                    )}
-                    {somePageSelected && !allPageSelected && (
-                      <div className="w-2.5 h-0.5 bg-[var(--text-brand)] rounded" />
-                    )}
-                  </div>
-                </th>
+
                 {visibleColumns.map(col => {
                   const isNumeric = col.key === 'totalDeals' || col.key === 'totalVolume';
                   const sortTooltipText = "Sorting is disabled due to legacy backend API limitations.";
@@ -394,7 +345,6 @@ export function CustomersTable({
             </thead>
             <tbody>
               {paginatedCustomers.map((customer, idx) => {
-                const isSelected = selectedRows.has(customer.customerId);
                 const isActive = activeCustomerId === customer.customerId;
                 return (
                   <tr
@@ -405,39 +355,12 @@ export function CustomersTable({
                     className={`border-b border-[var(--border-subtle)] cursor-pointer group/row outline-none focus:bg-[var(--background-secondary)] focus-visible:ring-2 focus-visible:ring-[var(--border-brand)] focus-visible:ring-inset ${
                       isActive 
                         ? 'bg-[var(--background-brand-primary)] font-medium' 
-                        : isSelected 
-                          ? 'bg-[var(--background-brand-primary)]/40 hover:bg-[var(--background-brand-primary)]/60' 
-                          : 'odd:bg-[var(--background-primary)] even:bg-[var(--background-secondary)]/10 hover:bg-[var(--background-secondary)]'
+                        : 'odd:bg-[var(--background-primary)] even:bg-[var(--background-secondary)]/10 hover:bg-[var(--background-secondary)]'
                     }`}
                     onClick={() => onRowClick(customer)}
                     aria-selected={isActive}
                   >
-                    {/* Checkbox */}
-                    <td 
-                      className="px-3 py-5 sticky left-0 z-10"
-                      style={{ 
-                        backgroundColor: isActive ? 'var(--background-brand-primary)' : isSelected ? 'rgba(70, 73, 229, 0.05)' : 'var(--background-primary)',
-                        transition: 'background-color 150ms ease',
-                        boxShadow: isActive ? 'inset 4px 0 0 var(--border-brand)' : 'none'
-                      }}
-                    >
-                      <div
-                        className={`w-4 h-4 rounded border flex items-center justify-center cursor-pointer transition-colors ${
-                          isSelected 
-                            ? 'bg-[var(--background-brand-solid)] border-[var(--border-brand)] text-white' 
-                            : 'border-[var(--border-subtle)] bg-[var(--background-primary)] group-hover/row:border-[var(--border-brand-hover)]'
-                        }`}
-                        onClick={(e) => { e.stopPropagation(); toggleRow(customer.customerId); }}
-                        role="checkbox"
-                        aria-checked={isSelected}
-                      >
-                        {isSelected && (
-                          <svg width="10" height="8" viewBox="0 0 10 8" fill="none">
-                            <path d="M1 4L3.5 6.5L9 1" stroke="white" strokeWidth="1.5" strokeLinecap="round" strokeLinejoin="round" />
-                          </svg>
-                        )}
-                      </div>
-                    </td>
+
                     {/* Data cells */}
                     {visibleColumns.map(col => {
                       const isNumeric = col.key === 'totalDeals' || col.key === 'totalVolume';
@@ -459,7 +382,7 @@ export function CustomersTable({
               })}
               {paginatedCustomers.length === 0 && (
                 <tr>
-                  <td colSpan={visibleColumns.length + 2} className="text-center py-16 bg-[var(--background-primary)]">
+                  <td colSpan={visibleColumns.length + 1} className="text-center py-16 bg-[var(--background-primary)]">
                     <div className="flex flex-col items-center gap-2.5 select-none animate-in fade-in duration-200">
                       <AlertTriangle size={24} strokeWidth={1.5} className="text-[var(--text-subtlest)]" />
                       <span className="text-sm font-bold text-[var(--text-subtle)]">No customers match the current filters.</span>
@@ -523,16 +446,11 @@ export function CustomersTable({
           </div>
         </div>
 
-        {/* Info Group (Showing text + selected count) */}
+        {/* Info Group (Showing text) */}
         <div className="flex items-center justify-center gap-2 order-2 md:order-1 w-full md:w-auto">
           <span className="text-[var(--body-size-small)] md:text-xs text-[var(--text-subtlest)] font-semibold">
             Showing {Math.min((currentPage - 1) * pageSize + 1, customers.length)}–{Math.min(currentPage * pageSize, customers.length)} of {customers.length}
           </span>
-          {selectedRows.size > 0 && (
-            <span className="text-[var(--body-size-small)] md:text-xs text-[var(--text-brand)] font-semibold bg-[var(--background-brand-primary)] px-2 py-0.5 rounded-full animate-in zoom-in-95 duration-100">
-              {selectedRows.size} selected
-            </span>
-          )}
         </div>
       </div>
     </div>

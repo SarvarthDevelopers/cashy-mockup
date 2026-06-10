@@ -68,15 +68,12 @@ function RowActionMenu({ deal, onAction }: { deal: Deal; onAction: (action: stri
   // "Live" statuses per workflow doc: payout has been made and item is stored.
   const EXTEND_ELIGIBLE_STATUSES = ['PAYED_AND_STORED', 'LOAN_DUE_NOTIFIED', 'LOAN_DUE', 'EXTENSION_CONFIRMED'];
   const isExtendEligible = deal.mode !== 'custom_deal' && EXTEND_ELIGIBLE_STATUSES.includes(deal.status);
-  const isRevertEligible = deal.status === 'EXTENSION_CONFIRMED' && deal.mode !== 'custom_deal';
   const PAYBACK_ELIGIBLE_STATUSES = ['PAYED_AND_STORED', 'LOAN_DUE_NOTIFIED', 'LOAN_DUE', 'EXTENSION_CONFIRMED', 'ON_SELL'];
   const isPaybackEligible = deal.mode !== 'custom_deal' && PAYBACK_ELIGIBLE_STATUSES.includes(deal.status);
   const menuItems = [
     { key: 'open', label: 'Open Deal Wizard' },
     ...(isExtendEligible ? [{ key: 'extend', label: 'Extend Deal' }] : []),
     ...(isPaybackEligible ? [{ key: 'payback', label: 'Payback Deal' }] : []),
-    ...(isRevertEligible ? [{ key: 'revert_extension', label: 'Revert Extension (Admin)' }] : []),
-    { key: 'comment', label: 'Add Comment' },
     { key: 'archive', label: 'Mark Archived' },
     { key: 'export', label: 'Export Row' },
   ];

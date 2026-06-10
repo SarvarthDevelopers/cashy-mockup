@@ -13,6 +13,7 @@ import { DealWizardModal } from './components/DealWizardModal/DealWizardModal';
 import { ExtendDealModal } from './components/ExtendDealModal/ExtendDealModal';
 import { PaybackDealModal } from './components/PaybackDealModal/PaybackDealModal';
 import { ToastProvider } from './components/Toast/ToastContext';
+import { PWAInstallPrompt } from './components/PWAInstallPrompt/PWAInstallPrompt';
 import { INITIAL_DEALS } from './data/mockData';
 import type { DealData } from './data/mockData';
 import type { ColumnConfig } from './components/Board/types';
@@ -35,6 +36,13 @@ const parseDealDate = (dateStr?: string): Date => {
   if (!dateStr || dateStr === 'No Date') {
     return new Date(2099, 11, 31);
   }
+
+  // Handle YYYY-MM-DD as local date to stay consistent with other local dates
+  if (/^\d{4}-\d{2}-\d{2}$/.test(dateStr)) {
+    const [year, month, day] = dateStr.split('-').map(Number);
+    return new Date(year, month - 1, day);
+  }
+
   const parts = dateStr.split(' ');
   if (parts.length === 2) {
     const months: Record<string, number> = {
@@ -506,6 +514,7 @@ function App() {
           dealData={selectedDeal || undefined}
           onUpdateDeal={handleUpdateDeal}
         />
+        <PWAInstallPrompt />
       </div>
     </ToastProvider>
   )

@@ -136,7 +136,6 @@ export function CustomersPage({ onSelectDeal }: CustomersPageProps) {
   const [isLoading, setIsLoading] = useState(true);
   const [filters, setFilters] = useState<FilterState>(INITIAL_FILTERS);
   const [searchQuery, setSearchQuery] = useState('');
-  const [selectedRows, setSelectedRows] = useState<Set<string>>(new Set());
   const [activeCustomerId, setActiveCustomerId] = useState<string | null>(null);
 
   // Column Picker
@@ -149,9 +148,7 @@ export function CustomersPage({ onSelectDeal }: CustomersPageProps) {
   // Sidebar visibility
   const [filterCollapsed, setFilterCollapsed] = useState(false);
 
-  // Bulk actions status
-  const [bulkActionStatus, setBulkActionStatus] = useState<'idle' | 'processing' | 'success' | 'error'>('idle');
-  const [bulkErrorMessage, setBulkErrorMessage] = useState('');
+
 
   // Export progress
   const [exportStatus, setExportStatus] = useState<'idle' | 'processing' | 'success' | 'error'>('idle');
@@ -283,31 +280,7 @@ export function CustomersPage({ onSelectDeal }: CustomersPageProps) {
     triggerSimulatedExport(filteredCustomers, 'cashy-customers-export.csv');
   }, [filteredCustomers, triggerSimulatedExport]);
 
-  // Bulk action handler: Blacklist
-  const executeBulkAction = useCallback((actionType: string) => {
-    setBulkActionStatus('processing');
-    setBulkErrorMessage('');
 
-    let progress = 0;
-    const interval = setInterval(() => {
-      progress += 25;
-      if (progress >= 100) {
-        clearInterval(interval);
-        
-        if (actionType === 'blacklist') {
-          setAllCustomers(prev => prev.map(c => 
-            selectedRows.has(c.customerId) ? { ...c, status: 'BLACKLISTED' as const } : c
-          ));
-        }
-        
-        setBulkActionStatus('success');
-        setSelectedRows(new Set());
-        setTimeout(() => setBulkActionStatus('idle'), 3000);
-      }
-    }, 150);
-  }, [selectedRows]);
-
-  const handleBulkBlacklist = useCallback(() => executeBulkAction('blacklist'), [executeBulkAction]);
 
   // Open the Deal Wizard modal
   const handleOpenWizard = useCallback((deal: Deal) => {
@@ -331,14 +304,7 @@ export function CustomersPage({ onSelectDeal }: CustomersPageProps) {
     }
   }, [activeCustomerId]);
 
-  const handleStatusChange = useCallback((customerId: string, status: Customer['status']) => {
-    setAllCustomers(prev => prev.map(c => c.customerId === customerId ? { ...c, status } : c));
-  }, []);
 
-  const handleDeleteCustomer = useCallback((customerId: string) => {
-    setAllCustomers(prev => prev.filter(c => c.customerId !== customerId));
-    setActiveCustomerId(null);
-  }, []);
 
   const handleRowClick = useCallback((c: Customer) => {
     if (activeCustomerId === c.customerId) setActiveCustomerId(null);
@@ -404,13 +370,7 @@ export function CustomersPage({ onSelectDeal }: CustomersPageProps) {
           searchQuery={searchQuery}
           onSearchChange={handleSearchChange}
           totalResults={filteredCustomers.length}
-          selectedCount={selectedRows.size}
-          onBulkBlacklist={handleBulkBlacklist}
           onExportAll={handleExportAll}
-          onClearSelection={() => setSelectedRows(new Set())}
-          bulkActionStatus={bulkActionStatus}
-          bulkErrorMessage={bulkErrorMessage}
-          onRetryBulk={() => executeBulkAction('blacklist')}
           exportStatus={exportStatus}
           exportProgress={exportProgress}
           onToggleFilter={() => setFilterCollapsed(!filterCollapsed)}
@@ -434,8 +394,6 @@ export function CustomersPage({ onSelectDeal }: CustomersPageProps) {
           <div className="flex-1 min-w-0 h-full flex flex-col">
             <CustomersTable
               customers={filteredCustomers}
-              selectedRows={selectedRows}
-              onSelectionChange={setSelectedRows}
               onRowClick={handleRowClick}
               activeCustomerId={activeCustomerId}
               pageSize={pageSize}
@@ -457,8 +415,6 @@ export function CustomersPage({ onSelectDeal }: CustomersPageProps) {
                 customer={activeCustomer}
                 onClose={() => setActiveCustomerId(null)}
                 onOpenWizard={handleOpenWizard}
-                onStatusChange={handleStatusChange}
-                onDeleteCustomer={handleDeleteCustomer}
               />
             )}
           </AnimatePresence>

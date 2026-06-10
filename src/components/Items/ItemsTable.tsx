@@ -1,5 +1,5 @@
 import { useState, useRef, useCallback, useEffect } from 'react';
-import { MoreHorizontal, ArrowUpDown, ArrowUp, ArrowDown, AlertTriangle, X, Search, HelpCircle, Loader2, Image, FileText } from 'lucide-react';
+import { MoreHorizontal, ArrowUpDown, ArrowUp, ArrowDown, AlertTriangle, X, Search, HelpCircle, Loader2 } from 'lucide-react';
 import type { Deal } from '../../data/mockDeals';
 import { STATUS_STYLES } from '../../data/mockDeals';
 import { Tooltip } from '../Tooltip/Tooltip';
@@ -37,8 +37,6 @@ interface ItemsTableProps {
   items: FlatItem[];
   sortConfigs: SortConfig[];
   onSortChange: (configs: SortConfig[]) => void;
-  selectedRows: Set<string>; // Set of Item IDs
-  onSelectionChange: (selected: Set<string>) => void;
   onRowClick: (item: FlatItem) => void;
   activeItemId: string | null;
   pageSize: number;
@@ -78,10 +76,10 @@ function RowActionMenu({ item, onAction }: { item: FlatItem; onAction: (action: 
         triggerRef.current?.focus();
       } else if (e.key === 'ArrowDown') {
         e.preventDefault();
-        setFocusIndex((prev) => (prev + 1) % 4);
+        setFocusIndex((prev) => (prev + 1) % 2);
       } else if (e.key === 'ArrowUp') {
         e.preventDefault();
-        setFocusIndex((prev) => (prev - 1 + 4) % 4);
+        setFocusIndex((prev) => (prev - 1 + 2) % 2);
       }
     };
     let frameId: number;
@@ -120,8 +118,6 @@ function RowActionMenu({ item, onAction }: { item: FlatItem; onAction: (action: 
         <div className="absolute right-0 top-7 z-50 bg-[var(--background-primary)] border border-[var(--border-subtle)] rounded-lg py-1 w-44 animate-in fade-in zoom-in-95 duration-150" role="menu">
           {[
             { key: 'open', label: 'Open Deal Wizard' },
-            { key: 'comment', label: 'Add Comment' },
-            { key: 'archive', label: 'Mark Archived' },
             { key: 'export', label: 'Export Row' },
           ].map((action, idx) => (
             <button
@@ -144,8 +140,6 @@ export function ItemsTable({
   items,
   sortConfigs,
   onSortChange,
-  selectedRows,
-  onSelectionChange,
   onRowClick,
   activeItemId,
   pageSize,
@@ -246,25 +240,6 @@ export function ItemsTable({
 
   const totalPages = Math.ceil(items.length / pageSize);
   const paginatedItems = items.slice((currentPage - 1) * pageSize, currentPage * pageSize);
-  const allPageSelected = paginatedItems.length > 0 && paginatedItems.every(i => selectedRows.has(i.itemId));
-  const somePageSelected = paginatedItems.some(i => selectedRows.has(i.itemId));
-
-  const handleSelectAll = () => {
-    const newSet = new Set(selectedRows);
-    if (allPageSelected) {
-      paginatedItems.forEach(i => newSet.delete(i.itemId));
-    } else {
-      paginatedItems.forEach(i => newSet.add(i.itemId));
-    }
-    onSelectionChange(newSet);
-  };
-
-  const toggleRow = (itemId: string) => {
-    const newSet = new Set(selectedRows);
-    if (newSet.has(itemId)) newSet.delete(itemId);
-    else newSet.add(itemId);
-    onSelectionChange(newSet);
-  };
 
   const visibleColumns = columns.filter(c => c.visible);
 
@@ -283,9 +258,6 @@ export function ItemsTable({
       e.preventDefault();
       const prevRow = document.querySelector(`[data-row-index="${idx - 1}"]`) as HTMLElement;
       if (prevRow) prevRow.focus();
-    } else if (e.key === ' ') {
-      e.preventDefault();
-      toggleRow(item.itemId);
     } else if (e.key === 'Enter') {
       e.preventDefault();
       onRowClick(item);
@@ -339,29 +311,14 @@ export function ItemsTable({
           </span>
         );
       }
-      case 'hasImages':
-        return item.hasImages ? (
-          <div className="flex justify-center w-full">
-            <Image size={15} strokeWidth={1.5} className="text-[#4649e5]" />
-          </div>
-        ) : (
-          <div className="w-full h-4" />
-        );
-      case 'hasDocuments':
-        return item.hasDocuments ? (
-          <div className="flex justify-center w-full">
-            <FileText size={15} strokeWidth={1.5} className="text-[#10b981]" />
-          </div>
-        ) : (
-          <div className="w-full h-4" />
-        );
+
       default:
         return null;
     }
   };
 
   return (
-    <div className="flex flex-col flex-1 min-w-0 h-full" role="grid" aria-colcount={visibleColumns.length + 2}>
+    <div className="flex flex-col flex-1 min-w-0 h-full" role="grid" aria-colcount={visibleColumns.length + 1}>
       <div className="flex-1 flex flex-col min-h-0 bg-[var(--background-primary)] border border-[var(--border-subtle)] rounded-xl overflow-hidden">
         
         {/* Desktop Search bar */}
@@ -413,36 +370,11 @@ export function ItemsTable({
           <table 
             className="w-full border-collapse bg-[var(--background-primary)]" 
             style={{ 
-              minWidth: (visibleColumns.reduce((sum, c) => sum + c.width, 0) + 95) + 'px'
+              minWidth: (visibleColumns.reduce((sum, c) => sum + c.width, 0) + 55) + 'px'
             }}
           >
             <thead className="sticky top-0 z-30 shadow-[0_1px_0_0_var(--border-subtle)]">
               <tr className="bg-[var(--background-secondary)] border-b border-[var(--border-subtle)]">
-                {/* Select all checkbox */}
-                <th className="w-10 px-3 py-3.5 text-left sticky top-0 left-0 bg-[var(--background-secondary)] z-20">
-                  <div
-                    className={`w-4 h-4 rounded border flex items-center justify-center cursor-pointer transition-colors ${
-                      allPageSelected 
-                        ? 'bg-[var(--background-brand-solid)] border-[var(--border-brand)] text-white' 
-                        : somePageSelected 
-                          ? 'bg-[var(--background-brand-primary)] border-[var(--border-brand)] text-[var(--text-brand)]' 
-                          : 'border-[var(--border-subtle)] bg-[var(--background-primary)] hover:border-[var(--border-brand-hover)]'
-                    }`}
-                    onClick={handleSelectAll}
-                    role="checkbox"
-                    aria-checked={allPageSelected}
-                    aria-label="Select all items on this page"
-                  >
-                    {allPageSelected && (
-                      <svg width="10" height="8" viewBox="0 0 10 8" fill="none">
-                        <path d="M1 4L3.5 6.5L9 1" stroke="white" strokeWidth="1.5" strokeLinecap="round" strokeLinejoin="round" />
-                      </svg>
-                    )}
-                    {somePageSelected && !allPageSelected && (
-                      <div className="w-2.5 h-0.5 bg-[var(--text-brand)] rounded" />
-                    )}
-                  </div>
-                </th>
                 {visibleColumns.map(col => {
                   const sortIdx = sortConfigs.findIndex(s => s.key === col.key);
                   const sortConfig = sortIdx >= 0 ? sortConfigs[sortIdx] : null;
@@ -498,7 +430,6 @@ export function ItemsTable({
             </thead>
             <tbody>
               {paginatedItems.map((item, idx) => {
-                const isSelected = selectedRows.has(item.itemId);
                 const isActive = activeItemId === item.itemId;
                 return (
                   <tr
@@ -509,39 +440,14 @@ export function ItemsTable({
                     className={`border-b border-[var(--border-subtle)] cursor-pointer group/row outline-none focus:bg-[var(--background-secondary)] focus-visible:ring-2 focus-visible:ring-[var(--border-brand)] focus-visible:ring-inset ${
                       isActive 
                         ? 'bg-[var(--background-brand-primary)] font-medium' 
-                        : isSelected 
-                          ? 'bg-[var(--background-brand-primary)]/40 hover:bg-[var(--background-brand-primary)]/60' 
-                          : 'odd:bg-[var(--background-primary)] even:bg-[var(--background-secondary)]/10 hover:bg-[var(--background-secondary)]'
+                        : 'odd:bg-[var(--background-primary)] even:bg-[var(--background-secondary)]/10 hover:bg-[var(--background-secondary)]'
                     }`}
+                    style={{
+                      boxShadow: isActive ? 'inset 4px 0 0 var(--border-brand)' : 'none'
+                    }}
                     onClick={() => onRowClick(item)}
                     aria-selected={isActive}
                   >
-                    {/* Checkbox */}
-                    <td 
-                      className="px-3 py-5 sticky left-0 z-10"
-                      style={{ 
-                        backgroundColor: isActive ? 'var(--background-brand-primary)' : isSelected ? 'rgba(70, 73, 229, 0.05)' : 'var(--background-primary)',
-                        transition: 'background-color 150ms ease',
-                        boxShadow: isActive ? 'inset 4px 0 0 var(--border-brand)' : 'none'
-                      }}
-                    >
-                      <div
-                        className={`w-4 h-4 rounded border flex items-center justify-center cursor-pointer transition-colors ${
-                          isSelected 
-                            ? 'bg-[var(--background-brand-solid)] border-[var(--border-brand)] text-white' 
-                            : 'border-[var(--border-subtle)] bg-[var(--background-primary)] group-hover/row:border-[var(--border-brand-hover)]'
-                        }`}
-                        onClick={(e) => { e.stopPropagation(); toggleRow(item.itemId); }}
-                        role="checkbox"
-                        aria-checked={isSelected}
-                      >
-                        {isSelected && (
-                          <svg width="10" height="8" viewBox="0 0 10 8" fill="none">
-                            <path d="M1 4L3.5 6.5L9 1" stroke="white" strokeWidth="1.5" strokeLinecap="round" strokeLinejoin="round" />
-                          </svg>
-                        )}
-                      </div>
-                    </td>
                     {/* Data cells */}
                     {visibleColumns.map(col => {
                       const isNumeric = col.key === 'marketValue' || col.key === 'payout';
@@ -563,7 +469,7 @@ export function ItemsTable({
               })}
               {paginatedItems.length === 0 && (
                 <tr>
-                  <td colSpan={visibleColumns.length + 2} className="text-center py-16 bg-[var(--background-primary)]">
+                  <td colSpan={visibleColumns.length + 1} className="text-center py-16 bg-[var(--background-primary)]">
                     <div className="flex flex-col items-center gap-2.5 select-none animate-in fade-in duration-200">
                       <AlertTriangle size={24} strokeWidth={1.5} className="text-[var(--text-subtlest)]" />
                       <span className="text-sm font-bold text-[var(--text-subtle)]">No items match the current filters.</span>
@@ -632,11 +538,6 @@ export function ItemsTable({
           <span className="text-[var(--body-size-small)] md:text-xs text-[var(--text-subtlest)] font-semibold">
             Showing {Math.min((currentPage - 1) * pageSize + 1, items.length)}–{Math.min(currentPage * pageSize, items.length)} of {items.length}
           </span>
-          {selectedRows.size > 0 && (
-            <span className="text-[var(--body-size-small)] md:text-xs text-[var(--text-brand)] font-semibold bg-[var(--background-brand-primary)] px-2 py-0.5 rounded-full animate-in zoom-in-95 duration-100">
-              {selectedRows.size} selected
-            </span>
-          )}
         </div>
       </div>
     </div>

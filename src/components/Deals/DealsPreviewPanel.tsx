@@ -1,5 +1,5 @@
 import { useState, useEffect } from 'react';
-import { X, ExternalLink, FileWarning, RefreshCw, MessageSquare, ArrowRight, Package, RotateCcw, ShieldAlert } from 'lucide-react';
+import { X, ExternalLink, FileWarning, RefreshCw, MessageSquare, ArrowRight, Package } from 'lucide-react';
 import { motion } from 'motion/react';
 import type { Deal } from '../../data/mockDeals';
 import { STATUS_STYLES } from '../../data/mockDeals';
@@ -35,7 +35,6 @@ interface DealsPreviewPanelProps {
   isLoading?: boolean;
   onClose: () => void;
   onOpenWizard: (deal: Deal) => void;
-  onRevertExtension?: (deal: Deal) => void;
 }
 
 function formatEur(value: number): string {
@@ -107,7 +106,7 @@ function PanelSkeleton() {
   );
 }
 
-export function DealsPreviewPanel({ deal, isLoading = false, onClose, onOpenWizard, onRevertExtension }: DealsPreviewPanelProps) {
+export function DealsPreviewPanel({ deal, isLoading = false, onClose, onOpenWizard }: DealsPreviewPanelProps) {
   const [isMobile, setIsMobile] = useState(false);
 
   // Keyboard navigation capturing
@@ -481,20 +480,6 @@ export function DealsPreviewPanel({ deal, isLoading = false, onClose, onOpenWiza
               <ExternalLink size={14} strokeWidth={1.5} />
               <span>Open Deal Wizard</span>
             </button>
-
-            {/* Admin Revert Button — only for EXTENSION_CONFIRMED */}
-            {deal.status === 'EXTENSION_CONFIRMED' && onRevertExtension && (
-              <button
-                onClick={() => onRevertExtension(deal)}
-                className="w-full h-9 flex items-center justify-center gap-2 px-4 border border-[var(--border-subtle)] text-[var(--text-subtle)] hover:text-red-600 hover:border-red-300 hover:bg-red-50 font-bold rounded-lg text-xs transition-all cursor-pointer focus:outline-none focus-visible:ring-2 focus-visible:ring-red-400"
-              >
-                <RotateCcw size={13} strokeWidth={1.5} />
-                <span>Revert Extension</span>
-                <span className="ml-auto flex items-center gap-1 px-1.5 py-0.5 bg-red-100 text-red-600 rounded text-[9px] font-black uppercase tracking-wide">
-                  <ShieldAlert size={9} /> Admin
-                </span>
-              </button>
-            )}
           </div>
         </>
       )}

@@ -1,5 +1,5 @@
 import { useState, useEffect, useRef } from 'react';
-import { Search, Download, X, HelpCircle, Loader2, RefreshCw, Eye, EyeOff, ShieldAlert } from 'lucide-react';
+import { Search, Download, X, HelpCircle, Loader2, Eye, EyeOff } from 'lucide-react';
 import type { ColumnDef } from './customersTableColumns';
 import { Tooltip } from '../Tooltip/Tooltip';
 
@@ -7,13 +7,7 @@ interface CustomersToolbarProps {
   searchQuery: string;
   onSearchChange: (query: string) => void;
   totalResults: number;
-  selectedCount: number;
-  onBulkBlacklist: () => void;
   onExportAll: () => void;
-  onClearSelection: () => void;
-  bulkActionStatus?: 'idle' | 'processing' | 'success' | 'error';
-  bulkErrorMessage?: string;
-  onRetryBulk?: () => void;
   exportStatus?: 'idle' | 'processing' | 'success' | 'error';
   exportProgress?: number;
   onToggleFilter?: () => void;
@@ -28,13 +22,7 @@ export function CustomersToolbar({
   searchQuery,
   onSearchChange,
   totalResults,
-  selectedCount,
-  onBulkBlacklist,
   onExportAll,
-  onClearSelection,
-  bulkActionStatus = 'idle',
-  bulkErrorMessage = '',
-  onRetryBulk,
   exportStatus = 'idle',
   exportProgress = 0,
   onToggleFilter,
@@ -128,83 +116,37 @@ export function CustomersToolbar({
         </div>
 
         <div className="w-full">
-          {selectedCount > 0 ? (
-            <div className="flex items-center justify-between w-full px-3 py-1 bg-[var(--background-brand-primary)] border border-[var(--border-brand-subtle)] rounded-lg animate-in fade-in zoom-in-95 duration-200 h-9">
-              <div className="flex items-center gap-2">
-                <span className="text-xs font-semibold text-[var(--text-brand)]">
-                  {selectedCount} selected
-                </span>
-              </div>
-              
-              <div className="flex items-center gap-2">
-                {bulkActionStatus === 'processing' ? (
-                  <div className="flex items-center gap-1.5">
-                    <Loader2 size={12} strokeWidth={1.5} className="animate-spin text-[var(--text-brand)]" />
-                    <span className="text-[10px] font-semibold text-[var(--text-brand)]">Processing...</span>
-                  </div>
-                ) : bulkActionStatus === 'error' ? (
-                  <div className="flex items-center gap-1">
-                    <span className="text-[10px] font-semibold text-[var(--text-error)] truncate max-w-[100px]" title={bulkErrorMessage}>
-                      {bulkErrorMessage || 'Error'}
-                    </span>
-                    {onRetryBulk && (
-                      <button onClick={onRetryBulk} className="p-0.5 hover:bg-red-100 rounded text-[var(--text-error)]">
-                        <RefreshCw size={10} strokeWidth={1.5} />
-                      </button>
-                    )}
-                  </div>
-                ) : (
-                  <button
-                    onClick={onBulkBlacklist}
-                    className="flex items-center gap-1 px-2 py-1 text-[10px] font-semibold text-white bg-[var(--background-error-solid)] hover:bg-[var(--background-error-solid-hover)] rounded transition-colors focus:outline-none"
-                  >
-                    <ShieldAlert size={10} strokeWidth={1.5} />
-                    <span>Blacklist Selected</span>
-                  </button>
-                )}
-
-                <div className="w-[1px] h-3.5 bg-[var(--border-brand)]/25" />
-                <button
-                  onClick={onClearSelection}
-                  className="p-1 hover:bg-[var(--background-secondary)] rounded transition-colors text-[var(--text-subtlest)] hover:text-[var(--text-brand)]"
-                >
-                  <X size={12} strokeWidth={1.5} />
-                </button>
-              </div>
-            </div>
-          ) : (
-            <div className="relative w-full">
-              <span className="absolute left-3 top-1/2 -translate-y-1/2 text-[var(--text-subtlest)] z-10">
-                {isSearching ? (
-                  <Loader2 size={14} strokeWidth={1.5} className="animate-spin text-[var(--text-brand)]" />
-                ) : (
-                  <Search size={14} strokeWidth={1.5} />
-                )}
-              </span>
-              <input
-                type="text"
-                value={localSearch}
-                onChange={(e) => handleSearchChange(e.target.value)}
-                placeholder="Search..."
-                className="w-full h-9 pl-9 pr-16 bg-[var(--background-primary)] border border-[var(--border-subtle)] rounded-lg text-xs focus:outline-none focus-visible:border-[var(--border-brand)] focus:ring-2 focus:ring-[var(--border-brand)]/20 transition-all text-[var(--text-primary)] placeholder:text-[var(--text-subtlest)] font-semibold"
-                aria-label="Search customer fields"
-              />
-              {localSearch && (
-                <button
-                  onClick={() => { setLocalSearch(''); onSearchChange(''); }}
-                  className="absolute right-8 top-1/2 -translate-y-1/2 p-0.5 hover:bg-[var(--background-secondary)] rounded transition-colors cursor-pointer"
-                  aria-label="Clear search input"
-                >
-                  <X size={12} strokeWidth={1.5} className="text-[var(--text-subtlest)] hover:text-[var(--text-primary)]" />
-                </button>
+          <div className="relative w-full">
+            <span className="absolute left-3 top-1/2 -translate-y-1/2 text-[var(--text-subtlest)] z-10">
+              {isSearching ? (
+                <Loader2 size={14} strokeWidth={1.5} className="animate-spin text-[var(--text-brand)]" />
+              ) : (
+                <Search size={14} strokeWidth={1.5} />
               )}
-              <div className="absolute right-3 top-1/2 -translate-y-1/2 z-25 flex items-center">
-                <Tooltip content="Search across customer IDs, names, emails, phones, cities, and countries." side="top">
-                  <span><HelpCircle size={12} strokeWidth={1.5} className="text-[var(--text-subtlest)] cursor-help hover:text-[var(--text-subtle)]" /></span>
-                </Tooltip>
-              </div>
+            </span>
+            <input
+              type="text"
+              value={localSearch}
+              onChange={(e) => handleSearchChange(e.target.value)}
+              placeholder="Search..."
+              className="w-full h-9 pl-9 pr-16 bg-[var(--background-primary)] border border-[var(--border-subtle)] rounded-lg text-xs focus:outline-none focus-visible:border-[var(--border-brand)] focus:ring-2 focus:ring-[var(--border-brand)]/20 transition-all text-[var(--text-primary)] placeholder:text-[var(--text-subtlest)] font-semibold"
+              aria-label="Search customer fields"
+            />
+            {localSearch && (
+              <button
+                onClick={() => { setLocalSearch(''); onSearchChange(''); }}
+                className="absolute right-8 top-1/2 -translate-y-1/2 p-0.5 hover:bg-[var(--background-secondary)] rounded transition-colors cursor-pointer"
+                aria-label="Clear search input"
+              >
+                <X size={12} strokeWidth={1.5} className="text-[var(--text-subtlest)] hover:text-[var(--text-primary)]" />
+              </button>
+            )}
+            <div className="absolute right-3 top-1/2 -translate-y-1/2 z-25 flex items-center">
+              <Tooltip content="Search across customer IDs, names, emails, phones, cities, and countries." side="top">
+                <span><HelpCircle size={12} strokeWidth={1.5} className="text-[var(--text-subtlest)] cursor-help hover:text-[var(--text-subtle)]" /></span>
+              </Tooltip>
             </div>
-          )}
+          </div>
         </div>
       </div>
 
@@ -296,52 +238,6 @@ export function CustomersToolbar({
         </div>
 
         <div className="flex items-center gap-3 shrink-0">
-          {selectedCount > 0 && (
-            <div className="flex items-center gap-2 px-3 py-1.5 bg-[var(--background-brand-primary)] border border-[var(--border-brand-subtle)] rounded-lg animate-in fade-in slide-in-from-right-3 duration-200 h-10">
-              <span className="text-xs font-semibold text-[var(--text-brand)]">
-                {selectedCount} selected
-              </span>
-              
-              <div className="w-[1px] h-3 bg-[var(--border-brand)]/20" />
-              
-              {bulkActionStatus === 'processing' ? (
-                <div className="flex items-center gap-1.5">
-                  <Loader2 size={12} strokeWidth={1.5} className="animate-spin text-[var(--text-brand)]" />
-                  <span className="text-[10px] font-semibold text-[var(--text-brand)]">Processing...</span>
-                </div>
-              ) : bulkActionStatus === 'error' ? (
-                <div className="flex items-center gap-1.5">
-                  <span className="text-[10px] font-semibold text-[var(--text-error)] max-w-[120px] truncate" title={bulkErrorMessage}>
-                    {bulkErrorMessage}
-                  </span>
-                  {onRetryBulk && (
-                    <button onClick={onRetryBulk} className="p-0.5 hover:bg-red-50 rounded text-[var(--text-error)]">
-                      <RefreshCw size={10} strokeWidth={1.5} />
-                    </button>
-                  )}
-                </div>
-              ) : (
-                <button
-                  onClick={onBulkBlacklist}
-                  className="flex items-center gap-1 px-2.5 py-1 text-[10px] font-semibold text-white bg-[var(--background-error-solid)] hover:bg-[var(--background-error-solid-hover)] rounded transition-colors focus:outline-none focus-visible:ring-2 focus-visible:ring-red-400"
-                >
-                  <ShieldAlert size={10} strokeWidth={1.5} />
-                  <span>Blacklist Selected</span>
-                </button>
-              )}
-
-              <div className="w-[1px] h-3 bg-[var(--border-brand)]/20" />
-              
-              <button
-                onClick={onClearSelection}
-                className="p-1 hover:bg-[var(--background-secondary)] rounded transition-colors text-[var(--text-subtlest)] hover:text-[var(--text-brand)] focus:outline-none"
-                aria-label="Clear selected rows"
-              >
-                <X size={12} strokeWidth={1.5} />
-              </button>
-            </div>
-          )}
-
           <button
             onClick={onExportAll}
             disabled={exportStatus === 'processing'}

@@ -18,6 +18,7 @@ import {
 import { ShopLabel } from '../Card/ShopLabel';
 import type { DealData } from '../../data/mockData';
 import { MOCK_WIZARDS, GLOBAL_STEPS } from '../../data/wizardData';
+import { STATUS_STYLES } from '../../data/mockDeals';
 import { getBusinessAreaForDeal, getCategoryFromItemTitle, CATEGORY_DISPLAY_NAMES } from '../../data/businessAreaMapping';
 import { CategoryTreeDropdown } from '../CategoryTree/CategoryTreeDropdown';
 import { DatePicker } from '../DatePicker/DatePicker';
@@ -30,9 +31,6 @@ const parseDateString = (str: string): Date | null => {
     const d = new Date(year, month - 1, day);
     if (!isNaN(d.getTime())) return d;
   }
-  // Try standard parsing
-  const parsed = Date.parse(str);
-  if (!isNaN(parsed)) return new Date(parsed);
 
   // Handle "Jan 20" style format
   const months: Record<string, number> = {
@@ -49,6 +47,11 @@ const parseDateString = (str: string): Date | null => {
       if (!isNaN(d.getTime())) return d;
     }
   }
+
+  // Try standard parsing
+  const parsed = Date.parse(str);
+  if (!isNaN(parsed)) return new Date(parsed);
+
   return null;
 };
 
@@ -1359,20 +1362,16 @@ export const DealWizardModal: React.FC<DealWizardModalProps> = ({
                                             Primary Customer
                                         </span>
                                     </div>
-                                    {showSecondaryCustomer && secondaryCustomerData && (
-                                        <div className="flex flex-col gap-0.5 mt-0.5 pt-0.5 border-t border-gray-100 w-full">
-                                            <h2 className="text-sm font-semibold m-0 leading-normal" style={{ color: 'var(--lilac-600)' }}>
-                                                {`${secondaryCustomerData.firstName} ${secondaryCustomerData.lastName}`}
-                                            </h2>
-                                            <span className="text-[10px] font-extrabold uppercase tracking-widest" style={{ color: 'var(--gray-400)' }}>
-                                                Secondary Customer
-                                            </span>
-                                        </div>
-                                    )}
                                 </div>
                                 <div className="w-[1px] bg-gray-100 align-self-stretch self-stretch" style={{ margin: '0 var(--space-200)' }} />
                                 <div className="flex" style={{ gap: 'var(--space-800)' }}>
                                     <DetailItem label="Deal ID" value={dealId} />
+                                    {showSecondaryCustomer && secondaryCustomerData && (
+                                        <DetailItem 
+                                            label="Secondary Customer" 
+                                            value={`${secondaryCustomerData.firstName} ${secondaryCustomerData.lastName}`} 
+                                        />
+                                    )}
                                     <DetailItem 
                                         label={dealMode === 'Pawn' && showPawnDueDate ? 'Pawn Due' : 'Pawn Duration'} 
                                         value={dealMode === 'Pawn' && showPawnDueDate ? getFormattedPawnDueDate() : `${metadata.duration} Days`} 
@@ -1381,6 +1380,20 @@ export const DealWizardModal: React.FC<DealWizardModalProps> = ({
                                     />
                                     <DetailItem label="Total Items" value={String(items.length)} />
                                     <DetailItem label="Business Area" value={currentBusinessArea} />
+                                    <DetailItem 
+                                        label="Deal Status" 
+                                        value={String(dealData?.status || 'BOOKED').replace(/_/g, ' ')} 
+                                        isBadge={true}
+                                        badgeStyle={
+                                            (STATUS_STYLES as any)[dealData?.status || 'BOOKED'] 
+                                                ? { 
+                                                    backgroundColor: (STATUS_STYLES as any)[dealData?.status || 'BOOKED'].bg, 
+                                                    color: (STATUS_STYLES as any)[dealData?.status || 'BOOKED'].text,
+                                                    border: `1px solid ${(STATUS_STYLES as any)[dealData?.status || 'BOOKED'].text}20`
+                                                  } 
+                                                : undefined
+                                        }
+                                    />
                                 </div>
                             </div>
                         )}
@@ -2254,11 +2267,16 @@ const SimulationStep = ({ active, done, text }: { active: boolean; done: boolean
 );
 
 
-const DetailItem = ({ label, value, isBadge, isInteractive, onClick }: any) => (
+const DetailItem = ({ label, value, isBadge, isInteractive, onClick, badgeStyle }: any) => (
     <div className="flex flex-col gap-1">
         <span className="text-[10px] uppercase font-extrabold tracking-widest text-gray-400">{label}</span>
         {isBadge ? (
-            <div className="inline-flex px-2 py-1 rounded-md bg-blue-50 border border-blue-100 text-[#4649E5] text-[11px] font-bold w-fit leading-none">{value}</div>
+            <div 
+                className="inline-flex px-2 py-1 rounded-md text-[11px] font-bold w-fit leading-none"
+                style={badgeStyle || { backgroundColor: '#eff6ff', borderColor: '#dbeafe', color: '#4649E5' }}
+            >
+                {value}
+            </div>
         ) : (
             <span 
                 onClick={onClick}

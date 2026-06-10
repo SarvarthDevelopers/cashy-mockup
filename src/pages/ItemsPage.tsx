@@ -217,7 +217,6 @@ export function ItemsPage({ onSelectDeal }: ItemsPageProps) {
   const [filters, setFilters] = useState<FilterState>(INITIAL_FILTERS);
   const [searchQuery, setSearchQuery] = useState('');
   const [sortConfigs, setSortConfigs] = useState<SortConfig[]>([{ key: 'itemId', direction: 'asc' }]);
-  const [selectedRows, setSelectedRows] = useState<Set<string>>(new Set());
   const [columns, setColumns] = useState<ColumnDef[]>(DEFAULT_COLUMNS);
   
   const [activeItemId, setActiveItemId] = useState<string | null>(null);
@@ -229,8 +228,7 @@ export function ItemsPage({ onSelectDeal }: ItemsPageProps) {
   const [exportStatus, setExportStatus] = useState<'idle' | 'processing' | 'success' | 'error'>('idle');
   const [exportProgress, setExportProgress] = useState(0);
 
-  const [bulkActionStatus, setBulkActionStatus] = useState<'idle' | 'processing' | 'success' | 'error'>('idle');
-  const [bulkErrorMessage, setBulkErrorMessage] = useState('');
+
 
   const [isLoading, setIsLoading] = useState(true);
 
@@ -368,38 +366,8 @@ export function ItemsPage({ onSelectDeal }: ItemsPageProps) {
   }, []);
 
   const handleExportAll = useCallback(() => {
-    if (selectedRows.size > 0) {
-      const selectedItemsList = allItems.filter(i => selectedRows.has(i.itemId));
-      triggerSimulatedExport(selectedItemsList, `cashy-items-selected-${selectedRows.size}.csv`);
-    } else {
-      triggerSimulatedExport(filteredItems, 'cashy-items-filtered.csv');
-    }
-  }, [selectedRows, allItems, filteredItems, triggerSimulatedExport]);
-
-  // Simulated bulk action
-  const executeBulkAction = useCallback((actionType: string) => {
-    setBulkActionStatus('processing');
-    setBulkErrorMessage('');
-    
-    // Check action type for future support
-    if (actionType !== 'archive') {
-      // noop
-    }
-
-    let progress = 0;
-    const interval = setInterval(() => {
-      progress += 25;
-      if (progress >= 100) {
-        clearInterval(interval);
-        
-        setBulkActionStatus('success');
-        setSelectedRows(new Set());
-        setTimeout(() => setBulkActionStatus('idle'), 3000);
-      }
-    }, 200);
-  }, []);
-
-  const handleBulkArchive = useCallback(() => executeBulkAction('archive'), [executeBulkAction]);
+    triggerSimulatedExport(filteredItems, 'cashy-items-filtered.csv');
+  }, [filteredItems, triggerSimulatedExport]);
 
   const handleOpenWizard = useCallback((deal: Deal) => {
     const dealData = mapDealToDealData(deal);
@@ -409,12 +377,10 @@ export function ItemsPage({ onSelectDeal }: ItemsPageProps) {
   const handleRowAction = useCallback((action: string, item: FlatItem) => {
     if (action === 'open') {
       handleOpenWizard(item.parentDeal);
-    } else if (action === 'archive') {
-      executeBulkAction('archive');
     } else if (action === 'export') {
       triggerSimulatedExport([item], `cashy-item-${item.itemId}.csv`);
     }
-  }, [handleOpenWizard, triggerSimulatedExport, executeBulkAction]);
+  }, [handleOpenWizard, triggerSimulatedExport]);
 
   if (isLoading) {
     return (
@@ -484,13 +450,7 @@ export function ItemsPage({ onSelectDeal }: ItemsPageProps) {
           searchQuery={searchQuery}
           onSearchChange={handleSearchChange}
           totalResults={filteredItems.length}
-          selectedCount={selectedRows.size}
-          onBulkArchive={handleBulkArchive}
           onExportAll={handleExportAll}
-          onClearSelection={() => setSelectedRows(new Set())}
-          bulkActionStatus={bulkActionStatus}
-          bulkErrorMessage={bulkErrorMessage}
-          onRetryBulk={() => executeBulkAction('archive')}
           exportStatus={exportStatus}
           exportProgress={exportProgress}
           onToggleFilter={() => setFilterCollapsed(!filterCollapsed)}
@@ -516,8 +476,6 @@ export function ItemsPage({ onSelectDeal }: ItemsPageProps) {
               items={filteredItems}
               sortConfigs={sortConfigs}
               onSortChange={setSortConfigs}
-              selectedRows={selectedRows}
-              onSelectionChange={setSelectedRows}
               onRowClick={handleRowClick}
               activeItemId={activeItemId}
               pageSize={pageSize}

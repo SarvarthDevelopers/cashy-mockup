@@ -1,5 +1,5 @@
 import { useState, useEffect, useMemo } from 'react';
-import { X, ExternalLink, Calendar, MapPin, Mail, Phone, UserCheck, ShieldAlert, Trash2 } from 'lucide-react';
+import { X, ExternalLink, Calendar, MapPin, Mail, Phone } from 'lucide-react';
 import { motion } from 'motion/react';
 import type { Customer } from '../../data/mockCustomers';
 import { MOCK_DEALS } from '../../data/mockDeals';
@@ -11,8 +11,6 @@ interface CustomersPreviewPanelProps {
   isLoading?: boolean;
   onClose: () => void;
   onOpenWizard: (deal: Deal) => void;
-  onStatusChange: (customerId: string, status: Customer['status']) => void;
-  onDeleteCustomer: (customerId: string) => void;
 }
 
 function formatEur(value: number): string {
@@ -61,8 +59,6 @@ export function CustomersPreviewPanel({
   isLoading = false,
   onClose,
   onOpenWizard,
-  onStatusChange,
-  onDeleteCustomer,
 }: CustomersPreviewPanelProps) {
   const [isMobile, setIsMobile] = useState(false);
 
@@ -203,46 +199,7 @@ export function CustomersPreviewPanel({
               </div>
             </div>
 
-            {/* Status Actions */}
-            <div className="px-5 py-4 border-b border-[var(--border-subtle)] flex flex-col gap-3">
-              <h4 className="text-[9px] font-black text-[var(--text-subtlest)] uppercase tracking-wider">Profile Actions</h4>
-              <div className="flex items-center gap-2 flex-wrap">
-                {customer.status !== 'ACTIVE' && (
-                  <button
-                    onClick={() => onStatusChange(customer.customerId, 'ACTIVE')}
-                    className="h-8 px-2.5 bg-[var(--background-success-primary)] hover:bg-[var(--background-success-subtle)] text-[var(--text-success)] border border-[var(--background-success-subtle)] text-xs font-bold rounded-lg transition-all flex items-center gap-1.5 cursor-pointer focus:outline-none"
-                  >
-                    <UserCheck size={12} />
-                    <span>Activate</span>
-                  </button>
-                )}
-                {customer.status !== 'INACTIVE' && (
-                  <button
-                    onClick={() => onStatusChange(customer.customerId, 'INACTIVE')}
-                    className="h-8 px-2.5 bg-[var(--background-secondary)] hover:bg-[var(--background-secondary-hover)] text-[var(--text-subtle)] border border-[var(--border-subtle)] text-xs font-bold rounded-lg transition-all flex items-center gap-1.5 cursor-pointer focus:outline-none"
-                  >
-                    <X size={12} />
-                    <span>Deactivate</span>
-                  </button>
-                )}
-                {customer.status !== 'BLACKLISTED' && (
-                  <button
-                    onClick={() => onStatusChange(customer.customerId, 'BLACKLISTED')}
-                    className="h-8 px-2.5 bg-[var(--background-error-primary)] hover:bg-[var(--background-error-subtle)] text-[var(--text-error)] border border-[var(--background-error-subtle)] text-xs font-bold rounded-lg transition-all flex items-center gap-1.5 cursor-pointer focus:outline-none"
-                  >
-                    <ShieldAlert size={12} />
-                    <span>Blacklist</span>
-                  </button>
-                )}
-                <button
-                  onClick={() => onDeleteCustomer(customer.customerId)}
-                  className="h-8 px-2.5 bg-red-50 hover:bg-red-100 text-red-600 border border-red-200 text-xs font-bold rounded-lg transition-all flex items-center gap-1.5 cursor-pointer focus:outline-none ml-auto"
-                >
-                  <Trash2 size={12} />
-                  <span>Delete</span>
-                </button>
-              </div>
-            </div>
+
 
             {/* Connected Deals List */}
             <div className="px-5 py-4 border-b border-[var(--border-subtle)] flex flex-col gap-3">

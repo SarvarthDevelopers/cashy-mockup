@@ -239,17 +239,11 @@ function App() {
   };
 
   const handleExtendDeal = () => {
-    setIsModalOpen(false);
-    setTimeout(() => {
-      setIsExtendModalOpen(true);
-    }, 150);
+    setIsExtendModalOpen(true);
   };
 
   const handlePaybackDeal = () => {
-    setIsModalOpen(false);
-    setTimeout(() => {
-      setIsPaybackModalOpen(true);
-    }, 150);
+    setIsPaybackModalOpen(true);
   };
 
   const handleDealDragOver = (dealId: string, fromColumn: string, toColumn: string, toIndex: number) => {
@@ -346,6 +340,10 @@ function App() {
       return newDeals;
     });
     setSelectedDeal(resolvedDeal);
+    const isClosed = resolvedDeal.specialNote?.startsWith('PAYBACK_META:') || resolvedDeal.status === 'CLOSED';
+    if (isClosed) {
+      setIsModalOpen(false);
+    }
   };
 
   const handleCreateDealSuccess = (newDeal: DealData) => {

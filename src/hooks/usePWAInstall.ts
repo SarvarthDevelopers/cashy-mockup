@@ -33,9 +33,12 @@ export function usePWAInstall() {
       (window.navigator as Navigator & { standalone?: boolean }).standalone === true;
     if (isStandaloneMode) return false;
 
+    // Check if already installed
+    const isInstalled = localStorage.getItem('cashy_pwa_installed') === 'true';
+    if (isInstalled) return false;
+
     // Check dismissal
-    const dismissedAt = localStorage.getItem('cashy_pwa_prompt_dismissed_at');
-    const isDismissed = dismissedAt && (Date.now() - Number(dismissedAt) < 7 * 24 * 60 * 60 * 1000);
+    const isDismissed = !!sessionStorage.getItem('cashy_pwa_prompt_dismissed_at');
     if (isDismissed) return false;
 
     // Check iOS
@@ -47,18 +50,31 @@ export function usePWAInstall() {
   });
 
   useEffect(() => {
-    if (isStandalone) return;
+    // If running in standalone mode, mark PWA as installed and do not show the prompt
+    if (isStandalone) {
+      localStorage.setItem('cashy_pwa_installed', 'true');
+      return;
+    }
 
-    // Update standalone/ios state on mount if matchMedia listener changes, but usually static
+    // Check if already installed
+    if (localStorage.getItem('cashy_pwa_installed') === 'true') {
+      return;
+    }
+
+    // Update standalone state on mount if display mode changes
     const handleDisplayModeChange = (e: MediaQueryListEvent) => {
       setIsStandalone(e.matches);
+      if (e.matches) {
+        localStorage.setItem('cashy_pwa_installed', 'true');
+        setShowPrompt(false);
+      }
     };
 
     const mediaQuery = window.matchMedia('(display-mode: standalone)');
     mediaQuery.addEventListener('change', handleDisplayModeChange);
 
-    const dismissedAt = localStorage.getItem('cashy_pwa_prompt_dismissed_at');
-    const isDismissed = dismissedAt && (Date.now() - Number(dismissedAt) < 7 * 24 * 60 * 60 * 1000);
+    // Stop early if dismissed in current session
+    const isDismissed = !!sessionStorage.getItem('cashy_pwa_prompt_dismissed_at');
     if (isDismissed) {
       mediaQuery.removeEventListener('change', handleDisplayModeChange);
       return;
@@ -71,11 +87,19 @@ export function usePWAInstall() {
       setShowPrompt(true);
     };
 
+    // Listen to successful install event
+    const handleAppInstalled = () => {
+      localStorage.setItem('cashy_pwa_installed', 'true');
+      setShowPrompt(false);
+    };
+
     window.addEventListener('beforeinstallprompt', handleBeforeInstallPrompt);
+    window.addEventListener('appinstalled', handleAppInstalled);
 
     return () => {
       mediaQuery.removeEventListener('change', handleDisplayModeChange);
       window.removeEventListener('beforeinstallprompt', handleBeforeInstallPrompt);
+      window.removeEventListener('appinstalled', handleAppInstalled);
     };
   }, [isStandalone]);
 
@@ -90,6 +114,7 @@ export function usePWAInstall() {
     
     if (outcome === 'accepted') {
       console.log('User accepted the PWA install prompt');
+      localStorage.setItem('cashy_pwa_installed', 'true');
       setShowPrompt(false);
     }
     
@@ -97,7 +122,7 @@ export function usePWAInstall() {
   };
 
   const dismissPrompt = () => {
-    localStorage.setItem('cashy_pwa_prompt_dismissed_at', String(Date.now()));
+    sessionStorage.setItem('cashy_pwa_prompt_dismissed_at', String(Date.now()));
     setShowPrompt(false);
   };
 

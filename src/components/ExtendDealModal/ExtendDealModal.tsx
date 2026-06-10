@@ -483,15 +483,15 @@ export const ExtendDealModal: React.FC<ExtendDealModalProps> = ({
 
     return (
         <div
-            className="fixed inset-0 z-[250] flex items-center justify-center bg-[#131518]/60 backdrop-blur-sm animate-in fade-in duration-200 p-4"
+            className="fixed inset-0 z-[250] flex items-center justify-center bg-[#131518]/60 backdrop-blur-sm animate-in fade-in duration-200 p-0 md:p-4"
             onClick={(e) => { e.stopPropagation(); }}
         >
             <div
-                className="w-full max-w-[560px] flex flex-col bg-[var(--background-primary)] overflow-hidden rounded-[24px] shadow-[0_32px_64px_-16px_rgba(0,0,0,0.3)] animate-in slide-in-from-bottom-8 duration-300 max-h-[90vh]"
+                className="w-full md:max-w-[560px] h-full md:h-auto md:max-h-[90vh] flex flex-col bg-[var(--background-primary)] overflow-hidden rounded-none md:rounded-[24px] shadow-none md:shadow-[0_32px_64px_-16px_rgba(0,0,0,0.3)] animate-in slide-in-from-bottom-8 duration-300"
                 onClick={(e) => e.stopPropagation()}
             >
-                {/* Header */}
-                <div className="px-6 py-5 border-b border-[var(--border-subtlest)] flex items-center justify-between shrink-0">
+                {/* Desktop Header */}
+                <div className="hidden md:flex px-6 py-5 border-b border-[var(--border-subtlest)] items-center justify-between shrink-0">
                     <div className="flex items-center gap-3">
                         <div className="w-9 h-9 rounded-full bg-[var(--background-brand-primary)] flex items-center justify-center">
                             <RefreshCwIcon size={16} strokeWidth={2} className="text-[var(--text-brand)]" />
@@ -508,6 +508,25 @@ export const ExtendDealModal: React.FC<ExtendDealModalProps> = ({
                         className="w-8 h-8 flex items-center justify-center rounded-full hover:bg-[var(--background-secondary)] text-[var(--text-subtle)] hover:text-[var(--text-primary)] transition-colors cursor-pointer"
                     >
                         <XIcon size={16} />
+                    </button>
+                </div>
+
+                {/* Mobile Header */}
+                <div className="md:hidden border-b border-[var(--border-subtlest)] shrink-0 bg-[var(--background-primary)] px-4 py-3 flex items-center justify-between z-40">
+                    <div className="w-10 h-10 shrink-0" />
+                    <div className="flex flex-col items-center justify-center select-none max-w-[60%]">
+                        <span className="text-[10px] font-extrabold uppercase tracking-widest text-[var(--text-placeholder)] truncate w-full text-center">
+                            {dealData.firstName} {dealData.lastName}
+                        </span>
+                        <span className="text-sm font-bold text-[var(--text-primary)] truncate mt-0.5">
+                            EXTEND DEAL #{dealData.id}
+                        </span>
+                    </div>
+                    <button 
+                        onClick={onClose}
+                        className="w-10 h-10 flex items-center justify-center rounded-lg hover:bg-[var(--background-hover)] text-[var(--text-subtlest)]"
+                    >
+                        <XIcon size={20} />
                     </button>
                 </div>
 
@@ -534,7 +553,7 @@ export const ExtendDealModal: React.FC<ExtendDealModalProps> = ({
                 </div>
 
                 {/* Footer */}
-                <div className="px-6 py-4 border-t border-[var(--border-subtlest)] bg-[var(--background-secondary)]/40 flex items-center justify-between shrink-0">
+                <div className="px-6 py-4 md:pb-4 pb-[calc(1rem+env(safe-area-inset-bottom))] border-t border-[var(--border-subtlest)] bg-[var(--background-secondary)]/40 flex items-center justify-between shrink-0">
                     {step > 1 ? (
                         <Button variant="secondary" onClick={goBack} disabled={isSubmitting} className="cursor-pointer">Back</Button>
                     ) : (

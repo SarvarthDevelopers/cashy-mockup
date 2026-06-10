@@ -1173,7 +1173,9 @@ export const DealWizardModal: React.FC<DealWizardModalProps> = ({
                                         Extend
                                     </Button>
                                 )}
-                                <Button variant="primary" size="small" className={`${isMobile ? 'flex-1' : ''} font-bold`} onClick={onClose}>Close</Button>
+                                {!isMobile && (
+                                    <Button variant="primary" size="small" className="font-bold" onClick={onClose}>Close</Button>
+                                )}
                             </>
                         ) : (
                             <>
@@ -1276,19 +1278,25 @@ export const DealWizardModal: React.FC<DealWizardModalProps> = ({
                     >
                         <Menu size={20} />
                     </button>
-                    <div className="flex flex-col items-center">
-                        <span className="text-[10px] font-extrabold uppercase tracking-widest text-[var(--text-placeholder)]">
-                            {creationFinalized ? `DEAL #${dealId}` : 'New Deal'}
-                        </span>
-                        <span className="text-sm font-bold text-[var(--text-primary)] truncate max-w-[180px]">
-                            {creationFinalized ? `${customerData.firstName} ${customerData.lastName}` : 'New Deal Creation'}
-                        </span>
-                    </div>
                     <button 
                         onClick={() => setIsRightSidebarOpen(true)}
+                        className="flex flex-col items-center justify-center bg-transparent border-none py-1.5 px-4 rounded-xl hover:bg-[var(--background-hover)] active:scale-[0.98] transition-all cursor-pointer select-none max-w-[60%]"
+                    >
+                        <span className="text-[10px] font-extrabold uppercase tracking-widest text-[var(--text-placeholder)] truncate w-full text-center">
+                            {creationFinalized ? `${customerData.firstName} ${customerData.lastName}` : 'New Deal'}
+                        </span>
+                        <div className="flex items-center justify-center gap-1.5 w-full mt-0.5">
+                            <span className="text-sm font-bold text-[var(--text-primary)] truncate">
+                                {creationFinalized ? `DEAL #${dealId}` : 'New Deal Creation'}
+                            </span>
+                            <Info size={15} className="text-[var(--text-primary)] shrink-0" />
+                        </div>
+                    </button>
+                    <button 
+                        onClick={onClose}
                         className="w-10 h-10 flex items-center justify-center rounded-lg hover:bg-[var(--background-hover)] text-[var(--text-subtlest)]"
                     >
-                        <Info size={20} />
+                        <X size={20} />
                     </button>
                 </div>
 
@@ -2064,14 +2072,17 @@ export const DealWizardModal: React.FC<DealWizardModalProps> = ({
                     </div>
                 </div>
 
-                {/* --- MOBILE RIGHT SIDE SHEET (DEAL INFO & METADATA) --- */}
+                {/* --- MOBILE BOTTOM DRAWER (DEAL INFO & METADATA) --- */}
                 <div className={`fixed inset-0 z-[250] md:hidden transition-opacity duration-300 ${isRightSidebarOpen ? 'opacity-100 pointer-events-auto' : 'opacity-0 pointer-events-none'}`}>
                     {/* Backdrop */}
                     <div className="absolute inset-0 bg-black/40 backdrop-blur-sm" onClick={() => setIsRightSidebarOpen(false)} />
-                    {/* Content */}
-                    <div className={`absolute top-0 bottom-0 right-0 w-[320px] bg-[var(--background-primary)] shadow-2xl transition-transform duration-300 flex flex-col ${isRightSidebarOpen ? 'translate-x-0' : 'translate-x-full'}`}>
-                        <div className="p-4 border-b border-[var(--border-subtlest)] flex items-center justify-between bg-[var(--background-primary)] shrink-0">
-                            <h3 className="font-bold text-[var(--text-subtle)] text-base m-0">Deal Information</h3>
+                    {/* Content - Bottom Drawer */}
+                    <div className={`absolute bottom-0 left-0 right-0 h-[85vh] bg-[var(--background-primary)] rounded-t-[32px] shadow-2xl transition-transform duration-300 flex flex-col overflow-hidden ${isRightSidebarOpen ? 'translate-y-0' : 'translate-y-full'}`}>
+                        {/* Drag Handle Indicator */}
+                        <div className="w-12 h-1 bg-[var(--border-subtle)]/75 rounded-full mx-auto my-3 shrink-0" />
+                        
+                        <div className="px-5 pb-3 border-b border-[var(--border-subtlest)] flex items-center justify-between bg-[var(--background-primary)] shrink-0">
+                            <h3 className="font-bold text-[var(--text-primary)] text-base m-0">Deal Information</h3>
                             <button onClick={() => setIsRightSidebarOpen(false)} className="w-8 h-8 flex items-center justify-center hover:bg-[var(--background-secondary-hover)] rounded-full text-[var(--text-placeholder)]">
                                 <X size={18} />
                             </button>

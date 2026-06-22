@@ -380,11 +380,17 @@ Thank you for choosing CASHY.
             case 2:
                 return (
                     <div className="space-y-5 animate-in fade-in slide-in-from-right-4 duration-300">
-                        <div>
-                            <h3 className="text-[13px] font-bold text-[var(--text-primary)] mb-1">Maturity & Fee Adjustments</h3>
-                            <p className="text-[11px] text-[var(--text-subtle)] leading-relaxed">
-                                Review and edit calculated maturity fees at the deal and item levels. Add extra components as needed.
-                            </p>
+                        <div className="flex justify-between items-start border-b border-[var(--border-subtlest)] pb-4 gap-4">
+                            <div className="pr-6 max-w-[75%]">
+                                <h3 className="text-[13px] font-bold text-[var(--text-primary)] mb-1">Maturity & Fee Adjustments</h3>
+                                <p className="text-[11px] text-[var(--text-subtle)] leading-relaxed">
+                                    Review and edit calculated maturity fees at the deal and item levels. Add extra components as needed.
+                                </p>
+                            </div>
+                            <div className="text-right shrink-0 mt-0.5">
+                                <span className="text-[9px] uppercase font-black tracking-widest text-[var(--text-subtlest)] block mb-0.5">Total Fees</span>
+                                <span className="text-[16px] font-extrabold text-[var(--text-primary)]">€ {fmtEur(finalFees)}</span>
+                            </div>
                         </div>
                         
                         {/* Deal Level Fees */}
@@ -933,8 +939,17 @@ Thank you for choosing CASHY.
                                     {isSubmitting ? 'Confirming...' : 'Confirm Payback'}
                                 </Button>
                             ) : (
-                                <Button variant="primary" onClick={goNext} disabled={!canContinue} className="cursor-pointer">
-                                    Continue
+                                <Button
+                                    variant="primary"
+                                    onClick={() => {
+                                        if (isEditingDeal) setIsEditingDeal(false);
+                                        if (editingItemIds.length > 0) setEditingItemIds([]);
+                                        goNext();
+                                    }}
+                                    disabled={!canContinue}
+                                    className="cursor-pointer font-bold"
+                                >
+                                    {step === 2 && (isEditingDeal || editingItemIds.length > 0) ? 'Save & Continue' : 'Continue'}
                                 </Button>
                             )}
                         </>

@@ -160,7 +160,7 @@ export const ExtendDealModal: React.FC<ExtendDealModalProps> = ({
     });
 
     const [isEditingDeal, setIsEditingDeal] = useState(false);
-    const [customNameEditIds, setCustomNameEditIds] = useState<Set<string>>(new Set());
+    const [selectModeIds, setSelectModeIds] = useState<Set<string>>(new Set());
     const [editingItemIds, setEditingItemIds] = useState<string[]>([]);
     const [feeOverrideReason, setFeeOverrideReason] = useState('');
     const [childFeeRateOverride, setChildFeeRateOverride] = useState('4.0');
@@ -256,8 +256,8 @@ export const ExtendDealModal: React.FC<ExtendDealModalProps> = ({
         }));
     };
 
-    const enterCustomName = (id: string) => setCustomNameEditIds(prev => new Set([...prev, id]));
-    const exitCustomName = (id: string) => setCustomNameEditIds(prev => { const s = new Set(prev); s.delete(id); return s; });
+    const enterSelectMode = (id: string) => setSelectModeIds(prev => new Set([...prev, id]));
+    const exitSelectMode = (id: string) => setSelectModeIds(prev => { const s = new Set(prev); s.delete(id); return s; });
 
     const handleDeleteComponent = (id: string) => {
         setFeeComponents(feeComponents.filter(comp => comp.id !== id));
@@ -562,9 +562,9 @@ export const ExtendDealModal: React.FC<ExtendDealModalProps> = ({
                                                                 <span className="font-normal text-[var(--text-primary)]">{comp.type}</span>
                                                             ) : (
                                                                 <div className="w-full">
-                                                                    {comp.type === 'Other' && customNameEditIds.has(comp.id) ? (
+                                                                    {comp.type === 'Other' && !selectModeIds.has(comp.id) ? (
                                                                         <div className="flex items-center gap-1">
-                                                                            <button type="button" onClick={() => exitCustomName(comp.id)} className="text-[var(--text-subtlest)] hover:text-[var(--text-brand)] transition-colors flex-shrink-0" title="Change type">
+                                                                            <button type="button" onClick={() => enterSelectMode(comp.id)} className="text-[var(--text-subtlest)] hover:text-[var(--text-brand)] transition-colors flex-shrink-0" title="Change type">
                                                                                 <svg width="12" height="12" viewBox="0 0 12 12" fill="none" stroke="currentColor" strokeWidth="1.8" strokeLinecap="round" strokeLinejoin="round"><path d="M7.5 2L4 6l3.5 4"/></svg>
                                                                             </button>
                                                                             <input
@@ -580,7 +580,7 @@ export const ExtendDealModal: React.FC<ExtendDealModalProps> = ({
                                                                         <select
                                                                             className="bg-[var(--background-primary)] border border-[var(--border-subtle)] text-[12px] rounded-lg px-2 py-1.5 focus:outline-none focus:ring-1 focus:ring-[var(--brand-500)] text-[var(--text-primary)] w-full font-normal"
                                                                             value={comp.type}
-                                                                            onChange={(e) => { handleUpdateComponent(comp.id, { type: e.target.value }); if (e.target.value === 'Other') enterCustomName(comp.id); }}
+                                                                            onChange={(e) => { handleUpdateComponent(comp.id, { type: e.target.value }); if (e.target.value === 'Other') exitSelectMode(comp.id); }}
                                                                         >
                                                                             {DEAL_FEE_TYPES.map(t => (
                                                                                 <option key={t} value={t} disabled={feeComponents.some(c => c.level === 'deal' && c.id !== comp.id && c.type === t && t !== 'Other')}>{t}</option>
@@ -708,9 +708,9 @@ export const ExtendDealModal: React.FC<ExtendDealModalProps> = ({
                                                                             <span className="font-normal text-[var(--text-primary)]">{comp.type}</span>
                                                                         ) : (
                                                                             <div className="w-full">
-                                                                                {comp.type === 'Other' && customNameEditIds.has(comp.id) ? (
+                                                                                {comp.type === 'Other' && !selectModeIds.has(comp.id) ? (
                                                                                     <div className="flex items-center gap-1">
-                                                                                        <button type="button" onClick={() => exitCustomName(comp.id)} className="text-[var(--text-subtlest)] hover:text-[var(--text-brand)] transition-colors flex-shrink-0" title="Change type">
+                                                                                        <button type="button" onClick={() => enterSelectMode(comp.id)} className="text-[var(--text-subtlest)] hover:text-[var(--text-brand)] transition-colors flex-shrink-0" title="Change type">
                                                                                             <svg width="11" height="11" viewBox="0 0 12 12" fill="none" stroke="currentColor" strokeWidth="1.8" strokeLinecap="round" strokeLinejoin="round"><path d="M7.5 2L4 6l3.5 4"/></svg>
                                                                                         </button>
                                                                                         <input
@@ -726,7 +726,7 @@ export const ExtendDealModal: React.FC<ExtendDealModalProps> = ({
                                                                                     <select
                                                                                         className="bg-[var(--background-primary)] border border-[var(--border-subtle)] text-[11px] rounded-md px-1.5 py-1 focus:outline-none focus:ring-1 focus:ring-[var(--brand-500)] text-[var(--text-primary)] w-full font-normal"
                                                                                         value={comp.type}
-                                                                                        onChange={(e) => { handleUpdateComponent(comp.id, { type: e.target.value }); if (e.target.value === 'Other') enterCustomName(comp.id); }}
+                                                                                        onChange={(e) => { handleUpdateComponent(comp.id, { type: e.target.value }); if (e.target.value === 'Other') exitSelectMode(comp.id); }}
                                                                                     >
                                                                                         {ITEM_FEE_TYPES.map(t => (
                                                                                             <option key={t} value={t} disabled={feeComponents.some(c => c.level === 'item' && c.itemId === comp.itemId && c.id !== comp.id && c.type === t && t !== 'Other')}>{t}</option>

@@ -1,4 +1,4 @@
-import { useState } from 'react';
+import { useState, useEffect } from 'react';
 import { DndProvider } from 'react-dnd';
 import { HTML5Backend } from 'react-dnd-html5-backend';
 
@@ -8,6 +8,8 @@ import { AssignmentsPanel } from './AssignmentsPanel';
 import { ConfirmationModal } from './ConfirmationModal';
 import { GLOBAL_STEPS } from '../../data/wizardData';
 import type { WizardConfig, AssociatedAction } from '../../data/wizardData';
+import { getWorkflowGates } from '../../data/workflowGates';
+import type { WorkflowGate } from '../../data/workflowGates';
 
 export interface FieldType {
   id: string;
@@ -59,6 +61,19 @@ interface DealWizardBuilderProps {
 }
 
 export function DealWizardBuilder({ wizardConfig, onBack, onSave, onDelete }: DealWizardBuilderProps) {
+  const [gates, setGates] = useState<WorkflowGate[]>(getWorkflowGates);
+
+  useEffect(() => {
+    const handleUpdate = () => {
+      setGates(getWorkflowGates());
+    };
+    window.addEventListener('cashy_workflow_gates_updated', handleUpdate);
+    window.addEventListener('storage', handleUpdate);
+    return () => {
+      window.removeEventListener('cashy_workflow_gates_updated', handleUpdate);
+      window.removeEventListener('storage', handleUpdate);
+    };
+  }, []);
 
   const [wizardState, setWizardState] = useState<WizardState>({
     name: wizardConfig.name,
@@ -236,6 +251,7 @@ export function DealWizardBuilder({ wizardConfig, onBack, onSave, onDelete }: De
               onReorderFields={reorderFields}
               onUpdateWizardName={updateWizardName}
               onBack={onBack}
+              gates={gates}
             />
              <AssignmentsPanel
               wizardId={wizardConfig.id}
@@ -248,6 +264,7 @@ export function DealWizardBuilder({ wizardConfig, onBack, onSave, onDelete }: De
               isActive={wizardState.active}
               steps={wizardState.steps}
               onUpdateStepAction={updateStepAction}
+              gates={gates}
             />
           </div>
         </div>

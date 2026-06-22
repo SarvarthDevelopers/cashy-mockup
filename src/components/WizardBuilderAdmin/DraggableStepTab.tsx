@@ -2,6 +2,8 @@ import { useRef, useEffect } from 'react';
 import { useDrag, useDrop } from 'react-dnd';
 import svgPaths from "../../imports/svg-4o201vrq4p";
 import type { Step } from './DealWizardBuilder';
+import { getWorkflowGates } from '../../data/workflowGates';
+import type { WorkflowGate } from '../../data/workflowGates';
 
 interface DraggableStepTabProps {
   step: Step;
@@ -9,11 +11,12 @@ interface DraggableStepTabProps {
   isActive: boolean;
   onClick: () => void;
   onReorder: (dragIndex: number, hoverIndex: number) => void;
+  gates?: WorkflowGate[];
 }
 
 const ITEM_TYPE = 'STEP_TAB';
 
-export function DraggableStepTab({ step, index, isActive, onClick, onReorder }: DraggableStepTabProps) {
+export function DraggableStepTab({ step, index, isActive, onClick, onReorder, gates }: DraggableStepTabProps) {
   const ref = useRef<HTMLDivElement>(null);
 
   const [{ isDragging }, drag] = useDrag({
@@ -48,38 +51,27 @@ export function DraggableStepTab({ step, index, isActive, onClick, onReorder }: 
 
   const getActionIndicator = () => {
     if (!step.associatedAction || step.associatedAction === 'NONE') return null;
-    switch (step.associatedAction) {
-      case 'SET_REVIEWING':
-        return (
-          <span 
-            title="Workflow Gate: Start Review"
-            className="w-2 h-2 rounded-full bg-amber-500 shrink-0" 
-          />
-        );
-      case 'VERIFY_DEAL':
-        return (
-          <span 
-            title="Workflow Gate: Verify Deal"
-            className="w-2 h-2 rounded-full bg-[#4649E5] shrink-0" 
-          />
-        );
-      case 'EXECUTE_PAYOUT':
-        return (
-          <span 
-            title="Workflow Gate: Execute Payout"
-            className="w-2 h-2 rounded-full bg-emerald-500 shrink-0" 
-          />
-        );
-      case 'DECLINE_DEAL':
-        return (
-          <span 
-            title="Workflow Gate: Decline Deal"
-            className="w-2 h-2 rounded-full bg-rose-500 shrink-0" 
-          />
-        );
-      default:
-        return null;
-    }
+    const activeGates = gates || getWorkflowGates();
+    const gate = activeGates.find(g => g.id === step.associatedAction);
+    if (!gate) return null;
+
+    const firstTrigger = gate.triggers[0] || '';
+    let colorClass = 'bg-gray-400';
+    if (firstTrigger === 'REVIEWING') colorClass = 'bg-amber-500';
+    else if (firstTrigger === 'VERIFIED') colorClass = 'bg-[#4649E5]';
+    else if (firstTrigger === 'PAYED_AND_STORED') colorClass = 'bg-emerald-500';
+    else if (firstTrigger === 'DECLINED') colorClass = 'bg-rose-500';
+    else if (firstTrigger === 'CANCELED') colorClass = 'bg-red-500';
+    else if (firstTrigger === 'CLOSED') colorClass = 'bg-zinc-600';
+    else if (firstTrigger === 'ON_SELL') colorClass = 'bg-purple-500';
+    else if (firstTrigger === 'ITEM_RECEIVED_ID_MISSING') colorClass = 'bg-orange-500';
+
+    return (
+      <span 
+        title={`Workflow Gate: ${gate.name}`}
+        className={`w-2 h-2 rounded-full ${colorClass} shrink-0`} 
+      />
+    );
   };
 
   return (

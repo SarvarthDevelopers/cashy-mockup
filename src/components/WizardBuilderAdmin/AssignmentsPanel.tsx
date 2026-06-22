@@ -5,6 +5,8 @@ import { CategoryTreeDropdown } from '../CategoryTree/CategoryTreeDropdown';
 
 import type { AssociatedAction } from '../../data/wizardData';
 import type { Step } from './DealWizardBuilder';
+import { getWorkflowGates } from '../../data/workflowGates';
+import type { WorkflowGate } from '../../data/workflowGates';
 
 interface AssignmentsPanelProps {
   wizardId: string;
@@ -17,6 +19,7 @@ interface AssignmentsPanelProps {
   onDelete: (id: string) => void;
   steps: Step[];
   onUpdateStepAction: (stepId: string, action: AssociatedAction) => void;
+  gates?: WorkflowGate[];
 }
 
 
@@ -40,7 +43,8 @@ export function AssignmentsPanel({
   onSave,
   onDelete,
   steps,
-  onUpdateStepAction
+  onUpdateStepAction,
+  gates
 }: AssignmentsPanelProps) {
   const [showShopDropdown, setShowShopDropdown] = useState(false);
   const [isDeleteModalOpen, setIsDeleteModalOpen] = useState(false);
@@ -50,18 +54,22 @@ export function AssignmentsPanel({
 
   const getActionIndicator = (associatedAction?: AssociatedAction) => {
     if (!associatedAction || associatedAction === 'NONE') return null;
-    switch (associatedAction) {
-      case 'SET_REVIEWING':
-        return <span className="w-2 h-2 rounded-full bg-amber-500 shrink-0" />;
-      case 'VERIFY_DEAL':
-        return <span className="w-2 h-2 rounded-full bg-[#4649E5] shrink-0" />;
-      case 'EXECUTE_PAYOUT':
-        return <span className="w-2 h-2 rounded-full bg-emerald-500 shrink-0" />;
-      case 'DECLINE_DEAL':
-        return <span className="w-2 h-2 rounded-full bg-rose-500 shrink-0" />;
-      default:
-        return null;
-    }
+    const activeGates = gates || getWorkflowGates();
+    const gate = activeGates.find(g => g.id === associatedAction);
+    if (!gate) return null;
+    
+    const firstTrigger = gate.triggers[0] || '';
+    let colorClass = 'bg-gray-400';
+    if (firstTrigger === 'REVIEWING') colorClass = 'bg-amber-500';
+    else if (firstTrigger === 'VERIFIED') colorClass = 'bg-[#4649E5]';
+    else if (firstTrigger === 'PAYED_AND_STORED') colorClass = 'bg-emerald-500';
+    else if (firstTrigger === 'DECLINED') colorClass = 'bg-rose-500';
+    else if (firstTrigger === 'CANCELED') colorClass = 'bg-red-500';
+    else if (firstTrigger === 'CLOSED') colorClass = 'bg-zinc-600';
+    else if (firstTrigger === 'ON_SELL') colorClass = 'bg-purple-500';
+    else if (firstTrigger === 'ITEM_RECEIVED_ID_MISSING') colorClass = 'bg-orange-500';
+    
+    return <span className={`w-2 h-2 rounded-full ${colorClass} shrink-0`} title={`Workflow Gate: ${gate.name}`} />;
   };
 
   const handleCategorySelect = (cat: string) => {
@@ -192,12 +200,13 @@ export function AssignmentsPanel({
                 <div className="flex flex-col gap-4 w-full">
                   {steps.map((step) => {
                     const currentAction = step.associatedAction || 'NONE';
-                    const actionLabelMap: Record<AssociatedAction, string> = {
+                    const activeGates = gates || getWorkflowGates();
+                    const actionLabelMap: Record<string, string> = {
                       NONE: 'None (Standard Step)',
-                      SET_REVIEWING: 'Start Review',
-                      VERIFY_DEAL: 'Verify Deal',
-                      EXECUTE_PAYOUT: 'Confirm Payout',
-                      DECLINE_DEAL: 'Reject & Close'
+                      ...activeGates.reduce((acc, g) => {
+                        acc[g.id] = g.name;
+                        return acc;
+                      }, {} as Record<string, string>)
                     };
                     const isOpen = activeDropdownStepId === step.id;
 

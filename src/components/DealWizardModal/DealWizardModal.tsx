@@ -22,6 +22,16 @@ import { STATUS_STYLES } from '../../data/mockDeals';
 import { getBusinessAreaForDeal, getCategoryFromItemTitle, CATEGORY_DISPLAY_NAMES } from '../../data/businessAreaMapping';
 import { CategoryTreeDropdown } from '../CategoryTree/CategoryTreeDropdown';
 import { DatePicker } from '../DatePicker/DatePicker';
+import { getWorkflowGates, STATUS_ORDER } from '../../data/workflowGates';
+
+const isGateCompleted = (gate: any, dealStatus: string) => {
+    if (!gate || !gate.triggers || gate.triggers.length === 0) return false;
+    if (gate.triggers.includes(dealStatus)) return true;
+    const currentOrder = STATUS_ORDER[dealStatus] || 0;
+    if (currentOrder === 0) return false;
+    const maxTriggerOrder = Math.max(...gate.triggers.map((t: string) => STATUS_ORDER[t] || 0));
+    return maxTriggerOrder > 0 && currentOrder >= maxTriggerOrder;
+};
 
 const parseDateString = (str: string): Date | null => {
   if (!str) return null;
@@ -219,43 +229,35 @@ export const DealWizardModal: React.FC<DealWizardModalProps> = ({
             setLoadingStepActions(prev => ({ ...prev, [stepId]: false }));
             setCompletedStepActions(prev => ({ ...prev, [stepId]: true }));
 
-            let statusText = '';
-            let nextStatus = '';
-            switch (action) {
-                case 'SET_REVIEWING':
-                    statusText = 'Review started and Issuance Certificate generated!';
-                    nextStatus = 'REVIEWING';
-                    break;
-                case 'VERIFY_DEAL':
-                    statusText = 'Deal verified and legal contract generated!';
-                    nextStatus = 'VERIFIED';
-                    break;
-                case 'EXECUTE_PAYOUT':
-                    statusText = 'Payout processed and item moved to storage!';
-                    nextStatus = 'PAYED_AND_STORED';
-                    break;
-                case 'DECLINE_DEAL':
-                    statusText = 'Deal declined and archived.';
-                    nextStatus = 'DECLINED';
-                    break;
-                default:
-                    break;
+            const category = dealData?.items[0] ? getCategoryFromItemTitle(dealData.items[0]) : 'car';
+            const wizard = getWizardForCategory(category);
+            const stepName = wizard?.stepNames?.[stepId] || stepId;
+
+            const gates = getWorkflowGates();
+            const gate = gates.find(g => g.id === action);
+
+            let statusText = 'Action Executed';
+            let nextStatus = dealData?.status || 'BOOKED';
+            let isDeclinedOrCanceled = false;
+
+            if (gate) {
+                const finalTrigger = gate.triggers[gate.triggers.length - 1];
+                if (finalTrigger) {
+                    nextStatus = finalTrigger;
+                }
+                isDeclinedOrCanceled = gate.triggers.includes('DECLINED') || gate.triggers.includes('CANCELED');
+                statusText = `Workflow Gate "${gate.name}" triggered: Deal status transitioned to ${nextStatus}!`;
             }
 
             showToast(statusText);
 
             const newEvent = {
                 id: `t-action-${stepId}-${Date.now()}`,
-                iconType: action === 'DECLINE_DEAL' ? 'x' : 'check-circle',
-                title: `Workflow Gate: ${
-                    action === 'SET_REVIEWING' ? 'Started Item Review' :
-                    action === 'VERIFY_DEAL' ? 'Deal Verified' :
-                    action === 'EXECUTE_PAYOUT' ? 'Payout & Storage Confirmed' :
-                    action === 'DECLINE_DEAL' ? 'Deal Declined' : 'Action Executed'
-                }`,
+                iconType: isDeclinedOrCanceled ? 'x' : 'check-circle',
+                title: `${gate ? gate.title : 'Action Executed'} (${stepName})`,
                 user: "Staff",
                 time: "Just now",
-                color: action === 'DECLINE_DEAL' ? 'amber' : 'green'
+                color: isDeclinedOrCanceled ? 'amber' : 'green'
             };
             setTimelineEvents(prev => [...prev, newEvent]);
 
@@ -284,17 +286,13 @@ export const DealWizardModal: React.FC<DealWizardModalProps> = ({
             const wizard = getWizardForCategory(category);
             const stepActions = wizard?.stepActions || {};
             const status = dealData.status || 'BOOKED';
+            const gates = getWorkflowGates();
 
             Object.entries(stepActions).forEach(([stepId, action]) => {
                 if (action === 'NONE') return;
-                if (status === 'REVIEWING') {
-                    if (action === 'SET_REVIEWING') completed[stepId] = true;
-                } else if (status === 'VERIFIED') {
-                    if (action === 'SET_REVIEWING' || action === 'VERIFY_DEAL') completed[stepId] = true;
-                } else if (status === 'PAYED_AND_STORED') {
-                    if (action === 'SET_REVIEWING' || action === 'VERIFY_DEAL' || action === 'EXECUTE_PAYOUT') completed[stepId] = true;
-                } else if (status === 'DECLINED') {
-                    if (action === 'DECLINE_DEAL') completed[stepId] = true;
+                const gate = gates.find(g => g.id === action);
+                if (gate && isGateCompleted(gate, status)) {
+                    completed[stepId] = true;
                 }
             });
             setCompletedStepActions(completed);
@@ -310,81 +308,18 @@ export const DealWizardModal: React.FC<DealWizardModalProps> = ({
             Object.entries(stepActions).forEach(([stepId, action]) => {
                 if (action === 'NONE') return;
                 const stepName = wizard?.stepNames?.[stepId] || stepId;
+                const gate = gates.find(g => g.id === action);
                 
-                if (status === 'REVIEWING') {
-                    if (action === 'SET_REVIEWING') {
-                        extraTimeline.push({
-                            id: `t-action-${stepId}`,
-                            iconType: 'check-circle',
-                            title: `Workflow Gate: Started Item Review (${stepName})`,
-                            user: "Staff",
-                            time: "Previous Session",
-                            color: "green"
-                        });
-                    }
-                } else if (status === 'VERIFIED') {
-                    if (action === 'SET_REVIEWING') {
-                        extraTimeline.push({
-                            id: `t-action-${stepId}`,
-                            iconType: 'check-circle',
-                            title: `Workflow Gate: Started Item Review (${stepName})`,
-                            user: "Staff",
-                            time: "Previous Session",
-                            color: "green"
-                        });
-                    }
-                    if (action === 'VERIFY_DEAL') {
-                        extraTimeline.push({
-                            id: `t-action-${stepId}`,
-                            iconType: 'check-circle',
-                            title: `Workflow Gate: Deal Verified (${stepName})`,
-                            user: "Staff",
-                            time: "Previous Session",
-                            color: "green"
-                        });
-                    }
-                } else if (status === 'PAYED_AND_STORED') {
-                    if (action === 'SET_REVIEWING') {
-                        extraTimeline.push({
-                            id: `t-action-${stepId}`,
-                            iconType: 'check-circle',
-                            title: `Workflow Gate: Started Item Review (${stepName})`,
-                            user: "Staff",
-                            time: "Previous Session",
-                            color: "green"
-                        });
-                    }
-                    if (action === 'VERIFY_DEAL') {
-                        extraTimeline.push({
-                            id: `t-action-${stepId}`,
-                            iconType: 'check-circle',
-                            title: `Workflow Gate: Deal Verified (${stepName})`,
-                            user: "Staff",
-                            time: "Previous Session",
-                            color: "green"
-                        });
-                    }
-                    if (action === 'EXECUTE_PAYOUT') {
-                        extraTimeline.push({
-                            id: `t-action-${stepId}`,
-                            iconType: 'check-circle',
-                            title: `Workflow Gate: Payout & Storage Confirmed (${stepName})`,
-                            user: "Staff",
-                            time: "Previous Session",
-                            color: "green"
-                        });
-                    }
-                } else if (status === 'DECLINED') {
-                    if (action === 'DECLINE_DEAL') {
-                        extraTimeline.push({
-                            id: `t-action-${stepId}`,
-                            iconType: 'x',
-                            title: `Workflow Gate: Deal Declined (${stepName})`,
-                            user: "Staff",
-                            time: "Previous Session",
-                            color: "amber"
-                        });
-                    }
+                if (gate && isGateCompleted(gate, status)) {
+                    const isDeclinedOrCanceled = gate.triggers.includes('DECLINED') || gate.triggers.includes('CANCELED');
+                    extraTimeline.push({
+                        id: `t-action-${stepId}`,
+                        iconType: isDeclinedOrCanceled ? 'x' : 'check-circle',
+                        title: `${gate.title} (${stepName})`,
+                        user: "Staff",
+                        time: "Previous Session",
+                        color: isDeclinedOrCanceled ? 'amber' : 'green'
+                    });
                 }
             });
 
@@ -992,85 +927,80 @@ export const DealWizardModal: React.FC<DealWizardModalProps> = ({
                                 );
                             })}
 
-                    {/* Workflow Action Gate Card */}
-                    {stepAction && stepAction !== 'NONE' && (
-                        <div className={`
-                            ${fields.length > 0 ? 'mt-8 pt-6 border-t border-[var(--border-subtlest)]' : ''}
-                        `}>
-                            <div className={`
-                                rounded-xl p-5 border flex flex-col md:flex-row md:items-center justify-between gap-4 transition-all duration-300
-                                ${completedStepActions[stepId] 
-                                    ? 'bg-green-50/40 border-green-100 text-green-800' 
-                                    : 'bg-indigo-50/35 border-indigo-100/50 text-indigo-900'}
-                            `}>
-                                <div className="flex items-start gap-3">
-                                    <div className={`
-                                        w-8 h-8 rounded-full flex items-center justify-center shrink-0 mt-0.5
-                                        ${completedStepActions[stepId] ? 'bg-green-100 text-green-600' : 'bg-indigo-100 text-[#4649E5]'}
-                                    `}>
-                                        {completedStepActions[stepId] ? <CheckCircle2 size={16} /> : <Lock size={16} />}
-                                    </div>
-                                    <div>
-                                        <h4 className="text-[13px] font-bold m-0 flex items-center gap-2">
-                                            Workflow Gate: {
-                                                stepAction === 'SET_REVIEWING' ? 'Start Item Review' :
-                                                stepAction === 'VERIFY_DEAL' ? 'Verify Calculations' :
-                                                stepAction === 'EXECUTE_PAYOUT' ? 'Execute Payout' :
-                                                stepAction === 'DECLINE_DEAL' ? 'Decline Deal' : 'Workflow Gate'
-                                            }
-                                            {completedStepActions[stepId] && (
-                                                <span className="text-[10px] font-bold uppercase tracking-wider px-2 py-0.5 rounded bg-green-100 text-green-700">
-                                                    Completed
-                                                </span>
-                                            )}
-                                        </h4>
-                                        <p className="text-xs text-gray-400 mt-1 mb-0 leading-relaxed max-w-xl">
-                                            {stepAction === 'SET_REVIEWING' && 'Ready to start the review process and transition the status to REVIEWING.'}
-                                            {stepAction === 'VERIFY_DEAL' && 'Validates all input data, locks appraisal/pricing, and marks the deal as VERIFIED.'}
-                                            {stepAction === 'EXECUTE_PAYOUT' && 'Processes the cashbook entry and marks the deal as PAYED_AND_STORED (Live).'}
-                                            {stepAction === 'DECLINE_DEAL' && 'Marks the deal as DECLINED. This terminates the wizard process.'}
-                                        </p>
-                                        {stepErrors[stepId] && (
-                                            <p className="text-[11px] font-bold text-red-500 mt-2 flex items-center gap-1.5 animate-pulse">
-                                                <AlertCircle size={12} /> {stepErrors[stepId]}
-                                            </p>
-                                        )}
-                                    </div>
-                                </div>
+                            {/* Workflow Action Gate Card */}
+                            {stepAction && stepAction !== 'NONE' && (() => {
+                                const gates = getWorkflowGates();
+                                const gate = gates.find(g => g.id === stepAction);
+                                if (!gate) return null;
                                 
-                                {!completedStepActions[stepId] ? (
-                                    <Button
-                                        onClick={() => handleTriggerStepAction(stepId, stepAction)}
-                                        disabled={loadingStepActions[stepId]}
-                                        variant="primary"
-                                        className="md:self-center font-bold px-5 h-9 shrink-0 flex items-center justify-center gap-2 bg-[#4649E5] hover:bg-[#3b3db8] text-white border-none text-xs rounded-lg shadow-sm hover:shadow"
-                                    >
-                                        {loadingStepActions[stepId] ? (
-                                            <>
-                                                <Loader2 size={14} className="animate-spin" />
-                                                Processing...
-                                            </>
-                                        ) : (
-                                            <>
-                                                {stepAction === 'SET_REVIEWING' ? 'Start Review' :
-                                                 stepAction === 'VERIFY_DEAL' ? 'Verify & Lock' :
-                                                 stepAction === 'EXECUTE_PAYOUT' ? 'Confirm Payout' :
-                                                 stepAction === 'DECLINE_DEAL' ? 'Decline Deal' : 'Unlock Gate'}
-                                            </>
-                                        )}
-                                    </Button>
-                                ) : (
-                                    <div className="text-xs font-bold text-green-600 flex items-center gap-1.5 shrink-0 self-center bg-green-100/60 px-3.5 py-1.5 rounded-lg border border-green-200">
-                                        <CheckCircle2 size={14} /> Gate Unlocked
+                                return (
+                                    <div className={`
+                                        ${fields.length > 0 ? 'mt-8 pt-6 border-t border-[var(--border-subtlest)]' : ''}
+                                    `}>
+                                        <div className={`
+                                            rounded-xl p-5 border flex flex-col md:flex-row md:items-center justify-between gap-4 transition-all duration-300
+                                            ${completedStepActions[stepId] 
+                                                ? 'bg-green-50/40 border-green-100 text-green-800' 
+                                                : 'bg-indigo-50/35 border-indigo-100/50 text-indigo-900'}
+                                        `}>
+                                            <div className="flex items-start gap-3">
+                                                <div className={`
+                                                    w-8 h-8 rounded-full flex items-center justify-center shrink-0 mt-0.5
+                                                    ${completedStepActions[stepId] ? 'bg-green-100 text-green-600' : 'bg-indigo-100 text-[#4649E5]'}
+                                                `}>
+                                                    {completedStepActions[stepId] ? <CheckCircle2 size={16} /> : <Lock size={16} />}
+                                                </div>
+                                                <div>
+                                                    <h4 className="text-[13px] font-bold m-0 flex items-center gap-2">
+                                                        {gate.title}
+                                                        {completedStepActions[stepId] && (
+                                                            <span className="text-[10px] font-bold uppercase tracking-wider px-2 py-0.5 rounded bg-green-100 text-green-700">
+                                                                Completed
+                                                            </span>
+                                                        )}
+                                                    </h4>
+                                                    <p className="text-xs text-gray-400 mt-1 mb-0 leading-relaxed max-w-xl">
+                                                        {gate.description}
+                                                    </p>
+                                                    {stepErrors[stepId] && (
+                                                        <p className="text-[11px] font-bold text-red-500 mt-2 flex items-center gap-1.5 animate-pulse">
+                                                            <AlertCircle size={12} /> {stepErrors[stepId]}
+                                                        </p>
+                                                    )}
+                                                </div>
+                                            </div>
+                                            
+                                            {!completedStepActions[stepId] ? (
+                                                <Button
+                                                    onClick={() => handleTriggerStepAction(stepId, stepAction)}
+                                                    disabled={loadingStepActions[stepId]}
+                                                    variant="primary"
+                                                    className="md:self-center font-bold px-5 h-9 shrink-0 flex items-center justify-center gap-2 bg-[#4649E5] hover:bg-[#3b3db8] text-white border-none text-xs rounded-lg shadow-sm hover:shadow"
+                                                >
+                                                    {loadingStepActions[stepId] ? (
+                                                        <>
+                                                            <Loader2 size={14} className="animate-spin" />
+                                                            Processing...
+                                                        </>
+                                                    ) : (
+                                                        <>
+                                                            {gate.buttonText}
+                                                        </>
+                                                    )}
+                                                </Button>
+                                            ) : (
+                                                <div className="text-xs font-bold text-green-600 flex items-center gap-1.5 shrink-0 self-center bg-green-100/60 px-3.5 py-1.5 rounded-lg border border-green-200">
+                                                    <CheckCircle2 size={14} /> Deal Status Changed
+                                                </div>
+                                            )}
+                                        </div>
                                     </div>
-                                )}
-                            </div>
+                                );
+                            })()}
                         </div>
-                    )}
-                </div>
-            </div>
-        );
-    };
+                    </div>
+                );
+            };
 
 
 

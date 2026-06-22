@@ -3,7 +3,47 @@ import { Button, Input, Dropdown, Toggle } from '../';
 import type { DealData } from '../../data/mockData';
 
 // Re-importing Lucide icons explicitly to avoid index mismatches
-import { X as XIcon, RefreshCw as RefreshCwIcon, Calendar as CalendarIcon } from 'lucide-react';
+import { 
+  X as XIcon, 
+  RefreshCw as RefreshCwIcon, 
+  Calendar as CalendarIcon,
+  Trash2 as TrashIcon,
+  Plus as PlusIcon,
+  AlertTriangle as AlertTriangleIcon
+} from 'lucide-react';
+
+export interface FeeComponent {
+    id: string;
+    level: 'deal' | 'item';
+    itemId?: string;
+    type: string;
+    customName?: string;
+    amount: number;
+    taxRate: number;
+    isDefault?: boolean;
+}
+
+const DEAL_FEE_TYPES = [
+    'Interest',
+    'Staggered fee',
+    'Transport fee (Pickup)',
+    'Transport fee (Drop-off)',
+    'Discount',
+    'No Interest & Fees (1 month)',
+    'Withdrawal fee',
+    'Other'
+];
+
+const ITEM_FEE_TYPES = [
+    'Manipulation Fee',
+    'Storage Fee',
+    'Cleaning Fee',
+    'Verification',
+    'Liquidation Fee',
+    'Third Party Costs',
+    'Cash Expenditures',
+    'Other'
+];
 
 export interface ExtendDealModalProps {
     isOpen: boolean;
@@ -34,8 +74,28 @@ function fmtDate(d: Date) {
 // Parse amounts like "€9,800" or "€1.200,00"
 function parseEurAmount(str: string): number {
     if (!str) return 0;
-    // Remove currency symbol, then handle German decimal notation
-    const cleaned = str.replace(/[€\s]/g, '').replace(/\./g, '').replace(',', '.');
+    let cleaned = str.replace(/[€\s]/g, '');
+    if (cleaned.includes('.') && cleaned.includes(',')) {
+        if (cleaned.indexOf('.') < cleaned.indexOf(',')) {
+            cleaned = cleaned.replace(/\./g, '').replace(',', '.');
+        } else {
+            cleaned = cleaned.replace(/,/g, '');
+        }
+    } else if (cleaned.includes(',')) {
+        const parts = cleaned.split(',');
+        if (parts.length === 2 && parts[1].length === 3) {
+            cleaned = cleaned.replace(/,/g, '');
+        } else {
+            cleaned = cleaned.replace(/,/g, '.');
+        }
+    } else if (cleaned.includes('.')) {
+        const parts = cleaned.split('.');
+        if (parts.length === 2 && parts[1].length === 3) {
+            cleaned = cleaned.replace(/\./g, '');
+        } else if (parts.length > 2) {
+            cleaned = cleaned.replace(/\./g, '');
+        }
+    }
     return parseFloat(cleaned) || 0;
 }
 
@@ -65,6 +125,12 @@ export const ExtendDealModal: React.FC<ExtendDealModalProps> = ({
     dealData,
     onUpdateDeal
 }) => {
+    // --- Calculations derived from props ---
+    const currentPayout = dealData ? parseEurAmount(dealData.amount || '0') : 0;
+    const currentDuration = dealData ? parseInt(dealData.wizardData?.dealDuration || '0', 10) : 0;
+    const elapsedDays = currentDuration || 30;
+    const calculatedBaseFees = Math.round(currentPayout * 0.04 * (elapsedDays / 30));
+
     const [step, setStep] = useState(1);
     const [isSubmitting, setIsSubmitting] = useState(false);
     const [extensionDays, setExtensionDays] = useState('30');
@@ -73,8 +139,30 @@ export const ExtendDealModal: React.FC<ExtendDealModalProps> = ({
     const [adjustmentMode, setAdjustmentMode] = useState<'none' | 'payback' | 'payout'>('none');
     const [adjustmentAmountInput, setAdjustmentAmountInput] = useState('');
 
-    // Step 4: Overrides states
-    const [customParentFees, setCustomParentFees] = useState('');
+    // Step 4: Overrides states & Fee Components
+    const [feeComponents, setFeeComponents] = useState<FeeComponent[]>(() => {
+        const components: FeeComponent[] = [
+            { id: 'deal-1', level: 'deal', type: 'Interest', amount: calculatedBaseFees * 0.5, taxRate: 0, isDefault: true },
+            { id: 'deal-2', level: 'deal', type: 'Staggered fee', amount: calculatedBaseFees * 0.3, taxRate: 20, isDefault: true }
+        ];
+        dealData?.items.forEach((item, idx) => {
+            components.push({
+                id: `item-storage-${idx}`,
+                level: 'item',
+                itemId: item,
+                type: 'Storage Fee',
+                amount: 1.00,
+                taxRate: 20,
+                isDefault: true
+            });
+        });
+        return components;
+    });
+
+    const [isEditingDeal, setIsEditingDeal] = useState(false);
+    const [customNameEditIds, setCustomNameEditIds] = useState<Set<string>>(new Set());
+    const [editingItemIds, setEditingItemIds] = useState<string[]>([]);
+    const [feeOverrideReason, setFeeOverrideReason] = useState('');
     const [childFeeRateOverride, setChildFeeRateOverride] = useState('4.0');
     const [allowOnlineExtension, setAllowOnlineExtension] = useState(true);
 
@@ -91,7 +179,28 @@ export const ExtendDealModal: React.FC<ExtendDealModalProps> = ({
                 setExtensionDays('30');
                 setAdjustmentMode('none');
                 setAdjustmentAmountInput('');
-                setCustomParentFees('');
+                
+                // Initialize fee components
+                const components: FeeComponent[] = [
+                    { id: 'deal-1', level: 'deal', type: 'Interest', amount: calculatedBaseFees * 0.5, taxRate: 0, isDefault: true },
+                    { id: 'deal-2', level: 'deal', type: 'Staggered fee', amount: calculatedBaseFees * 0.3, taxRate: 20, isDefault: true }
+                ];
+                dealData?.items.forEach((item, idx) => {
+                    components.push({
+                        id: `item-storage-${idx}`,
+                        level: 'item',
+                        itemId: item,
+                        type: 'Storage Fee',
+                        amount: 1.00,
+                        taxRate: 20,
+                        isDefault: true
+                    });
+                });
+                setFeeComponents(components);
+
+                setIsEditingDeal(false);
+                setEditingItemIds([]);
+                setFeeOverrideReason('');
                 setChildFeeRateOverride('4.0');
                 setAllowOnlineExtension(true);
                 setPaymentType('Cash');
@@ -100,20 +209,66 @@ export const ExtendDealModal: React.FC<ExtendDealModalProps> = ({
             }, 0);
             return () => clearTimeout(timer);
         }
-    }, [isOpen, dealData?.id, dealData?.countryCode]);
+    }, [isOpen, dealData?.id, dealData?.countryCode, calculatedBaseFees, dealData?.items]);
+
+    // Fee modification handlers
+    const handleAddDealFeeComponent = () => {
+        const newComp: FeeComponent = {
+            id: String(Math.floor(Math.random() * 1000000)),
+            level: 'deal',
+            type: 'Other',
+            customName: 'Other Fee',
+            amount: 0,
+            taxRate: 20,
+            isDefault: false
+        };
+        setFeeComponents([...feeComponents, newComp]);
+    };
+
+    const handleAddItemFeeComponent = (itemName: string) => {
+        const newComp: FeeComponent = {
+            id: String(Math.floor(Math.random() * 1000000)),
+            level: 'item',
+            itemId: itemName,
+            type: 'Other',
+            customName: 'Other Fee',
+            amount: 0,
+            taxRate: 20,
+            isDefault: false
+        };
+        setFeeComponents([...feeComponents, newComp]);
+    };
+
+    const handleUpdateComponent = (id: string, updates: Partial<FeeComponent>) => {
+        setFeeComponents(feeComponents.map(comp => {
+            if (comp.id === id) {
+                const updated = { ...comp, ...updates };
+                if (updates.type) {
+                    if (updates.type === 'Interest' || updates.type === 'Discount' || updates.type === 'No Interest & Fees (1 month)') {
+                        updated.taxRate = 0;
+                    } else {
+                        updated.taxRate = 20;
+                    }
+                }
+                return updated;
+            }
+            return comp;
+        }));
+    };
+
+    const enterCustomName = (id: string) => setCustomNameEditIds(prev => new Set([...prev, id]));
+    const exitCustomName = (id: string) => setCustomNameEditIds(prev => { const s = new Set(prev); s.delete(id); return s; });
+
+    const handleDeleteComponent = (id: string) => {
+        setFeeComponents(feeComponents.filter(comp => comp.id !== id));
+    };
 
     if (!isOpen || !dealData) return null;
 
     // --- Calculations ---
-    const currentPayout = parseEurAmount(dealData.amount || '0');
     const mockMarketValue = currentPayout * 2.2;
     const maxAllowedPayout = mockMarketValue * 0.60;
     const additionalPossible = Math.max(0, maxAllowedPayout - currentPayout);
-    const currentDuration = parseInt(dealData.wizardData?.dealDuration || '0', 10);
-
-    // Base parent fees calculation based on elapsed days (defaults to currentDuration, else 30)
-    const elapsedDays = currentDuration || 30;
-    const calculatedBaseFees = Math.round(currentPayout * 0.04 * (elapsedDays / 30));
 
     const origDueDate = parseDueDate(dealData.dueDate);
     const newDueDate = new Date(origDueDate);
@@ -121,9 +276,12 @@ export const ExtendDealModal: React.FC<ExtendDealModalProps> = ({
 
     const adjustmentAmountNum = parseFloat(adjustmentAmountInput) || 0;
     const adjustmentAmount = adjustmentMode === 'payback' ? adjustmentAmountNum : adjustmentMode === 'payout' ? -adjustmentAmountNum : 0;
-    const newTotalPayout = currentPayout - adjustmentAmount; // payback reduces layout payout, payout increases it
+    const newTotalPayout = currentPayout - adjustmentAmount;
 
-    const finalParentFees = customParentFees !== '' ? (parseFloat(customParentFees) || 0) : calculatedBaseFees;
+    const finalParentFees = feeComponents.reduce((sum, comp) => sum + (comp.amount || 0), 0);
+    const defaultFeesBaseline = (calculatedBaseFees * 0.8) + (dealData.items.length * 1.00);
+    const isFeesOverridden = Math.abs(finalParentFees - defaultFeesBaseline) > 0.01;
+    const isNotesRequired = isFeesOverridden && !feeOverrideReason.trim();
 
     const TOTAL_STEPS = 5;
 
@@ -148,6 +306,14 @@ export const ExtendDealModal: React.FC<ExtendDealModalProps> = ({
                     extensionDays: parseInt(extensionDays, 10),
                     adjustmentAmount: adjustmentAmount,
                     overwrittenParentFees: finalParentFees,
+                    feeBreakdown: feeComponents.map(c => ({
+                        level: c.level,
+                        itemId: c.itemId,
+                        type: c.type,
+                        name: c.type === 'Other' ? c.customName : c.type,
+                        amount: c.amount,
+                        taxRate: c.taxRate
+                    })),
                     childFeeRate: parseFloat(childFeeRateOverride),
                     allowOnlineExtension: allowOnlineExtension,
                     paymentType: paymentType,
@@ -179,7 +345,9 @@ export const ExtendDealModal: React.FC<ExtendDealModalProps> = ({
             }
         }
         if (step === 4) {
-            return finalParentFees >= 0;
+            if (isNotesRequired) return false;
+            if (finalParentFees < 0 || feeComponents.some(c => isNaN(c.amount) || c.amount < 0)) return false;
+            return true;
         }
         return true;
     })();
@@ -343,44 +511,345 @@ export const ExtendDealModal: React.FC<ExtendDealModalProps> = ({
             case 4:
                 return (
                     <div className="space-y-5 animate-in fade-in slide-in-from-right-4 duration-300">
-                        <p className="text-[13px] text-[var(--text-subtle)] leading-relaxed">
-                            Customize transaction fees and extension policy overrides for this rollover contract.
-                        </p>
+                        <div className="flex justify-between items-start border-b border-[var(--border-subtlest)] pb-4 gap-4">
+                            <div className="pr-6 max-w-[75%]">
+                                <h3 className="text-[13px] font-bold text-[var(--text-primary)] mb-1">Maturity & Fee Adjustments</h3>
+                                <p className="text-[11px] text-[var(--text-subtle)] leading-relaxed">
+                                    Review and edit calculated maturity fees at the deal and item levels. Add extra components as needed.
+                                </p>
+                            </div>
+                            <div className="text-right shrink-0 mt-0.5">
+                                <span className="text-[9px] uppercase font-black tracking-widest text-[var(--text-subtlest)] block mb-0.5">Total Fees</span>
+                                <span className="text-[16px] font-extrabold text-[var(--text-primary)]">€ {fmtEur(finalParentFees)}</span>
+                            </div>
+                        </div>
                         
-                        <Input
-                            label="Parent Fees Due Today (€)"
-                            type="number"
-                            step="0.01"
-                            min="0"
-                            placeholder={calculatedBaseFees.toString()}
-                            value={customParentFees}
-                            onChange={(e: React.ChangeEvent<HTMLInputElement>) => setCustomParentFees(e.target.value)}
-                            error={customParentFees !== '' && parseFloat(customParentFees) < 0}
-                            errorMessage="Fees must be a positive number or €0"
-                        />
-                        <p className="text-[11px] text-[var(--text-subtlest)] -mt-3.5">
-                            Default is € {calculatedBaseFees}. Set to €0 to completely waive parent fees.
-                        </p>
+                        {/* Deal Level Fees */}
+                        <div className="space-y-2">
+                            <div className="flex justify-between items-center">
+                                <span className="text-[11px] font-black uppercase tracking-widest text-[var(--text-subtlest)] block">Deal Level Fees</span>
+                                <button
+                                    type="button"
+                                    onClick={() => setIsEditingDeal(!isEditingDeal)}
+                                    className="text-[11px] font-bold text-[var(--text-brand)] hover:underline flex items-center gap-1 cursor-pointer bg-transparent border-0 outline-none"
+                                >
+                                    {isEditingDeal ? 'Done Editing' : 'Edit'}
+                                </button>
+                            </div>
+                            
+                            <div className="border border-[var(--border-subtlest)] rounded-xl overflow-hidden bg-[var(--background-secondary)]/10">
+                                <table className="w-full text-left border-collapse text-[12px] table-layout-fixed" style={{ tableLayout: 'fixed' }}>
+                                    <colgroup>
+                                        <col className="w-[50%]" />
+                                        <col className="w-[25%]" />
+                                        <col className="w-[25%]" />
+                                    </colgroup>
+                                    <thead>
+                                        <tr className="bg-[var(--background-secondary)]/60 text-[var(--text-subtle)] border-b border-[var(--border-subtlest)] font-bold">
+                                            <th className="px-4 py-2">Fee Component</th>
+                                            <th className="px-3 py-2 text-right whitespace-nowrap">% of Principal</th>
+                                            <th className="px-3 py-2 text-right">Amount</th>
+                                        </tr>
+                                    </thead>
+                                    <tbody>
+                                        {feeComponents.filter(c => c.level === 'deal').map((comp) => {
+                                            const principalPercentage = currentPayout > 0 ? ((comp.amount / currentPayout) * 100).toFixed(2) : '0.00';
+                                            return (
+                                                <tr key={comp.id} className="border-b border-[var(--border-subtlest)] hover:bg-[var(--background-secondary)]/20 transition-colors">
+                                                    <td className="px-4 py-2.5">
+                                                        {isEditingDeal ? (
+                                                            comp.isDefault ? (
+                                                                <span className="font-normal text-[var(--text-primary)]">{comp.type}</span>
+                                                            ) : (
+                                                                <div className="w-full">
+                                                                    {comp.type === 'Other' && customNameEditIds.has(comp.id) ? (
+                                                                        <div className="flex items-center gap-1">
+                                                                            <button type="button" onClick={() => exitCustomName(comp.id)} className="text-[var(--text-subtlest)] hover:text-[var(--text-brand)] transition-colors flex-shrink-0" title="Change type">
+                                                                                <svg width="12" height="12" viewBox="0 0 12 12" fill="none" stroke="currentColor" strokeWidth="1.8" strokeLinecap="round" strokeLinejoin="round"><path d="M7.5 2L4 6l3.5 4"/></svg>
+                                                                            </button>
+                                                                            <input
+                                                                                type="text"
+                                                                                autoFocus
+                                                                                className="flex-1 text-[12px] px-2 py-1.5 bg-[var(--background-primary)] border border-[var(--border-brand)] rounded-lg focus:outline-none focus:ring-1 focus:ring-[var(--brand-500)] text-[var(--text-primary)] font-normal"
+                                                                                placeholder="Custom fee name…"
+                                                                                value={comp.customName || ''}
+                                                                                onChange={(e) => handleUpdateComponent(comp.id, { customName: e.target.value })}
+                                                                            />
+                                                                        </div>
+                                                                    ) : (
+                                                                        <select
+                                                                            className="bg-[var(--background-primary)] border border-[var(--border-subtle)] text-[12px] rounded-lg px-2 py-1.5 focus:outline-none focus:ring-1 focus:ring-[var(--brand-500)] text-[var(--text-primary)] w-full font-normal"
+                                                                            value={comp.type}
+                                                                            onChange={(e) => { handleUpdateComponent(comp.id, { type: e.target.value }); if (e.target.value === 'Other') enterCustomName(comp.id); }}
+                                                                        >
+                                                                            {DEAL_FEE_TYPES.map(t => (
+                                                                                <option key={t} value={t} disabled={feeComponents.some(c => c.level === 'deal' && c.id !== comp.id && c.type === t && t !== 'Other')}>{t}</option>
+                                                                            ))}
+                                                                        </select>
+                                                                    )}
+                                                                </div>
+                                                            )
+                                                        ) : (
+                                                            <span className="font-normal text-[var(--text-primary)]">
+                                                                {comp.type === 'Other' ? (comp.customName || 'Other') : comp.type}
+                                                            </span>
+                                                        )}
+                                                    </td>
+                                                    <td className="px-3 py-2.5 text-right font-medium text-[var(--text-subtle)]">
+                                                        {principalPercentage}%
+                                                    </td>
+                                                    <td className="px-3 py-2.5 text-right font-normal text-[var(--text-primary)]">
+                                                        {isEditingDeal ? (
+                                                            <div className="flex items-center gap-1.5 justify-end">
+                                                                <div className="relative flex items-center justify-end flex-1">
+                                                                    <span className="absolute left-2.5 text-[var(--text-subtle)] text-[12px] font-semibold select-none">€</span>
+                                                                    <input
+                                                                        type="number"
+                                                                        step="0.01"
+                                                                        className="w-full text-[12px] pl-6 pr-2 py-1 bg-[var(--background-primary)] border border-[var(--border-subtle)] rounded-lg focus:outline-none focus:ring-1 focus:ring-[var(--brand-500)] text-[var(--text-primary)] font-normal text-right [appearance:textfield] [&::-webkit-outer-spin-button]:appearance-none [&::-webkit-inner-spin-button]:appearance-none"
+                                                                        value={isNaN(comp.amount) ? '' : comp.amount}
+                                                                        onChange={(e) => handleUpdateComponent(comp.id, { amount: parseFloat(e.target.value) })}
+                                                                    />
+                                                                </div>
+                                                                <button
+                                                                    type="button"
+                                                                    onClick={() => handleDeleteComponent(comp.id)}
+                                                                    className="p-1 hover:bg-red-50 dark:hover:bg-red-950/20 hover:text-red-600 rounded text-[var(--text-subtlest)] transition-colors cursor-pointer flex-shrink-0"
+                                                                    title="Delete"
+                                                                >
+                                                                    <TrashIcon size={14} />
+                                                                </button>
+                                                            </div>
+                                                        ) : (
+                                                            `€ ${fmtEur(comp.amount)}`
+                                                        )}
+                                                    </td>
+                                                </tr>
+                                            );
+                                        })}
+                                        {/* Subtotal Row inside Table */}
+                                        <tr className="bg-[var(--background-secondary)]/30 border-t border-[var(--border-subtlest)] font-bold text-[12px]">
+                                            <td className="px-4 py-2.5">
+                                                {isEditingDeal && (
+                                                    <button
+                                                        type="button"
+                                                        onClick={handleAddDealFeeComponent}
+                                                        className="text-[11px] font-bold text-[var(--text-brand)] hover:underline flex items-center gap-1 cursor-pointer"
+                                                    >
+                                                        <PlusIcon size={12} /> Add Deal Fee Component
+                                                    </button>
+                                                )}
+                                            </td>
+                                            <td className="px-3 py-2.5 text-right text-[var(--text-subtle)]">
+                                                Subtotal:
+                                            </td>
+                                            <td className="px-3 py-2.5 text-right text-[var(--text-primary)]">
+                                                € {fmtEur(feeComponents.filter(c => c.level === 'deal').reduce((sum, c) => sum + (c.amount || 0), 0))}
+                                            </td>
+                                            <td className="px-3 py-2.5"></td>
+                                        </tr>
+                                    </tbody>
+                                </table>
+                            </div>
+                        </div>
 
-                        <Dropdown
-                            label="Next Contract Child Fee Rate"
-                            value={childFeeRateOverride}
-                            onChange={(val) => setChildFeeRateOverride(val)}
-                            options={[
-                                { label: 'Standard (4% / month)', value: '4.0' },
-                                { label: 'Override to 3%', value: '3.0' },
-                                { label: 'Override to 2%', value: '2.0' },
-                                { label: 'Override to 0%', value: '0.0' },
-                            ]}
-                        />
+                        {/* Item Level Fees */}
+                        <div className="space-y-3">
+                            <span className="text-[11px] font-black uppercase tracking-widest text-[var(--text-subtlest)] block">Item Level Fees</span>
+                            {dealData.items.map((itemName, itemIdx) => {
+                                const itemComps = feeComponents.filter(c => c.level === 'item' && c.itemId === itemName);
+                                const isEditingItem = editingItemIds.includes(itemName);
+                                
+                                const toggleEditItem = () => {
+                                    if (isEditingItem) {
+                                        setEditingItemIds(editingItemIds.filter(id => id !== itemName));
+                                    } else {
+                                        setEditingItemIds([...editingItemIds, itemName]);
+                                    }
+                                };
 
-                        <div className="pt-2 border-t border-[var(--border-subtlest)]">
-                            <Toggle
-                                label="Allow Online Extension"
-                                description="Customer can perform future extensions themselves via portal"
-                                checked={allowOnlineExtension}
-                                onChange={(e) => setAllowOnlineExtension(e.target.checked)}
+                                return (
+                                    <div key={`item-card-${itemIdx}`} className="bg-[var(--background-secondary)]/20 rounded-xl border border-[var(--border-subtlest)] p-4 space-y-3">
+                                        <div className="flex justify-between items-center">
+                                            <span className="text-[12px] font-bold text-[var(--text-primary)] flex items-center gap-1.5">
+                                                <span className="w-1.5 h-1.5 rounded-full bg-[var(--brand-500)]" />
+                                                Item: {itemName}
+                                            </span>
+                                            <button
+                                                type="button"
+                                                onClick={toggleEditItem}
+                                                className="text-[11px] font-bold text-[var(--text-brand)] hover:underline flex items-center gap-1 cursor-pointer bg-transparent border-0 outline-none"
+                                            >
+                                                {isEditingItem ? 'Done Editing' : 'Edit'}
+                                            </button>
+                                        </div>
+                                        <div className="border border-[var(--border-subtlest)] rounded-lg overflow-hidden bg-white/5">
+                                            <table className="w-full text-left border-collapse text-[11px] table-layout-fixed" style={{ tableLayout: 'fixed' }}>
+                                                <colgroup>
+                                                    <col className="w-[50%]" />
+                                                    <col className="w-[25%]" />
+                                                    <col className="w-[25%]" />
+                                                </colgroup>
+                                                <thead>
+                                                    <tr className="bg-[var(--background-secondary)]/40 text-[var(--text-subtle)] border-b border-[var(--border-subtlest)] font-bold">
+                                                        <th className="px-3 py-1.5">Fee Component</th>
+                                                        <th className="px-2 py-1.5 text-right whitespace-nowrap">% of Principal</th>
+                                                        <th className="px-2 py-1.5 text-right">Amount</th>
+                                                    </tr>
+                                                </thead>
+                                                <tbody>
+                                                    {itemComps.map((comp) => {
+                                                        const principalPercentage = currentPayout > 0 ? ((comp.amount / currentPayout) * 100).toFixed(2) : '0.00';
+                                                        return (
+                                                            <tr key={comp.id} className="border-b border-[var(--border-subtlest)] hover:bg-[var(--background-secondary)]/20 transition-colors">
+                                                                <td className="px-3 py-2">
+                                                                    {isEditingItem ? (
+                                                                        comp.isDefault ? (
+                                                                            <span className="font-normal text-[var(--text-primary)]">{comp.type}</span>
+                                                                        ) : (
+                                                                            <div className="w-full">
+                                                                                {comp.type === 'Other' && customNameEditIds.has(comp.id) ? (
+                                                                                    <div className="flex items-center gap-1">
+                                                                                        <button type="button" onClick={() => exitCustomName(comp.id)} className="text-[var(--text-subtlest)] hover:text-[var(--text-brand)] transition-colors flex-shrink-0" title="Change type">
+                                                                                            <svg width="11" height="11" viewBox="0 0 12 12" fill="none" stroke="currentColor" strokeWidth="1.8" strokeLinecap="round" strokeLinejoin="round"><path d="M7.5 2L4 6l3.5 4"/></svg>
+                                                                                        </button>
+                                                                                        <input
+                                                                                            type="text"
+                                                                                            autoFocus
+                                                                                            className="flex-1 text-[11px] px-1.5 py-1 bg-[var(--background-primary)] border border-[var(--border-brand)] rounded-md focus:outline-none focus:ring-1 focus:ring-[var(--brand-500)] text-[var(--text-primary)] font-normal"
+                                                                                            placeholder="Custom fee name…"
+                                                                                            value={comp.customName || ''}
+                                                                                            onChange={(e) => handleUpdateComponent(comp.id, { customName: e.target.value })}
+                                                                                        />
+                                                                                    </div>
+                                                                                ) : (
+                                                                                    <select
+                                                                                        className="bg-[var(--background-primary)] border border-[var(--border-subtle)] text-[11px] rounded-md px-1.5 py-1 focus:outline-none focus:ring-1 focus:ring-[var(--brand-500)] text-[var(--text-primary)] w-full font-normal"
+                                                                                        value={comp.type}
+                                                                                        onChange={(e) => { handleUpdateComponent(comp.id, { type: e.target.value }); if (e.target.value === 'Other') enterCustomName(comp.id); }}
+                                                                                    >
+                                                                                        {ITEM_FEE_TYPES.map(t => (
+                                                                                            <option key={t} value={t} disabled={feeComponents.some(c => c.level === 'item' && c.itemId === comp.itemId && c.id !== comp.id && c.type === t && t !== 'Other')}>{t}</option>
+                                                                                        ))}
+                                                                                    </select>
+                                                                                )}
+                                                                            </div>
+                                                                        )
+                                                                    ) : (
+                                                                        <span className="font-normal text-[var(--text-primary)]">
+                                                                            {comp.type === 'Other' ? (comp.customName || 'Other') : comp.type}
+                                                                        </span>
+                                                                    )}
+                                                                </td>
+                                                                <td className="px-2 py-2 text-right font-medium text-[var(--text-subtle)]">
+                                                                    {principalPercentage}%
+                                                                </td>
+                                                                <td className="px-2 py-2 text-right font-normal text-[var(--text-primary)]">
+                                                                    {isEditingItem ? (
+                                                                        <div className="flex items-center gap-1 justify-end">
+                                                                            <div className="relative flex items-center justify-end flex-1">
+                                                                                <span className="absolute left-1.5 text-[var(--text-subtle)] text-[11px] font-semibold select-none">€</span>
+                                                                                <input
+                                                                                    type="number"
+                                                                                    step="0.01"
+                                                                                    className="w-full text-[11px] pl-4 pr-1 py-0.5 bg-[var(--background-primary)] border border-[var(--border-subtle)] rounded focus:outline-none focus:ring-1 focus:ring-[var(--brand-500)] text-[var(--text-primary)] font-normal text-right [appearance:textfield] [&::-webkit-outer-spin-button]:appearance-none [&::-webkit-inner-spin-button]:appearance-none"
+                                                                                    value={isNaN(comp.amount) ? '' : comp.amount}
+                                                                                    onChange={(e) => handleUpdateComponent(comp.id, { amount: parseFloat(e.target.value) })}
+                                                                                />
+                                                                            </div>
+                                                                            <button
+                                                                                type="button"
+                                                                                onClick={() => handleDeleteComponent(comp.id)}
+                                                                                className="p-1 hover:bg-red-50 dark:hover:bg-red-950/20 hover:text-red-600 rounded text-[var(--text-subtlest)] transition-colors cursor-pointer flex-shrink-0"
+                                                                                title="Delete"
+                                                                            >
+                                                                                <TrashIcon size={12} />
+                                                                            </button>
+                                                                        </div>
+                                                                    ) : (
+                                                                        `€ ${fmtEur(comp.amount)}`
+                                                                    )}
+                                                                </td>
+                                                            </tr>
+                                                        );
+                                                    })}
+                                                    {/* Subtotal Row inside Table */}
+                                                    <tr className="bg-[var(--background-secondary)]/30 border-t border-[var(--border-subtlest)] font-bold text-[11px]">
+                                                        <td className="px-3 py-1.5">
+                                                            {isEditingItem && (
+                                                                <button
+                                                                    type="button"
+                                                                    onClick={() => handleAddItemFeeComponent(itemName)}
+                                                                    className="text-[10px] font-bold text-[var(--text-brand)] hover:underline flex items-center gap-1 cursor-pointer"
+                                                                >
+                                                                    <PlusIcon size={10} /> Add Item Fee
+                                                                </button>
+                                                            )}
+                                                        </td>
+                                                        <td className="px-2 py-1.5 text-right text-[var(--text-subtle)]">
+                                                            Subtotal:
+                                                        </td>
+                                                        <td className="px-2 py-1.5 text-right text-[var(--text-primary)]">
+                                                            € {fmtEur(itemComps.reduce((sum, c) => sum + (c.amount || 0), 0))}
+                                                        </td>
+                                                        <td className="px-2 py-1.5"></td>
+                                                    </tr>
+                                                </tbody>
+                                            </table>
+                                        </div>
+                                    </div>
+                                );
+                            })}
+                        </div>
+
+                        {/* Notes / Justification Section */}
+                        {isFeesOverridden && (
+                            <div className="flex flex-col">
+                                <label className="text-[12px] font-bold text-[var(--text-primary)] mb-1.5 flex items-center justify-between">
+                                    <span>Notes / Justification <span className="text-red-500">*</span></span>
+                                    <span className="text-[10px] text-amber-600 dark:text-amber-400 font-semibold bg-amber-50 dark:bg-amber-950/20 px-2 py-0.5 rounded border border-amber-200">
+                                        Adjustment Reason Required
+                                    </span>
+                                </label>
+                                <textarea
+                                    className={`w-full text-[13px] px-3.5 py-3 bg-white dark:bg-[#1f2937] border rounded-xl focus:outline-none focus:ring-2 focus:ring-[var(--brand-500)] text-[var(--text-primary)] transition-all min-h-[75px] ${
+                                        isNotesRequired ? 'border-red-300 bg-red-50/10' : 'border-[var(--border-subtle)]'
+                                    }`}
+                                    placeholder="Enter operator reason for fee adjustment..."
+                                    value={feeOverrideReason}
+                                    onChange={(e) => setFeeOverrideReason(e.target.value)}
+                                />
+                                {isNotesRequired && (
+                                    <span className="text-[11px] font-semibold text-red-600 dark:text-red-400 mt-1.5 flex items-center gap-1.5">
+                                        <AlertTriangleIcon size={12} />
+                                        Written justification is mandatory when fees are overridden.
+                                    </span>
+                                )}
+                            </div>
+                        )}
+
+                        {/* Policy Overrides */}
+                        <div className="space-y-4 pt-3 border-t border-[var(--border-subtlest)]">
+                            <span className="text-[11px] font-black uppercase tracking-widest text-[var(--text-subtlest)] block">Extension Policy Overrides</span>
+                            <Dropdown
+                                label="Next Contract Child Fee Rate"
+                                value={childFeeRateOverride}
+                                onChange={(val) => setChildFeeRateOverride(val)}
+                                options={[
+                                    { label: 'Standard (4% / month)', value: '4.0' },
+                                    { label: 'Override to 3%', value: '3.0' },
+                                    { label: 'Override to 2%', value: '2.0' },
+                                    { label: 'Override to 0%', value: '0.0' },
+                                ]}
                             />
+                            <div className="pt-2">
+                                <Toggle
+                                    label="Allow Online Extension"
+                                    description="Customer can perform future extensions themselves via portal"
+                                    checked={allowOnlineExtension}
+                                    onChange={(e) => setAllowOnlineExtension(e.target.checked)}
+                                />
+                            </div>
                         </div>
                     </div>
                 );
@@ -571,8 +1040,19 @@ export const ExtendDealModal: React.FC<ExtendDealModalProps> = ({
                             {isSubmitting ? 'Confirming...' : 'Confirm Extension'}
                         </Button>
                     ) : (
-                        <Button variant="primary" onClick={goNext} disabled={!canContinue} className="cursor-pointer">
-                            Continue
+                        <Button
+                            variant="primary"
+                            onClick={() => {
+                                if (step === 4) {
+                                    if (isEditingDeal) setIsEditingDeal(false);
+                                    if (editingItemIds.length > 0) setEditingItemIds([]);
+                                }
+                                goNext();
+                            }}
+                            disabled={!canContinue}
+                            className="cursor-pointer font-bold"
+                        >
+                            {step === 4 && (isEditingDeal || editingItemIds.length > 0) ? 'Save & Continue' : 'Continue'}
                         </Button>
                     )}
                 </div>

@@ -8,7 +8,7 @@ export interface WizardField {
   required?: boolean;
 }
 
-export type AssociatedAction = 'NONE' | 'SET_REVIEWING' | 'VERIFY_DEAL' | 'EXECUTE_PAYOUT' | 'DECLINE_DEAL';
+export type AssociatedAction = string; // Allows any dynamic workflow gate ID or 'NONE'
 
 export interface WizardConfig {
   id: string;

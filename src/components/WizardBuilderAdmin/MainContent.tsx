@@ -1,6 +1,7 @@
 import { useState } from 'react';
 import svgPaths from "../../imports/svg-4o201vrq4p";
 import type { WizardState, Field } from './DealWizardBuilder';
+import type { WorkflowGate } from '../../data/workflowGates';
 import { DraggableFieldItem } from './DraggableFieldItem';
 import { DraggableStepTab } from './DraggableStepTab';
 import { Breadcrumb } from './Breadcrumb';
@@ -18,6 +19,7 @@ interface MainContentProps {
   onReorderFields: (dragIndex: number, hoverIndex: number, stepId: string) => void;
   onUpdateWizardName: (name: string) => void;
   onBack: () => void;
+  gates?: WorkflowGate[];
 }
 
 export function MainContent({
@@ -28,7 +30,8 @@ export function MainContent({
   onToggleActive,
   onReorderFields,
   onUpdateWizardName,
-  onBack
+  onBack,
+  gates
 }: MainContentProps) {
   const { showToast } = useToast();
   const currentStepFields = wizardState.fields.filter(f => f.stepId === wizardState.currentStep);
@@ -128,6 +131,7 @@ export function MainContent({
                 isActive={step.id === wizardState.currentStep}
                 onClick={() => onSetCurrentStep(step.id)}
                 onReorder={() => {}} // Disabled reordering for fixed global steps
+                gates={gates}
               />
             ))}
           </div>

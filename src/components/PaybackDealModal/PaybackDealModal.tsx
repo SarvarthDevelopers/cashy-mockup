@@ -401,19 +401,19 @@ Thank you for choosing CASHY.
                             </div>
                             
                             <div className="border border-[var(--border-subtlest)] rounded-xl overflow-hidden bg-[var(--background-secondary)]/10">
-                                <table className="w-full text-left border-collapse text-[12px]">
+                                <table className="w-full text-left border-collapse text-[12px] table-layout-fixed" style={{ tableLayout: 'fixed' }}>
+                                    <colgroup>
+                                        <col className="w-[45%]" />
+                                        <col className="w-[25%]" />
+                                        <col className="w-[25%]" />
+                                        <col className="w-[5%]" />
+                                    </colgroup>
                                     <thead>
                                         <tr className="bg-[var(--background-secondary)]/60 text-[var(--text-subtle)] border-b border-[var(--border-subtlest)] font-bold">
-                                            <th className="px-4 py-2 w-[45%]">Fee Component</th>
-                                            <th className="px-3 py-2 w-[20%] text-right">% of Principal</th>
-                                            {isEditingDeal ? (
-                                                <>
-                                                    <th className="px-3 py-2 w-[25%] text-right">Amount</th>
-                                                    <th className="px-3 py-2 w-[10%] text-center"></th>
-                                                </>
-                                            ) : (
-                                                <th className="px-4 py-2 w-[35%] text-right">Amount</th>
-                                            )}
+                                            <th className="px-4 py-2">Fee Component</th>
+                                            <th className="px-3 py-2 text-right whitespace-nowrap">% of Principal</th>
+                                            <th className="px-3 py-2 text-right">Amount</th>
+                                            <th className="px-3 py-2"></th>
                                         </tr>
                                     </thead>
                                     <tbody>
@@ -456,14 +456,14 @@ Thank you for choosing CASHY.
                                                     <td className="px-3 py-2.5 text-right font-medium text-[var(--text-subtle)]">
                                                         {principalPercentage}%
                                                     </td>
-                                                    <td className={isEditingDeal ? "px-3 py-2.5 text-right" : "px-4 py-2.5 text-right font-bold text-[var(--text-primary)]"}>
+                                                    <td className="px-3 py-2.5 text-right font-bold text-[var(--text-primary)]">
                                                         {isEditingDeal ? (
                                                             <div className="relative flex items-center justify-end">
                                                                 <span className="absolute left-2.5 text-[var(--text-subtle)] text-[12px] font-semibold select-none">€</span>
                                                                 <input
                                                                     type="number"
                                                                     step="0.01"
-                                                                    className="w-full text-[12px] pl-6 pr-2 py-1 bg-white dark:bg-[#1f2937] border border-[var(--border-subtle)] rounded-lg focus:outline-none focus:ring-1 focus:ring-[var(--brand-500)] text-[var(--text-primary)] font-bold text-right"
+                                                                    className="w-full text-[12px] pl-6 pr-2 py-1 bg-white dark:bg-[#1f2937] border border-[var(--border-subtle)] rounded-lg focus:outline-none focus:ring-1 focus:ring-[var(--brand-500)] text-[var(--text-primary)] font-bold text-right [appearance:textfield] [&::-webkit-outer-spin-button]:appearance-none [&::-webkit-inner-spin-button]:appearance-none"
                                                                     value={isNaN(comp.amount) ? '' : comp.amount}
                                                                     onChange={(e) => handleUpdateComponent(comp.id, { amount: parseFloat(e.target.value) })}
                                                                 />
@@ -472,40 +472,43 @@ Thank you for choosing CASHY.
                                                             `€ ${fmtEur(comp.amount)}`
                                                         )}
                                                     </td>
-                                                    {isEditingDeal && (
-                                                        <td className="px-3 py-2.5 text-center">
-                                                            {!comp.isDefault && (
-                                                                <button
-                                                                    type="button"
-                                                                    onClick={() => handleDeleteComponent(comp.id)}
-                                                                    className="p-1 hover:bg-red-50 dark:hover:bg-red-950/20 hover:text-red-600 rounded text-[var(--text-subtlest)] transition-colors cursor-pointer"
-                                                                >
-                                                                    <TrashIcon size={14} />
-                                                                </button>
-                                                            )}
-                                                        </td>
-                                                    )}
+                                                    <td className="px-3 py-2.5 text-center">
+                                                        {isEditingDeal && !comp.isDefault && (
+                                                            <button
+                                                                type="button"
+                                                                onClick={() => handleDeleteComponent(comp.id)}
+                                                                className="p-1 hover:bg-red-50 dark:hover:bg-red-950/20 hover:text-red-600 rounded text-[var(--text-subtlest)] transition-colors cursor-pointer"
+                                                            >
+                                                                <TrashIcon size={14} />
+                                                            </button>
+                                                        )}
+                                                    </td>
                                                 </tr>
                                             );
                                         })}
+                                        {/* Subtotal Row inside Table */}
+                                        <tr className="bg-[var(--background-secondary)]/30 border-t border-[var(--border-subtlest)] font-bold text-[12px]">
+                                            <td className="px-4 py-2.5">
+                                                {isEditingDeal && (
+                                                    <button
+                                                        type="button"
+                                                        onClick={handleAddDealFeeComponent}
+                                                        className="text-[11px] font-bold text-[var(--text-brand)] hover:underline flex items-center gap-1 cursor-pointer"
+                                                    >
+                                                        <PlusIcon size={12} /> Add Deal Fee Component
+                                                    </button>
+                                                )}
+                                            </td>
+                                            <td className="px-3 py-2.5 text-right text-[var(--text-subtle)]">
+                                                Subtotal:
+                                            </td>
+                                            <td className="px-3 py-2.5 text-right text-[var(--text-primary)]">
+                                                € {fmtEur(feeComponents.filter(c => c.level === 'deal').reduce((sum, c) => sum + (c.amount || 0), 0))}
+                                            </td>
+                                            <td className="px-3 py-2.5"></td>
+                                        </tr>
                                     </tbody>
                                 </table>
-                                <div className="px-4 py-2.5 bg-[var(--background-secondary)]/30 border-t border-[var(--border-subtlest)] flex justify-between items-center">
-                                    <div>
-                                        {isEditingDeal && (
-                                            <button
-                                                type="button"
-                                                onClick={handleAddDealFeeComponent}
-                                                className="text-[11px] font-bold text-[var(--text-brand)] hover:underline flex items-center gap-1 cursor-pointer"
-                                            >
-                                                <PlusIcon size={12} /> Add Deal Fee Component
-                                            </button>
-                                        )}
-                                    </div>
-                                    <div className="text-[12px] font-bold text-[var(--text-primary)]">
-                                        Subtotal: € {fmtEur(feeComponents.filter(c => c.level === 'deal').reduce((sum, c) => sum + (c.amount || 0), 0))}
-                                    </div>
-                                </div>
                             </div>
                         </div>
 
@@ -540,19 +543,19 @@ Thank you for choosing CASHY.
                                             </button>
                                         </div>
                                         <div className="border border-[var(--border-subtlest)] rounded-lg overflow-hidden bg-white/5">
-                                            <table className="w-full text-left border-collapse text-[11px]">
+                                            <table className="w-full text-left border-collapse text-[11px] table-layout-fixed" style={{ tableLayout: 'fixed' }}>
+                                                <colgroup>
+                                                    <col className="w-[45%]" />
+                                                    <col className="w-[25%]" />
+                                                    <col className="w-[25%]" />
+                                                    <col className="w-[5%]" />
+                                                </colgroup>
                                                 <thead>
                                                     <tr className="bg-[var(--background-secondary)]/40 text-[var(--text-subtle)] border-b border-[var(--border-subtlest)] font-bold">
-                                                        <th className="px-3 py-1.5 w-[45%]">Fee Component</th>
-                                                        <th className="px-2 py-1.5 w-[20%] text-right">% of Principal</th>
-                                                        {isEditingItem ? (
-                                                            <>
-                                                                <th className="px-2 py-1.5 w-[25%] text-right">Amount</th>
-                                                                <th className="px-2 py-1.5 w-[10%] text-center"></th>
-                                                            </>
-                                                        ) : (
-                                                            <th className="px-3 py-1.5 w-[35%] text-right">Amount</th>
-                                                        )}
+                                                        <th className="px-3 py-1.5">Fee Component</th>
+                                                        <th className="px-2 py-1.5 text-right whitespace-nowrap">% of Principal</th>
+                                                        <th className="px-2 py-1.5 text-right">Amount</th>
+                                                        <th className="px-2 py-1.5"></th>
                                                     </tr>
                                                 </thead>
                                                 <tbody>
@@ -595,14 +598,14 @@ Thank you for choosing CASHY.
                                                                 <td className="px-2 py-2 text-right font-medium text-[var(--text-subtle)]">
                                                                     {principalPercentage}%
                                                                 </td>
-                                                                <td className={isEditingItem ? "px-2 py-2 text-right" : "px-3 py-2 text-right font-bold text-[var(--text-primary)]"}>
+                                                                <td className="px-2 py-2 text-right font-bold text-[var(--text-primary)]">
                                                                     {isEditingItem ? (
                                                                         <div className="relative flex items-center justify-end">
                                                                             <span className="absolute left-1.5 text-[var(--text-subtle)] text-[11px] font-semibold select-none">€</span>
                                                                             <input
                                                                                 type="number"
                                                                                 step="0.01"
-                                                                                className="w-full text-[11px] pl-4 pr-1 py-0.5 bg-white dark:bg-[#1f2937] border border-[var(--border-subtle)] rounded focus:outline-none focus:ring-1 focus:ring-[var(--brand-500)] text-[var(--text-primary)] font-bold text-right"
+                                                                                className="w-full text-[11px] pl-4 pr-1 py-0.5 bg-white dark:bg-[#1f2937] border border-[var(--border-subtle)] rounded focus:outline-none focus:ring-1 focus:ring-[var(--brand-500)] text-[var(--text-primary)] font-bold text-right [appearance:textfield] [&::-webkit-outer-spin-button]:appearance-none [&::-webkit-inner-spin-button]:appearance-none"
                                                                                 value={isNaN(comp.amount) ? '' : comp.amount}
                                                                                 onChange={(e) => handleUpdateComponent(comp.id, { amount: parseFloat(e.target.value) })}
                                                                             />
@@ -611,40 +614,43 @@ Thank you for choosing CASHY.
                                                                         `€ ${fmtEur(comp.amount)}`
                                                                     )}
                                                                 </td>
-                                                                {isEditingItem && (
-                                                                    <td className="px-2 py-2 text-center">
-                                                                        {!comp.isDefault && (
-                                                                            <button
-                                                                                type="button"
-                                                                                onClick={() => handleDeleteComponent(comp.id)}
-                                                                                className="p-1 hover:bg-red-50 dark:hover:bg-red-950/20 hover:text-red-600 rounded text-[var(--text-subtlest)] transition-colors cursor-pointer"
-                                                                            >
-                                                                                <TrashIcon size={12} />
-                                                                            </button>
-                                                                        )}
-                                                                    </td>
-                                                                )}
+                                                                <td className="px-2 py-2 text-center">
+                                                                    {isEditingItem && !comp.isDefault && (
+                                                                        <button
+                                                                            type="button"
+                                                                            onClick={() => handleDeleteComponent(comp.id)}
+                                                                            className="p-1 hover:bg-red-50 dark:hover:bg-red-950/20 hover:text-red-600 rounded text-[var(--text-subtlest)] transition-colors cursor-pointer"
+                                                                        >
+                                                                            <TrashIcon size={12} />
+                                                                        </button>
+                                                                    )}
+                                                                </td>
                                                             </tr>
                                                         );
                                                     })}
+                                                    {/* Subtotal Row inside Table */}
+                                                    <tr className="bg-[var(--background-secondary)]/30 border-t border-[var(--border-subtlest)] font-bold text-[11px]">
+                                                        <td className="px-3 py-1.5">
+                                                            {isEditingItem && (
+                                                                <button
+                                                                    type="button"
+                                                                    onClick={() => handleAddItemFeeComponent(itemName)}
+                                                                    className="text-[10px] font-bold text-[var(--text-brand)] hover:underline flex items-center gap-1 cursor-pointer"
+                                                                >
+                                                                    <PlusIcon size={10} /> Add Item Fee
+                                                                </button>
+                                                            )}
+                                                        </td>
+                                                        <td className="px-2 py-1.5 text-right text-[var(--text-subtle)]">
+                                                            Subtotal:
+                                                        </td>
+                                                        <td className="px-2 py-1.5 text-right text-[var(--text-primary)]">
+                                                            € {fmtEur(itemComps.reduce((sum, c) => sum + (c.amount || 0), 0))}
+                                                        </td>
+                                                        <td className="px-2 py-1.5"></td>
+                                                    </tr>
                                                 </tbody>
                                             </table>
-                                            <div className="px-3 py-1.5 bg-[var(--background-secondary)]/30 border-t border-[var(--border-subtlest)] flex justify-between items-center">
-                                                <div>
-                                                    {isEditingItem && (
-                                                        <button
-                                                            type="button"
-                                                            onClick={() => handleAddItemFeeComponent(itemName)}
-                                                            className="text-[10px] font-bold text-[var(--text-brand)] hover:underline flex items-center gap-1 cursor-pointer"
-                                                        >
-                                                            <PlusIcon size={10} /> Add Item Fee
-                                                        </button>
-                                                    )}
-                                                </div>
-                                                <div className="text-[11px] font-bold text-[var(--text-primary)]">
-                                                    Subtotal: € {fmtEur(itemComps.reduce((sum, c) => sum + (c.amount || 0), 0))}
-                                                </div>
-                                            </div>
                                         </div>
                                     </div>
                                 );

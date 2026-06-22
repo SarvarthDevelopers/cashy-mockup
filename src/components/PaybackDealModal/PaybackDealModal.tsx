@@ -115,6 +115,8 @@ export const PaybackDealModal: React.FC<PaybackDealModalProps> = ({
         return components;
     });
     const [feeOverrideReason, setFeeOverrideReason] = useState('');
+    const [isEditingDeal, setIsEditingDeal] = useState(false);
+    const [editingItemIds, setEditingItemIds] = useState<string[]>([]);
 
     // Storage and checkout states (moved to Step 2)
     const [removeItemsFromStorage, setRemoveItemsFromStorage] = useState(true);
@@ -387,15 +389,31 @@ Thank you for choosing CASHY.
                         
                         {/* Deal Level Fees */}
                         <div className="space-y-2">
-                            <span className="text-[11px] font-black uppercase tracking-widest text-[var(--text-subtlest)] block">Deal Level Fees</span>
+                            <div className="flex justify-between items-center">
+                                <span className="text-[11px] font-black uppercase tracking-widest text-[var(--text-subtlest)] block">Deal Level Fees</span>
+                                <button
+                                    type="button"
+                                    onClick={() => setIsEditingDeal(!isEditingDeal)}
+                                    className="text-[11px] font-bold text-[var(--text-brand)] hover:underline flex items-center gap-1 cursor-pointer bg-transparent border-0 outline-none"
+                                >
+                                    {isEditingDeal ? 'Done Editing' : 'Edit'}
+                                </button>
+                            </div>
+                            
                             <div className="border border-[var(--border-subtlest)] rounded-xl overflow-hidden bg-[var(--background-secondary)]/10">
                                 <table className="w-full text-left border-collapse text-[12px]">
                                     <thead>
                                         <tr className="bg-[var(--background-secondary)]/60 text-[var(--text-subtle)] border-b border-[var(--border-subtlest)] font-bold">
                                             <th className="px-4 py-2 w-[45%]">Fee Component</th>
-                                            <th className="px-3 py-2 w-[20%] text-center">VAT/Tax</th>
-                                            <th className="px-3 py-2 w-[25%] text-right">Amount</th>
-                                            <th className="px-3 py-2 w-[10%] text-center"></th>
+                                            <th className="px-3 py-2 w-[20%] text-right">% of Principal</th>
+                                            {isEditingDeal ? (
+                                                <>
+                                                    <th className="px-3 py-2 w-[25%] text-right">Amount</th>
+                                                    <th className="px-3 py-2 w-[10%] text-center"></th>
+                                                </>
+                                            ) : (
+                                                <th className="px-4 py-2 w-[35%] text-right">Amount</th>
+                                            )}
                                         </tr>
                                     </thead>
                                     <tbody>
@@ -404,89 +422,86 @@ Thank you for choosing CASHY.
                                             return (
                                                 <tr key={comp.id} className="border-b border-[var(--border-subtlest)] hover:bg-[var(--background-secondary)]/20 transition-colors">
                                                     <td className="px-4 py-2.5">
-                                                        {comp.isDefault ? (
-                                                            <div className="flex flex-col">
+                                                        {isEditingDeal ? (
+                                                            comp.isDefault ? (
                                                                 <span className="font-bold text-[var(--text-primary)]">{comp.type}</span>
-                                                                <span className="text-[10px] text-[var(--text-subtle)] font-medium">
-                                                                    {principalPercentage}% of principal
-                                                                </span>
-                                                            </div>
+                                                            ) : (
+                                                                <div className="space-y-1 text-right">
+                                                                    <select
+                                                                        className="bg-white dark:bg-[#1f2937] border border-[var(--border-subtle)] text-[12px] rounded-lg px-2 py-1.5 focus:outline-none focus:ring-1 focus:ring-[var(--brand-500)] text-[var(--text-primary)] w-full font-semibold text-right"
+                                                                        value={comp.type}
+                                                                        onChange={(e) => handleUpdateComponent(comp.id, { type: e.target.value })}
+                                                                    >
+                                                                        {DEAL_FEE_TYPES.map(t => (
+                                                                            <option key={t} value={t}>{t}</option>
+                                                                        ))}
+                                                                    </select>
+                                                                    {comp.type === 'Other' && (
+                                                                        <input
+                                                                            type="text"
+                                                                            className="w-full text-[11px] px-2 py-1 bg-white dark:bg-[#1f2937] border border-[var(--border-subtle)] rounded-md focus:outline-none focus:ring-1 focus:ring-[var(--brand-500)] text-[var(--text-primary)] font-semibold text-right"
+                                                                            placeholder="Custom label..."
+                                                                            value={comp.customName || ''}
+                                                                            onChange={(e) => handleUpdateComponent(comp.id, { customName: e.target.value })}
+                                                                        />
+                                                                    )}
+                                                                </div>
+                                                            )
                                                         ) : (
-                                                            <div className="space-y-1">
-                                                                <select
-                                                                    className="bg-white dark:bg-[#1f2937] border border-[var(--border-subtle)] text-[12px] rounded-lg px-2 py-1.5 focus:outline-none focus:ring-1 focus:ring-[var(--brand-500)] text-[var(--text-primary)] w-full font-semibold"
-                                                                    value={comp.type}
-                                                                    onChange={(e) => handleUpdateComponent(comp.id, { type: e.target.value })}
-                                                                >
-                                                                    {DEAL_FEE_TYPES.map(t => (
-                                                                        <option key={t} value={t}>{t}</option>
-                                                                    ))}
-                                                                </select>
-                                                                {comp.type === 'Other' && (
-                                                                    <input
-                                                                        type="text"
-                                                                        className="w-full text-[11px] px-2 py-1 bg-white dark:bg-[#1f2937] border border-[var(--border-subtle)] rounded-md focus:outline-none focus:ring-1 focus:ring-[var(--brand-500)] text-[var(--text-primary)] font-semibold"
-                                                                        placeholder="Custom label..."
-                                                                        value={comp.customName || ''}
-                                                                        onChange={(e) => handleUpdateComponent(comp.id, { customName: e.target.value })}
-                                                                    />
-                                                                )}
-                                                            </div>
-                                                        )}
-                                                    </td>
-                                                    <td className="px-3 py-2.5 text-center">
-                                                        {comp.type === 'Other' ? (
-                                                            <select
-                                                                className="bg-white dark:bg-[#1f2937] border border-[var(--border-subtle)] text-[12px] rounded-lg px-1.5 py-1 focus:outline-none focus:ring-1 focus:ring-[var(--brand-500)] text-[var(--text-primary)] font-semibold text-center"
-                                                                value={comp.taxRate}
-                                                                onChange={(e) => handleUpdateComponent(comp.id, { taxRate: parseInt(e.target.value) || 0 })}
-                                                            >
-                                                                <option value={0}>0%</option>
-                                                                <option value={10}>10%</option>
-                                                                <option value={20}>20%</option>
-                                                            </select>
-                                                        ) : (
-                                                            <span className="text-[11px] font-bold text-[var(--text-subtle)] bg-[var(--background-secondary)]/80 px-2.5 py-1 rounded-full border border-[var(--border-subtlest)] inline-block">
-                                                                {comp.taxRate}%
+                                                            <span className="font-semibold text-[var(--text-primary)]">
+                                                                {comp.type === 'Other' ? (comp.customName || 'Other') : comp.type}
                                                             </span>
                                                         )}
                                                     </td>
-                                                    <td className="px-3 py-2.5 text-right">
-                                                        <div className="relative flex items-center justify-end">
-                                                            <span className="absolute left-2.5 text-[var(--text-subtle)] text-[12px] font-semibold select-none">€</span>
-                                                            <input
-                                                                type="number"
-                                                                step="0.01"
-                                                                className="w-full text-[12px] pl-6 pr-2 py-1 bg-white dark:bg-[#1f2937] border border-[var(--border-subtle)] rounded-lg focus:outline-none focus:ring-1 focus:ring-[var(--brand-500)] text-[var(--text-primary)] font-bold text-right"
-                                                                value={isNaN(comp.amount) ? '' : comp.amount}
-                                                                onChange={(e) => handleUpdateComponent(comp.id, { amount: parseFloat(e.target.value) })}
-                                                            />
-                                                        </div>
+                                                    <td className="px-3 py-2.5 text-right font-medium text-[var(--text-subtle)]">
+                                                        {principalPercentage}%
                                                     </td>
-                                                    <td className="px-3 py-2.5 text-center">
-                                                        {!comp.isDefault && (
-                                                            <button
-                                                                type="button"
-                                                                onClick={() => handleDeleteComponent(comp.id)}
-                                                                className="p-1 hover:bg-red-50 dark:hover:bg-red-950/20 hover:text-red-600 rounded text-[var(--text-subtlest)] transition-colors cursor-pointer"
-                                                            >
-                                                                <TrashIcon size={14} />
-                                                            </button>
+                                                    <td className={isEditingDeal ? "px-3 py-2.5 text-right" : "px-4 py-2.5 text-right font-bold text-[var(--text-primary)]"}>
+                                                        {isEditingDeal ? (
+                                                            <div className="relative flex items-center justify-end">
+                                                                <span className="absolute left-2.5 text-[var(--text-subtle)] text-[12px] font-semibold select-none">€</span>
+                                                                <input
+                                                                    type="number"
+                                                                    step="0.01"
+                                                                    className="w-full text-[12px] pl-6 pr-2 py-1 bg-white dark:bg-[#1f2937] border border-[var(--border-subtle)] rounded-lg focus:outline-none focus:ring-1 focus:ring-[var(--brand-500)] text-[var(--text-primary)] font-bold text-right"
+                                                                    value={isNaN(comp.amount) ? '' : comp.amount}
+                                                                    onChange={(e) => handleUpdateComponent(comp.id, { amount: parseFloat(e.target.value) })}
+                                                                />
+                                                            </div>
+                                                        ) : (
+                                                            `€ ${fmtEur(comp.amount)}`
                                                         )}
                                                     </td>
+                                                    {isEditingDeal && (
+                                                        <td className="px-3 py-2.5 text-center">
+                                                            {!comp.isDefault && (
+                                                                <button
+                                                                    type="button"
+                                                                    onClick={() => handleDeleteComponent(comp.id)}
+                                                                    className="p-1 hover:bg-red-50 dark:hover:bg-red-950/20 hover:text-red-600 rounded text-[var(--text-subtlest)] transition-colors cursor-pointer"
+                                                                >
+                                                                    <TrashIcon size={14} />
+                                                                </button>
+                                                            )}
+                                                        </td>
+                                                    )}
                                                 </tr>
                                             );
                                         })}
                                     </tbody>
                                 </table>
-                                <div className="px-4 py-2 bg-[var(--background-secondary)]/30 border-t border-[var(--border-subtlest)] flex justify-between items-center">
-                                    <button
-                                        type="button"
-                                        onClick={handleAddDealFeeComponent}
-                                        className="text-[11px] font-bold text-[var(--text-brand)] hover:underline flex items-center gap-1 cursor-pointer"
-                                    >
-                                        <PlusIcon size={12} /> Add Deal Fee Component
-                                    </button>
+                                <div className="px-4 py-2.5 bg-[var(--background-secondary)]/30 border-t border-[var(--border-subtlest)] flex justify-between items-center">
+                                    <div>
+                                        {isEditingDeal && (
+                                            <button
+                                                type="button"
+                                                onClick={handleAddDealFeeComponent}
+                                                className="text-[11px] font-bold text-[var(--text-brand)] hover:underline flex items-center gap-1 cursor-pointer"
+                                            >
+                                                <PlusIcon size={12} /> Add Deal Fee Component
+                                            </button>
+                                        )}
+                                    </div>
                                     <div className="text-[12px] font-bold text-[var(--text-primary)]">
                                         Subtotal: € {fmtEur(feeComponents.filter(c => c.level === 'deal').reduce((sum, c) => sum + (c.amount || 0), 0))}
                                     </div>
@@ -499,6 +514,16 @@ Thank you for choosing CASHY.
                             <span className="text-[11px] font-black uppercase tracking-widest text-[var(--text-subtlest)] block">Item Level Fees</span>
                             {dealData.items.map((itemName, itemIdx) => {
                                 const itemComps = feeComponents.filter(c => c.level === 'item' && c.itemId === itemName);
+                                const isEditingItem = editingItemIds.includes(itemName);
+                                
+                                const toggleEditItem = () => {
+                                    if (isEditingItem) {
+                                        setEditingItemIds(editingItemIds.filter(id => id !== itemName));
+                                    } else {
+                                        setEditingItemIds([...editingItemIds, itemName]);
+                                    }
+                                };
+
                                 return (
                                     <div key={`item-card-${itemIdx}`} className="bg-[var(--background-secondary)]/20 rounded-xl border border-[var(--border-subtlest)] p-4 space-y-3">
                                         <div className="flex justify-between items-center">
@@ -506,15 +531,28 @@ Thank you for choosing CASHY.
                                                 <span className="w-1.5 h-1.5 rounded-full bg-[var(--brand-500)]" />
                                                 Item: {itemName}
                                             </span>
+                                            <button
+                                                type="button"
+                                                onClick={toggleEditItem}
+                                                className="text-[11px] font-bold text-[var(--text-brand)] hover:underline flex items-center gap-1 cursor-pointer bg-transparent border-0 outline-none"
+                                            >
+                                                {isEditingItem ? 'Done Editing' : 'Edit'}
+                                            </button>
                                         </div>
                                         <div className="border border-[var(--border-subtlest)] rounded-lg overflow-hidden bg-white/5">
                                             <table className="w-full text-left border-collapse text-[11px]">
                                                 <thead>
                                                     <tr className="bg-[var(--background-secondary)]/40 text-[var(--text-subtle)] border-b border-[var(--border-subtlest)] font-bold">
                                                         <th className="px-3 py-1.5 w-[45%]">Fee Component</th>
-                                                        <th className="px-2 py-1.5 w-[20%] text-center">VAT/Tax</th>
-                                                        <th className="px-2 py-1.5 w-[25%] text-right">Amount</th>
-                                                        <th className="px-2 py-1.5 w-[10%] text-center"></th>
+                                                        <th className="px-2 py-1.5 w-[20%] text-right">% of Principal</th>
+                                                        {isEditingItem ? (
+                                                            <>
+                                                                <th className="px-2 py-1.5 w-[25%] text-right">Amount</th>
+                                                                <th className="px-2 py-1.5 w-[10%] text-center"></th>
+                                                            </>
+                                                        ) : (
+                                                            <th className="px-3 py-1.5 w-[35%] text-right">Amount</th>
+                                                        )}
                                                     </tr>
                                                 </thead>
                                                 <tbody>
@@ -523,90 +561,87 @@ Thank you for choosing CASHY.
                                                         return (
                                                             <tr key={comp.id} className="border-b border-[var(--border-subtlest)] hover:bg-[var(--background-secondary)]/20 transition-colors">
                                                                 <td className="px-3 py-2">
-                                                                    {comp.isDefault ? (
-                                                                        <div className="flex flex-col">
+                                                                    {isEditingItem ? (
+                                                                        comp.isDefault ? (
                                                                             <span className="font-bold text-[var(--text-primary)]">{comp.type}</span>
-                                                                            <span className="text-[9px] text-[var(--text-subtle)] font-medium">
-                                                                                {principalPercentage}% of principal
-                                                                            </span>
-                                                                        </div>
+                                                                        ) : (
+                                                                            <div className="space-y-1 text-right">
+                                                                                <select
+                                                                                    className="bg-white dark:bg-[#1f2937] border border-[var(--border-subtle)] text-[11px] rounded-md px-1.5 py-1 focus:outline-none focus:ring-1 focus:ring-[var(--brand-500)] text-[var(--text-primary)] w-full font-semibold text-right"
+                                                                                    value={comp.type}
+                                                                                    onChange={(e) => handleUpdateComponent(comp.id, { type: e.target.value })}
+                                                                                >
+                                                                                    {ITEM_FEE_TYPES.map(t => (
+                                                                                        <option key={t} value={t}>{t}</option>
+                                                                                    ))}
+                                                                                </select>
+                                                                                {comp.type === 'Other' && (
+                                                                                    <input
+                                                                                        type="text"
+                                                                                        className="w-full text-[10px] px-1.5 py-0.5 bg-white dark:bg-[#1f2937] border border-[var(--border-subtle)] rounded focus:outline-none focus:ring-1 focus:ring-[var(--brand-500)] text-[var(--text-primary)] font-semibold text-right"
+                                                                                        placeholder="Custom label..."
+                                                                                        value={comp.customName || ''}
+                                                                                        onChange={(e) => handleUpdateComponent(comp.id, { customName: e.target.value })}
+                                                                                    />
+                                                                                )}
+                                                                            </div>
+                                                                        )
                                                                     ) : (
-                                                                        <div className="space-y-1">
-                                                                            <select
-                                                                                className="bg-white dark:bg-[#1f2937] border border-[var(--border-subtle)] text-[11px] rounded-md px-1.5 py-1 focus:outline-none focus:ring-1 focus:ring-[var(--brand-500)] text-[var(--text-primary)] w-full font-semibold"
-                                                                                value={comp.type}
-                                                                                onChange={(e) => handleUpdateComponent(comp.id, { type: e.target.value })}
-                                                                            >
-                                                                                {ITEM_FEE_TYPES.map(t => (
-                                                                                    <option key={t} value={t}>{t}</option>
-                                                                                ))}
-                                                                            </select>
-                                                                            {comp.type === 'Other' && (
-                                                                                <input
-                                                                                    type="text"
-                                                                                    className="w-full text-[10px] px-1.5 py-0.5 bg-white dark:bg-[#1f2937] border border-[var(--border-subtle)] rounded focus:outline-none focus:ring-1 focus:ring-[var(--brand-500)] text-[var(--text-primary)] font-semibold"
-                                                                                    placeholder="Custom label..."
-                                                                                    value={comp.customName || ''}
-                                                                                    onChange={(e) => handleUpdateComponent(comp.id, { customName: e.target.value })}
-                                                                                />
-                                                                            )}
-                                                                        </div>
-                                                                    )}
-                                                                </td>
-                                                                <td className="px-2 py-2 text-center">
-                                                                    {comp.type === 'Other' ? (
-                                                                        <select
-                                                                            className="bg-white dark:bg-[#1f2937] border border-[var(--border-subtle)] text-[11px] rounded-md px-1 py-0.5 focus:outline-none focus:ring-1 focus:ring-[var(--brand-500)] text-[var(--text-primary)] font-semibold text-center"
-                                                                            value={comp.taxRate}
-                                                                            onChange={(e) => handleUpdateComponent(comp.id, { taxRate: parseInt(e.target.value) || 0 })}
-                                                                        >
-                                                                            <option value={0}>0%</option>
-                                                                            <option value={10}>10%</option>
-                                                                            <option value={20}>20%</option>
-                                                                        </select>
-                                                                    ) : (
-                                                                        <span className="text-[10px] font-bold text-[var(--text-subtle)] bg-[var(--background-secondary)]/80 px-2 py-0.5 rounded-full border border-[var(--border-subtlest)] inline-block">
-                                                                            {comp.taxRate}%
+                                                                        <span className="font-semibold text-[var(--text-primary)]">
+                                                                            {comp.type === 'Other' ? (comp.customName || 'Other') : comp.type}
                                                                         </span>
                                                                     )}
                                                                 </td>
-                                                                <td className="px-2 py-2 text-right">
-                                                                    <div className="relative flex items-center justify-end">
-                                                                        <span className="absolute left-1.5 text-[var(--text-subtle)] text-[11px] font-semibold select-none">€</span>
-                                                                        <input
-                                                                            type="number"
-                                                                            step="0.01"
-                                                                            className="w-full text-[11px] pl-4 pr-1 py-0.5 bg-white dark:bg-[#1f2937] border border-[var(--border-subtle)] rounded focus:outline-none focus:ring-1 focus:ring-[var(--brand-500)] text-[var(--text-primary)] font-bold text-right"
-                                                                            value={isNaN(comp.amount) ? '' : comp.amount}
-                                                                            onChange={(e) => handleUpdateComponent(comp.id, { amount: parseFloat(e.target.value) })}
-                                                                        />
-                                                                    </div>
+                                                                <td className="px-2 py-2 text-right font-medium text-[var(--text-subtle)]">
+                                                                    {principalPercentage}%
                                                                 </td>
-                                                                <td className="px-2 py-2 text-center">
-                                                                    {!comp.isDefault && (
-                                                                        <button
-                                                                            type="button"
-                                                                            onClick={() => handleDeleteComponent(comp.id)}
-                                                                            className="p-1 hover:bg-red-50 dark:hover:bg-red-950/20 hover:text-red-600 rounded text-[var(--text-subtlest)] transition-colors cursor-pointer"
-                                                                        >
-                                                                            <TrashIcon size={12} />
-                                                                        </button>
+                                                                <td className={isEditingItem ? "px-2 py-2 text-right" : "px-3 py-2 text-right font-bold text-[var(--text-primary)]"}>
+                                                                    {isEditingItem ? (
+                                                                        <div className="relative flex items-center justify-end">
+                                                                            <span className="absolute left-1.5 text-[var(--text-subtle)] text-[11px] font-semibold select-none">€</span>
+                                                                            <input
+                                                                                type="number"
+                                                                                step="0.01"
+                                                                                className="w-full text-[11px] pl-4 pr-1 py-0.5 bg-white dark:bg-[#1f2937] border border-[var(--border-subtle)] rounded focus:outline-none focus:ring-1 focus:ring-[var(--brand-500)] text-[var(--text-primary)] font-bold text-right"
+                                                                                value={isNaN(comp.amount) ? '' : comp.amount}
+                                                                                onChange={(e) => handleUpdateComponent(comp.id, { amount: parseFloat(e.target.value) })}
+                                                                            />
+                                                                        </div>
+                                                                    ) : (
+                                                                        `€ ${fmtEur(comp.amount)}`
                                                                     )}
                                                                 </td>
+                                                                {isEditingItem && (
+                                                                    <td className="px-2 py-2 text-center">
+                                                                        {!comp.isDefault && (
+                                                                            <button
+                                                                                type="button"
+                                                                                onClick={() => handleDeleteComponent(comp.id)}
+                                                                                className="p-1 hover:bg-red-50 dark:hover:bg-red-950/20 hover:text-red-600 rounded text-[var(--text-subtlest)] transition-colors cursor-pointer"
+                                                                            >
+                                                                                <TrashIcon size={12} />
+                                                                            </button>
+                                                                        )}
+                                                                    </td>
+                                                                )}
                                                             </tr>
                                                         );
                                                     })}
                                                 </tbody>
                                             </table>
                                             <div className="px-3 py-1.5 bg-[var(--background-secondary)]/30 border-t border-[var(--border-subtlest)] flex justify-between items-center">
-                                                <button
-                                                    type="button"
-                                                    onClick={() => handleAddItemFeeComponent(itemName)}
-                                                    className="text-[10px] font-bold text-[var(--text-brand)] hover:underline flex items-center gap-1 cursor-pointer"
-                                                >
-                                                    <PlusIcon size={10} /> Add Item Fee
-                                                </button>
-                                                <div className="text-[11px] font-bold text-[var(--text-subtle)]">
+                                                <div>
+                                                    {isEditingItem && (
+                                                        <button
+                                                            type="button"
+                                                            onClick={() => handleAddItemFeeComponent(itemName)}
+                                                            className="text-[10px] font-bold text-[var(--text-brand)] hover:underline flex items-center gap-1 cursor-pointer"
+                                                        >
+                                                            <PlusIcon size={10} /> Add Item Fee
+                                                        </button>
+                                                    )}
+                                                </div>
+                                                <div className="text-[11px] font-bold text-[var(--text-primary)]">
                                                     Subtotal: € {fmtEur(itemComps.reduce((sum, c) => sum + (c.amount || 0), 0))}
                                                 </div>
                                             </div>

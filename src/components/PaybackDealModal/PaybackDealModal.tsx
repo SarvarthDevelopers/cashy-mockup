@@ -1,5 +1,5 @@
 import React, { useState } from 'react';
-import { Button, Input, Dropdown, Toggle } from '../';
+import { Button, Dropdown, Toggle } from '../';
 import type { DealData } from '../../data/mockData';
 import { 
   X as XIcon, 
@@ -7,8 +7,43 @@ import {
   Check as CheckIcon, 
   Download as DownloadIcon, 
   Info as InfoIcon,
-  AlertTriangle as AlertTriangleIcon
+  AlertTriangle as AlertTriangleIcon,
+  Trash2 as TrashIcon,
+  Plus as PlusIcon
 } from 'lucide-react';
+
+export interface FeeComponent {
+    id: string;
+    level: 'deal' | 'item';
+    itemId?: string;
+    type: string;
+    customName?: string;
+    amount: number;
+    taxRate: number;
+    isDefault?: boolean;
+}
+
+const DEAL_FEE_TYPES = [
+    'Interest',
+    'Staggered fee',
+    'Transport fee (Pickup)',
+    'Transport fee (Drop-off)',
+    'Discount',
+    'No Interest & Fees (1 month)',
+    'Withdrawal fee',
+    'Other'
+];
+
+const ITEM_FEE_TYPES = [
+    'Manipulation Fee',
+    'Storage Fee',
+    'Cleaning Fee',
+    'Verification',
+    'Liquidation Fee',
+    'Third Party Costs',
+    'Cash Expenditures',
+    'Other'
+];
 
 export interface PaybackDealModalProps {
     isOpen: boolean;
@@ -17,11 +52,10 @@ export interface PaybackDealModalProps {
     onUpdateDeal?: (deal: DealData) => void;
 }
 
-// 5 Step labels matching the requirements
+// 4 Step labels matching the requirements
 const STEP_LABELS = [
     'Deal Summary & Elapsed Days',
-    'Fee Overrides & Notes',
-    'Inventory Release (Vault Retrieval)',
+    'Adjust Fees & Storage Options',
     'Payment Selection',
     'Confirmation & Receipt',
 ];
@@ -57,33 +91,48 @@ export const PaybackDealModal: React.FC<PaybackDealModalProps> = ({
     const startDate = new Date();
     startDate.setDate(startDate.getDate() - elapsedDays);
 
-    // Step 2: Override states
-    const [customFees, setCustomFees] = useState('');
+    // Dynamic initial fee components calculation
+    const payoutPrincipal = dealData ? parseEurAmount(dealData.amount || '0') : 0;
+    const calculatedBaseFees = Math.ceil(elapsedDays / 30) * (payoutPrincipal * 0.04);
+
+    // Step 2: Override states & Fee Components
+    const [feeComponents, setFeeComponents] = useState<FeeComponent[]>(() => {
+        const components: FeeComponent[] = [
+            { id: 'deal-1', level: 'deal', type: 'Interest', amount: calculatedBaseFees * 0.5, taxRate: 0, isDefault: true },
+            { id: 'deal-2', level: 'deal', type: 'Staggered fee', amount: calculatedBaseFees * 0.3, taxRate: 20, isDefault: true }
+        ];
+        dealData?.items.forEach((item, idx) => {
+            components.push({
+                id: `item-storage-${idx}`,
+                level: 'item',
+                itemId: item,
+                type: 'Storage Fee',
+                amount: 1.00,
+                taxRate: 20,
+                isDefault: true
+            });
+        });
+        return components;
+    });
     const [feeOverrideReason, setFeeOverrideReason] = useState('');
 
-    // Step 3: Vault release states
+    // Storage and checkout states (moved to Step 2)
     const [removeItemsFromStorage, setRemoveItemsFromStorage] = useState(true);
 
-    // Step 4: Payment states
+    // Step 3: Payment states
     const [paymentType, setPaymentType] = useState('Cash');
     const [cashBookName, setCashBookName] = useState(() => {
         return dealData?.countryCode === 'DE' ? 'Munich Main Cash' : 'Vienna Main Cash';
     });
 
-
-
     if (!isOpen || !dealData) return null;
 
     // --- Calculations ---
-    const payoutPrincipal = parseEurAmount(dealData.amount || '0');
-    // Base accumulated fees: 4% of principal for each 30-day block (rounded up). 45 days is 2 blocks.
-    const calculatedBaseFees = Math.ceil(elapsedDays / 30) * (payoutPrincipal * 0.04);
-    
-    const finalFees = customFees !== '' ? (parseFloat(customFees) || 0) : calculatedBaseFees;
-    const isFeesOverridden = customFees !== '' && parseFloat(customFees) !== calculatedBaseFees;
+    const finalFees = feeComponents.reduce((sum, comp) => sum + (comp.amount || 0), 0);
+    const isFeesOverridden = Math.abs(finalFees - (calculatedBaseFees + (dealData.items.length * 1.00))) > 0.01;
     const totalCollected = payoutPrincipal + finalFees;
 
-    const TOTAL_STEPS = 5;
+    const TOTAL_STEPS = 4;
 
     const goNext = () => {
         setStep(s => s + 1);
@@ -91,6 +140,54 @@ export const PaybackDealModal: React.FC<PaybackDealModalProps> = ({
 
     const goBack = () => {
         setStep(s => s - 1);
+    };
+
+    const handleAddDealFeeComponent = () => {
+        const newComp: FeeComponent = {
+            id: String(Math.floor(Math.random() * 1000000)),
+            level: 'deal',
+            type: 'Other',
+            customName: 'Other Fee',
+            amount: 0,
+            taxRate: 20,
+            isDefault: false
+        };
+        setFeeComponents([...feeComponents, newComp]);
+    };
+
+    const handleAddItemFeeComponent = (itemName: string) => {
+        const newComp: FeeComponent = {
+            id: String(Math.floor(Math.random() * 1000000)),
+            level: 'item',
+            itemId: itemName,
+            type: 'Other',
+            customName: 'Other Fee',
+            amount: 0,
+            taxRate: 20,
+            isDefault: false
+        };
+        setFeeComponents([...feeComponents, newComp]);
+    };
+
+    const handleUpdateComponent = (id: string, updates: Partial<FeeComponent>) => {
+        setFeeComponents(feeComponents.map(comp => {
+            if (comp.id === id) {
+                const updated = { ...comp, ...updates };
+                if (updates.type) {
+                    if (updates.type === 'Interest' || updates.type === 'Discount' || updates.type === 'No Interest & Fees (1 month)') {
+                        updated.taxRate = 0;
+                    } else {
+                        updated.taxRate = 20;
+                    }
+                }
+                return updated;
+            }
+            return comp;
+        }));
+    };
+
+    const handleDeleteComponent = (id: string) => {
+        setFeeComponents(feeComponents.filter(comp => comp.id !== id));
     };
 
     const handleConfirm = () => {
@@ -115,7 +212,7 @@ export const PaybackDealModal: React.FC<PaybackDealModalProps> = ({
                     date: new Date().toISOString().split('T')[0],
                     customerId: dealData.id,
                     paymentReference: 'Payback',
-                    note: `Items ${removeItemsFromStorage ? 'removed' : 'retained'} - ${dealData.items.join(', ')}`,
+                    note: `Items ${removeItemsFromStorage ? 'removed' : 'retained'} - ${dealData.items.join(', ')} (Fees: ${feeComponents.map(c => `${c.level === 'item' ? `[Item: ${c.itemId}] ` : ''}${c.type === 'Other' ? (c.customName || 'Other') : c.type}: €${fmtEur(c.amount)}`).join(', ')})`,
                     inflow: totalCollected,
                     outflow: 0,
                     feesAndInterest: finalFees,
@@ -132,7 +229,7 @@ export const PaybackDealModal: React.FC<PaybackDealModalProps> = ({
             }
 
             setIsSubmitting(false);
-            setStep(5); // Go to success step
+            setStep(4); // Go to success step
         }, 1500);
     };
 
@@ -146,6 +243,14 @@ export const PaybackDealModal: React.FC<PaybackDealModalProps> = ({
                 paymentType,
                 cashBookName: ['Cash', 'Debit/Credit Card'].includes(paymentType) ? cashBookName : undefined,
                 itemsRemovedFromStorage: removeItemsFromStorage,
+                feeBreakdown: feeComponents.map(c => ({
+                    level: c.level,
+                    itemId: c.itemId,
+                    type: c.type,
+                    name: c.type === 'Other' ? c.customName : c.type,
+                    amount: c.amount,
+                    taxRate: c.taxRate
+                }))
             });
 
             onUpdateDeal({
@@ -157,6 +262,9 @@ export const PaybackDealModal: React.FC<PaybackDealModalProps> = ({
     };
 
     const downloadReceipt = () => {
+        const dealFees = feeComponents.filter(c => c.level === 'deal');
+        const itemFees = feeComponents.filter(c => c.level === 'item');
+
         const text = `
 =========================================
           CASHY Redemptions Receipt
@@ -168,12 +276,16 @@ Date of Redemption: ${new Date().toLocaleDateString('de-DE')}
 Financial Summary:
 -----------------------------------------
 Payout Principal:      EUR ${fmtEur(payoutPrincipal)}
-Adjusted Fees:         EUR ${fmtEur(finalFees)}
+
+Deal Level Fees:
+${dealFees.map(comp => `  - ${(comp.type === 'Other' ? (comp.customName || 'Other Fee') : comp.type).padEnd(20)} EUR ${fmtEur(comp.amount).padStart(8)} (VAT: ${comp.taxRate}%)`).join('\n')}
+
+Item Level Fees:
+${itemFees.map(comp => `  - [${comp.itemId}] ${(comp.type === 'Other' ? (comp.customName || 'Other Fee') : comp.type).padEnd(20)} EUR ${fmtEur(comp.amount).padStart(8)} (VAT: ${comp.taxRate}%)`).join('\n')}
 -----------------------------------------
 Total Amount Received: EUR ${fmtEur(totalCollected)}
 
 Payment Method: ${paymentType} ${['Cash', 'Debit/Credit Card'].includes(paymentType) ? `(${cashBookName})` : ''}
-Handover Method: ${getHandoverLabel(dealData.pickupType)}
 Vault Checkout: ${removeItemsFromStorage ? 'Retrieved (CLOSED)' : 'Vault Retention (CLOSED)'}
 
 Thank you for choosing CASHY.
@@ -192,17 +304,14 @@ Thank you for choosing CASHY.
     const canContinue = (() => {
         if (step === 2) {
             if (isNotesRequired) return false;
-            if (parseFloat(customFees) < 0) return false;
+            if (totalCollected < 0) return false;
+            if (feeComponents.some(comp => isNaN(comp.amount))) return false;
         }
         return true;
     })();
 
-    // Handover labels helper
-    function getHandoverLabel(pickupType?: string) {
-        if (pickupType === 'STANDARD_SHIPMENT') return 'Standard Shipment';
-        if (pickupType === 'STOREBOX') return 'Storebox Lockbox';
-        return 'In-Shop Pickup';
-    }
+
+
 
     const isCardOrCash = ['Cash', 'Debit/Credit Card'].includes(paymentType);
 
@@ -265,80 +374,251 @@ Thank you for choosing CASHY.
                     </div>
                 );
 
-            // ── Step 2: Fee Overrides & Notes ────────────────────────────────────
+            // ── Step 2: Adjust Fees & Options ────────────────────────────────────
             case 2:
                 return (
                     <div className="space-y-5 animate-in fade-in slide-in-from-right-4 duration-300">
-                        <p className="text-[13px] text-[var(--text-subtle)] leading-relaxed">
-                            Apply manual discount or waive fees. Overrides require a written justification.
-                        </p>
+                        <div>
+                            <h3 className="text-[13px] font-bold text-[var(--text-primary)] mb-1">Maturity & Fee Adjustments</h3>
+                            <p className="text-[11px] text-[var(--text-subtle)] leading-relaxed">
+                                Review and edit calculated maturity fees at the deal and item levels. Add extra components as needed.
+                            </p>
+                        </div>
                         
-                        <div className="space-y-4">
-                            <Input
-                                label="Adjusted Fees Charged (€)"
-                                type="number"
-                                placeholder={String(calculatedBaseFees)}
-                                value={customFees}
-                                onChange={(e) => setCustomFees(e.target.value)}
-                            />
-
-                            <div className="flex flex-col">
-                                <label className="text-[12px] font-bold text-[var(--text-primary)] mb-1.5">
-                                    Notes / Justification {isFeesOverridden && <span className="text-red-500">*</span>}
-                                </label>
-                                <textarea
-                                    className={`w-full text-[13px] px-3.5 py-3.5 bg-white border rounded-xl focus:outline-none focus:ring-2 focus:ring-[var(--brand-500)] transition-all min-h-[90px] ${
-                                        isNotesRequired ? 'border-red-300 bg-red-50/10' : 'border-[var(--border-subtle)]'
-                                    }`}
-                                    placeholder="Enter operator reason for fee adjustment..."
-                                    value={feeOverrideReason}
-                                    onChange={(e) => setFeeOverrideReason(e.target.value)}
-                                />
-                                {isNotesRequired && (
-                                    <span className="text-[11px] font-semibold text-red-600 mt-1.5 flex items-center gap-1.5">
-                                        <AlertTriangleIcon size={12} />
-                                        Written justification is mandatory when fees are overridden.
-                                    </span>
-                                )}
+                        {/* Deal Level Fees */}
+                        <div className="space-y-2">
+                            <span className="text-[11px] font-black uppercase tracking-widest text-[var(--text-subtlest)] block">Deal Level Fees</span>
+                            <div className="border border-[var(--border-subtlest)] rounded-xl overflow-hidden bg-[var(--background-secondary)]/10">
+                                <table className="w-full text-left border-collapse text-[12px]">
+                                    <thead>
+                                        <tr className="bg-[var(--background-secondary)]/60 text-[var(--text-subtle)] border-b border-[var(--border-subtlest)] font-bold">
+                                            <th className="px-4 py-2 w-[45%]">Fee Component</th>
+                                            <th className="px-3 py-2 w-[20%] text-center">VAT/Tax</th>
+                                            <th className="px-3 py-2 w-[25%] text-right">Amount</th>
+                                            <th className="px-3 py-2 w-[10%] text-center"></th>
+                                        </tr>
+                                    </thead>
+                                    <tbody>
+                                        {feeComponents.filter(c => c.level === 'deal').map((comp) => {
+                                            const principalPercentage = payoutPrincipal > 0 ? ((comp.amount / payoutPrincipal) * 100).toFixed(2) : '0.00';
+                                            return (
+                                                <tr key={comp.id} className="border-b border-[var(--border-subtlest)] hover:bg-[var(--background-secondary)]/20 transition-colors">
+                                                    <td className="px-4 py-2.5">
+                                                        {comp.isDefault ? (
+                                                            <div className="flex flex-col">
+                                                                <span className="font-bold text-[var(--text-primary)]">{comp.type}</span>
+                                                                <span className="text-[10px] text-[var(--text-subtle)] font-medium">
+                                                                    {principalPercentage}% of principal
+                                                                </span>
+                                                            </div>
+                                                        ) : (
+                                                            <div className="space-y-1">
+                                                                <select
+                                                                    className="bg-white dark:bg-[#1f2937] border border-[var(--border-subtle)] text-[12px] rounded-lg px-2 py-1.5 focus:outline-none focus:ring-1 focus:ring-[var(--brand-500)] text-[var(--text-primary)] w-full font-semibold"
+                                                                    value={comp.type}
+                                                                    onChange={(e) => handleUpdateComponent(comp.id, { type: e.target.value })}
+                                                                >
+                                                                    {DEAL_FEE_TYPES.map(t => (
+                                                                        <option key={t} value={t}>{t}</option>
+                                                                    ))}
+                                                                </select>
+                                                                {comp.type === 'Other' && (
+                                                                    <input
+                                                                        type="text"
+                                                                        className="w-full text-[11px] px-2 py-1 bg-white dark:bg-[#1f2937] border border-[var(--border-subtle)] rounded-md focus:outline-none focus:ring-1 focus:ring-[var(--brand-500)] text-[var(--text-primary)] font-semibold"
+                                                                        placeholder="Custom label..."
+                                                                        value={comp.customName || ''}
+                                                                        onChange={(e) => handleUpdateComponent(comp.id, { customName: e.target.value })}
+                                                                    />
+                                                                )}
+                                                            </div>
+                                                        )}
+                                                    </td>
+                                                    <td className="px-3 py-2.5 text-center">
+                                                        {comp.type === 'Other' ? (
+                                                            <select
+                                                                className="bg-white dark:bg-[#1f2937] border border-[var(--border-subtle)] text-[12px] rounded-lg px-1.5 py-1 focus:outline-none focus:ring-1 focus:ring-[var(--brand-500)] text-[var(--text-primary)] font-semibold text-center"
+                                                                value={comp.taxRate}
+                                                                onChange={(e) => handleUpdateComponent(comp.id, { taxRate: parseInt(e.target.value) || 0 })}
+                                                            >
+                                                                <option value={0}>0%</option>
+                                                                <option value={10}>10%</option>
+                                                                <option value={20}>20%</option>
+                                                            </select>
+                                                        ) : (
+                                                            <span className="text-[11px] font-bold text-[var(--text-subtle)] bg-[var(--background-secondary)]/80 px-2.5 py-1 rounded-full border border-[var(--border-subtlest)] inline-block">
+                                                                {comp.taxRate}%
+                                                            </span>
+                                                        )}
+                                                    </td>
+                                                    <td className="px-3 py-2.5 text-right">
+                                                        <div className="relative flex items-center justify-end">
+                                                            <span className="absolute left-2.5 text-[var(--text-subtle)] text-[12px] font-semibold select-none">€</span>
+                                                            <input
+                                                                type="number"
+                                                                step="0.01"
+                                                                className="w-full text-[12px] pl-6 pr-2 py-1 bg-white dark:bg-[#1f2937] border border-[var(--border-subtle)] rounded-lg focus:outline-none focus:ring-1 focus:ring-[var(--brand-500)] text-[var(--text-primary)] font-bold text-right"
+                                                                value={isNaN(comp.amount) ? '' : comp.amount}
+                                                                onChange={(e) => handleUpdateComponent(comp.id, { amount: parseFloat(e.target.value) })}
+                                                            />
+                                                        </div>
+                                                    </td>
+                                                    <td className="px-3 py-2.5 text-center">
+                                                        {!comp.isDefault && (
+                                                            <button
+                                                                type="button"
+                                                                onClick={() => handleDeleteComponent(comp.id)}
+                                                                className="p-1 hover:bg-red-50 dark:hover:bg-red-950/20 hover:text-red-600 rounded text-[var(--text-subtlest)] transition-colors cursor-pointer"
+                                                            >
+                                                                <TrashIcon size={14} />
+                                                            </button>
+                                                        )}
+                                                    </td>
+                                                </tr>
+                                            );
+                                        })}
+                                    </tbody>
+                                </table>
+                                <div className="px-4 py-2 bg-[var(--background-secondary)]/30 border-t border-[var(--border-subtlest)] flex justify-between items-center">
+                                    <button
+                                        type="button"
+                                        onClick={handleAddDealFeeComponent}
+                                        className="text-[11px] font-bold text-[var(--text-brand)] hover:underline flex items-center gap-1 cursor-pointer"
+                                    >
+                                        <PlusIcon size={12} /> Add Deal Fee Component
+                                    </button>
+                                    <div className="text-[12px] font-bold text-[var(--text-primary)]">
+                                        Subtotal: € {fmtEur(feeComponents.filter(c => c.level === 'deal').reduce((sum, c) => sum + (c.amount || 0), 0))}
+                                    </div>
+                                </div>
                             </div>
                         </div>
 
-                        <div className="bg-[var(--background-secondary)]/40 rounded-xl border border-[var(--border-subtlest)] p-4 text-xs space-y-2.5">
-                            <div className="flex justify-between items-center">
-                                <span className="text-[var(--text-subtle)] font-medium">Payout Principal</span>
-                                <span className="font-bold text-[var(--text-primary)]">€ {fmtEur(payoutPrincipal)}</span>
-                            </div>
-                            <div className="flex justify-between items-center">
-                                <span className="text-[var(--text-subtle)] font-medium">Adjusted Fees</span>
-                                <span className={`font-bold ${isFeesOverridden ? 'text-[var(--text-brand)]' : 'text-[var(--text-primary)]'}`}>
-                                    € {fmtEur(finalFees)}
-                                </span>
-                            </div>
-                            <div className="border-t border-[var(--border-subtlest)] pt-2.5 flex justify-between items-center text-sm">
-                                <span className="text-[var(--text-primary)] font-bold">Total Redemption Sum</span>
-                                <span className="text-[var(--text-brand)] font-black text-base">€ {fmtEur(totalCollected)}</span>
-                            </div>
+                        {/* Item Level Fees */}
+                        <div className="space-y-3">
+                            <span className="text-[11px] font-black uppercase tracking-widest text-[var(--text-subtlest)] block">Item Level Fees</span>
+                            {dealData.items.map((itemName, itemIdx) => {
+                                const itemComps = feeComponents.filter(c => c.level === 'item' && c.itemId === itemName);
+                                return (
+                                    <div key={`item-card-${itemIdx}`} className="bg-[var(--background-secondary)]/20 rounded-xl border border-[var(--border-subtlest)] p-4 space-y-3">
+                                        <div className="flex justify-between items-center">
+                                            <span className="text-[12px] font-bold text-[var(--text-primary)] flex items-center gap-1.5">
+                                                <span className="w-1.5 h-1.5 rounded-full bg-[var(--brand-500)]" />
+                                                Item: {itemName}
+                                            </span>
+                                        </div>
+                                        <div className="border border-[var(--border-subtlest)] rounded-lg overflow-hidden bg-white/5">
+                                            <table className="w-full text-left border-collapse text-[11px]">
+                                                <thead>
+                                                    <tr className="bg-[var(--background-secondary)]/40 text-[var(--text-subtle)] border-b border-[var(--border-subtlest)] font-bold">
+                                                        <th className="px-3 py-1.5 w-[45%]">Fee Component</th>
+                                                        <th className="px-2 py-1.5 w-[20%] text-center">VAT/Tax</th>
+                                                        <th className="px-2 py-1.5 w-[25%] text-right">Amount</th>
+                                                        <th className="px-2 py-1.5 w-[10%] text-center"></th>
+                                                    </tr>
+                                                </thead>
+                                                <tbody>
+                                                    {itemComps.map((comp) => {
+                                                        const principalPercentage = payoutPrincipal > 0 ? ((comp.amount / payoutPrincipal) * 100).toFixed(2) : '0.00';
+                                                        return (
+                                                            <tr key={comp.id} className="border-b border-[var(--border-subtlest)] hover:bg-[var(--background-secondary)]/20 transition-colors">
+                                                                <td className="px-3 py-2">
+                                                                    {comp.isDefault ? (
+                                                                        <div className="flex flex-col">
+                                                                            <span className="font-bold text-[var(--text-primary)]">{comp.type}</span>
+                                                                            <span className="text-[9px] text-[var(--text-subtle)] font-medium">
+                                                                                {principalPercentage}% of principal
+                                                                            </span>
+                                                                        </div>
+                                                                    ) : (
+                                                                        <div className="space-y-1">
+                                                                            <select
+                                                                                className="bg-white dark:bg-[#1f2937] border border-[var(--border-subtle)] text-[11px] rounded-md px-1.5 py-1 focus:outline-none focus:ring-1 focus:ring-[var(--brand-500)] text-[var(--text-primary)] w-full font-semibold"
+                                                                                value={comp.type}
+                                                                                onChange={(e) => handleUpdateComponent(comp.id, { type: e.target.value })}
+                                                                            >
+                                                                                {ITEM_FEE_TYPES.map(t => (
+                                                                                    <option key={t} value={t}>{t}</option>
+                                                                                ))}
+                                                                            </select>
+                                                                            {comp.type === 'Other' && (
+                                                                                <input
+                                                                                    type="text"
+                                                                                    className="w-full text-[10px] px-1.5 py-0.5 bg-white dark:bg-[#1f2937] border border-[var(--border-subtle)] rounded focus:outline-none focus:ring-1 focus:ring-[var(--brand-500)] text-[var(--text-primary)] font-semibold"
+                                                                                    placeholder="Custom label..."
+                                                                                    value={comp.customName || ''}
+                                                                                    onChange={(e) => handleUpdateComponent(comp.id, { customName: e.target.value })}
+                                                                                />
+                                                                            )}
+                                                                        </div>
+                                                                    )}
+                                                                </td>
+                                                                <td className="px-2 py-2 text-center">
+                                                                    {comp.type === 'Other' ? (
+                                                                        <select
+                                                                            className="bg-white dark:bg-[#1f2937] border border-[var(--border-subtle)] text-[11px] rounded-md px-1 py-0.5 focus:outline-none focus:ring-1 focus:ring-[var(--brand-500)] text-[var(--text-primary)] font-semibold text-center"
+                                                                            value={comp.taxRate}
+                                                                            onChange={(e) => handleUpdateComponent(comp.id, { taxRate: parseInt(e.target.value) || 0 })}
+                                                                        >
+                                                                            <option value={0}>0%</option>
+                                                                            <option value={10}>10%</option>
+                                                                            <option value={20}>20%</option>
+                                                                        </select>
+                                                                    ) : (
+                                                                        <span className="text-[10px] font-bold text-[var(--text-subtle)] bg-[var(--background-secondary)]/80 px-2 py-0.5 rounded-full border border-[var(--border-subtlest)] inline-block">
+                                                                            {comp.taxRate}%
+                                                                        </span>
+                                                                    )}
+                                                                </td>
+                                                                <td className="px-2 py-2 text-right">
+                                                                    <div className="relative flex items-center justify-end">
+                                                                        <span className="absolute left-1.5 text-[var(--text-subtle)] text-[11px] font-semibold select-none">€</span>
+                                                                        <input
+                                                                            type="number"
+                                                                            step="0.01"
+                                                                            className="w-full text-[11px] pl-4 pr-1 py-0.5 bg-white dark:bg-[#1f2937] border border-[var(--border-subtle)] rounded focus:outline-none focus:ring-1 focus:ring-[var(--brand-500)] text-[var(--text-primary)] font-bold text-right"
+                                                                            value={isNaN(comp.amount) ? '' : comp.amount}
+                                                                            onChange={(e) => handleUpdateComponent(comp.id, { amount: parseFloat(e.target.value) })}
+                                                                        />
+                                                                    </div>
+                                                                </td>
+                                                                <td className="px-2 py-2 text-center">
+                                                                    {!comp.isDefault && (
+                                                                        <button
+                                                                            type="button"
+                                                                            onClick={() => handleDeleteComponent(comp.id)}
+                                                                            className="p-1 hover:bg-red-50 dark:hover:bg-red-950/20 hover:text-red-600 rounded text-[var(--text-subtlest)] transition-colors cursor-pointer"
+                                                                        >
+                                                                            <TrashIcon size={12} />
+                                                                        </button>
+                                                                    )}
+                                                                </td>
+                                                            </tr>
+                                                        );
+                                                    })}
+                                                </tbody>
+                                            </table>
+                                            <div className="px-3 py-1.5 bg-[var(--background-secondary)]/30 border-t border-[var(--border-subtlest)] flex justify-between items-center">
+                                                <button
+                                                    type="button"
+                                                    onClick={() => handleAddItemFeeComponent(itemName)}
+                                                    className="text-[10px] font-bold text-[var(--text-brand)] hover:underline flex items-center gap-1 cursor-pointer"
+                                                >
+                                                    <PlusIcon size={10} /> Add Item Fee
+                                                </button>
+                                                <div className="text-[11px] font-bold text-[var(--text-subtle)]">
+                                                    Subtotal: € {fmtEur(itemComps.reduce((sum, c) => sum + (c.amount || 0), 0))}
+                                                </div>
+                                            </div>
+                                        </div>
+                                    </div>
+                                );
+                            })}
                         </div>
-                    </div>
-                );
 
-            // ── Step 3: Inventory Release ────────────────────────────────────────
-            case 3:
-                return (
-                    <div className="space-y-5 animate-in fade-in slide-in-from-right-4 duration-300">
-                        <p className="text-[13px] text-[var(--text-subtle)] leading-relaxed">
-                            Configure physical storage retrieval. Handover details are read-only and pre-configured.
-                        </p>
-
+                        {/* Physical Storage Retrieval Options */}
                         <div className="bg-[var(--background-secondary)]/40 p-4 rounded-xl border border-[var(--border-subtlest)] space-y-4">
-                            <div className="flex justify-between items-center">
-                                <span className="text-[13px] text-[var(--text-subtle)] font-medium">Handover Method</span>
-                                <span className="px-3 py-1 bg-[var(--background-primary)] border border-[var(--border-subtle)] text-[12px] font-bold rounded-full text-[var(--text-primary)]">
-                                    {getHandoverLabel(dealData.pickupType)}
-                                </span>
-                            </div>
-
-                            <div className="border-t border-[var(--border-subtlest)] pt-4 flex items-center justify-between">
+                            <div className="flex items-center justify-between">
                                 <div className="flex flex-col gap-0.5">
                                     <span className="text-[13px] font-bold text-[var(--text-primary)]">Remove items from storage today?</span>
                                     <span className="text-[11px] text-[var(--text-subtle)]">Confirm physical retrieval from vault</span>
@@ -362,22 +642,44 @@ Thank you for choosing CASHY.
                                     <p className="font-semibold text-amber-800">
                                         Vault Retention: Items will remain in storage. Status will be updated to CLOSED (retaining vault storage).
                                     </p>
-                                ) : dealData.pickupType === 'STANDARD_SHIPMENT' ? (
-                                    <p className="font-semibold text-blue-800">
-                                        Standard Shipment: An automated shipping label will be generated upon confirmation.
-                                    </p>
                                 ) : (
                                     <p className="font-semibold text-blue-800">
-                                        In-Shop: Customer will retrieve items immediately at the {dealData.countryCode === 'DE' ? 'Munich' : 'Vienna'} register.
+                                        Vault Retrieval: Items will be checked out and retrieved from the vault today.
                                     </p>
                                 )}
                             </div>
                         </div>
+
+                        {/* Notes / Justification Section */}
+                        <div className="flex flex-col">
+                            <label className="text-[12px] font-bold text-[var(--text-primary)] mb-1.5 flex items-center justify-between">
+                                <span>Notes / Justification {isFeesOverridden && <span className="text-red-500">*</span>}</span>
+                                {isFeesOverridden && (
+                                    <span className="text-[10px] text-amber-600 dark:text-amber-400 font-semibold bg-amber-50 dark:bg-amber-950/20 px-2 py-0.5 rounded border border-amber-200">
+                                        Adjustment Reason Required
+                                    </span>
+                                )}
+                            </label>
+                            <textarea
+                                className={`w-full text-[13px] px-3.5 py-3 bg-white dark:bg-[#1f2937] border rounded-xl focus:outline-none focus:ring-2 focus:ring-[var(--brand-500)] text-[var(--text-primary)] transition-all min-h-[75px] ${
+                                    isNotesRequired ? 'border-red-300 bg-red-50/10' : 'border-[var(--border-subtle)]'
+                                }`}
+                                placeholder="Enter operator reason for fee adjustment..."
+                                value={feeOverrideReason}
+                                onChange={(e) => setFeeOverrideReason(e.target.value)}
+                            />
+                            {isNotesRequired && (
+                                <span className="text-[11px] font-semibold text-red-600 dark:text-red-400 mt-1.5 flex items-center gap-1.5">
+                                    <AlertTriangleIcon size={12} />
+                                    Written justification is mandatory when fees are overridden.
+                                </span>
+                            )}
+                        </div>
                     </div>
                 );
 
-            // ── Step 4: Payment Selection ────────────────────────────────────────
-            case 4:
+            // ── Step 3: Payment Selection ────────────────────────────────────────
+            case 3:
                 return (
                     <div className="space-y-5 animate-in fade-in slide-in-from-right-4 duration-300">
                         <p className="text-[13px] text-[var(--text-subtle)] leading-relaxed">
@@ -433,8 +735,8 @@ Thank you for choosing CASHY.
                     </div>
                 );
 
-            // ── Step 5: Success & Receipt ────────────────────────────────────────
-            case 5:
+            // ── Step 4: Success & Receipt ────────────────────────────────────────
+            case 4:
                 return (
                     <div className="text-center py-6 space-y-6 animate-in fade-in zoom-in-95 duration-500">
                         {/* Beautiful Checkmark Animation */}
@@ -477,8 +779,8 @@ Thank you for choosing CASHY.
         }
     };
 
-    const isLastStepBeforeSuccess = step === 4;
-    const isSuccessStep = step === 5;
+    const isLastStepBeforeSuccess = step === 3;
+    const isSuccessStep = step === 4;
 
     return (
         <div

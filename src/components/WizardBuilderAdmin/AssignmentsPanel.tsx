@@ -83,8 +83,8 @@ export function AssignmentsPanel({
   };
 
   return (
-    <div className="bg-[var(--background-primary)] h-full relative rounded-[8px] shrink-0 w-[260px] overflow-hidden border border-[var(--border-subtle)]">
-      <div className="content-stretch flex flex-col gap-[24px] items-start py-[8px] relative w-full h-full overflow-y-auto slick-scrollbar">
+    <div className="bg-[var(--background-primary)] h-full flex flex-col rounded-[8px] shrink-0 w-[260px] overflow-hidden border border-[var(--border-subtle)]">
+      <div className="flex-1 overflow-y-auto slick-scrollbar py-[8px] w-full flex flex-col gap-[24px]">
         <div className="content-stretch flex flex-col gap-[24px] items-start relative shrink-0 w-full">
           {/* Header */}
           <div className="grid-rows-[max-content] inline-grid leading-[0] place-items-start relative shrink-0 w-full">
@@ -286,24 +286,24 @@ export function AssignmentsPanel({
             </div>
           </div>
         </div>
+      </div>
 
-        {/* Save & Delete Buttons */}
-        <div className="px-[16px] py-[16px] w-full flex flex-col gap-3 mt-auto border-t border-[var(--border-subtle)]">
-          <button 
-            onClick={onSave}
-            className="bg-[var(--background-brand-solid)] w-full h-[40px] rounded-[8px] flex items-center justify-center hover:bg-[var(--background-brand-solid-hover)] transition-colors shadow-sm"
-          >
-            <span className="font-['Inter',sans-serif] font-bold text-[14px] text-[var(--text-white)]">
-              Save and Close
-            </span>
-          </button>
-          <button 
-            onClick={() => setIsDeleteModalOpen(true)}
-            className="w-full h-[40px] rounded-[8px] flex items-center justify-center border border-[var(--border-error-subtle)] text-[var(--text-error)] hover:bg-[var(--background-error-primary)] transition-colors font-bold text-[14px]"
-          >
-            Delete Wizard
-          </button>
-        </div>
+      {/* Save & Delete Buttons (Sticky) */}
+      <div className="px-[16px] py-[16px] w-full flex flex-col gap-3 border-t border-[var(--border-subtle)] bg-[var(--background-primary)] shrink-0 z-10">
+        <button 
+          onClick={onSave}
+          className="bg-[var(--background-brand-solid)] w-full h-[40px] rounded-[8px] flex items-center justify-center hover:bg-[var(--background-brand-solid-hover)] transition-colors shadow-sm"
+        >
+          <span className="font-['Inter',sans-serif] font-bold text-[14px] text-[var(--text-white)]">
+            Save and Close
+          </span>
+        </button>
+        <button 
+          onClick={() => setIsDeleteModalOpen(true)}
+          className="w-full h-[40px] rounded-[8px] flex items-center justify-center border border-[var(--border-error-subtle)] text-[var(--text-error)] hover:bg-[var(--background-error-primary)] transition-colors font-bold text-[14px]"
+        >
+          Delete Wizard
+        </button>
       </div>
 
       {/* Confirmation Modals */}

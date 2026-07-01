@@ -6,10 +6,11 @@ import { Sidebar } from './Sidebar';
 import { MainContent } from './MainContent';
 import { AssignmentsPanel } from './AssignmentsPanel';
 import { ConfirmationModal } from './ConfirmationModal';
-import { GLOBAL_STEPS } from '../../data/wizardData';
+import { GLOBAL_STEPS, MOCK_WIZARDS } from '../../data/wizardData';
 import type { WizardConfig, AssociatedAction } from '../../data/wizardData';
-import { getWorkflowGates } from '../../data/workflowGates';
+import { getWorkflowGates, STATUS_ORDER } from '../../data/workflowGates';
 import type { WorkflowGate } from '../../data/workflowGates';
+import { useToast } from '../Toast/useToast';
 
 export interface FieldType {
   id: string;
@@ -75,11 +76,19 @@ export function DealWizardBuilder({ wizardConfig, onBack, onSave, onDelete }: De
     };
   }, []);
 
+  const { showToast } = useToast();
+  const [showBackConfirmation, setShowBackConfirmation] = useState(false);
+  const [showCollisionConfirmation, setShowCollisionConfirmation] = useState(false);
+  const [conflictingWizard, setConflictingWizard] = useState<WizardConfig | null>(null);
+  const [pendingCategoryUpdate, setPendingCategoryUpdate] = useState<string | null>(null);
+  const [pendingShopUpdate, setPendingShopUpdate] = useState<string | null>(null);
+  const [pendingActiveUpdate, setPendingActiveUpdate] = useState<boolean | null>(null);
+
   const [wizardState, setWizardState] = useState<WizardState>({
     name: wizardConfig.name,
     active: wizardConfig.active,
     category: wizardConfig.category,
-    shop: 'Global',
+    shop: wizardConfig.shop || 'Global',
     steps: GLOBAL_STEPS.map((s, idx) => ({
       id: s.id,
       name: s.defaultTitle,
@@ -106,6 +115,88 @@ export function DealWizardBuilder({ wizardConfig, onBack, onSave, onDelete }: De
 
   const [showDeactivateConfirmation, setShowDeactivateConfirmation] = useState(false);
 
+  const allWizards: WizardConfig[] = (() => {
+    const saved = localStorage.getItem('cashy_wizards_v2');
+    return saved ? JSON.parse(saved) : MOCK_WIZARDS;
+  })();
+
+  const isStateModified = () => {
+    if (wizardState.name !== wizardConfig.name) return true;
+    if (wizardState.active !== wizardConfig.active) return true;
+    if (wizardState.category !== wizardConfig.category) return true;
+    const initialShop = wizardConfig.shop || 'Global';
+    if (wizardState.shop !== initialShop) return true;
+
+    for (const step of wizardState.steps) {
+      const initialName = wizardConfig.stepNames?.[step.id] || GLOBAL_STEPS.find(s => s.id === step.id)?.defaultTitle || '';
+      if (step.name !== initialName) return true;
+      const initialAction = wizardConfig.stepActions?.[step.id] || 'NONE';
+      if (step.associatedAction !== initialAction) return true;
+    }
+
+    if (wizardState.fields.length !== wizardConfig.fields.length) return true;
+    for (const fState of wizardState.fields) {
+      const fConfig = wizardConfig.fields.find(f => f.id === fState.id);
+      if (!fConfig) return true;
+      if (fState.label !== fConfig.label) return true;
+      if (fState.placeholder !== (fConfig.placeholder || '')) return true;
+      if (fState.required !== (fConfig.required || false)) return true;
+      if (fState.stepId !== fConfig.stepId) return true;
+      if (fState.fieldType.type !== fConfig.type) return true;
+      const stateOpts = fState.options || [];
+      const configOpts = fConfig.options || [];
+      if (stateOpts.length !== configOpts.length) return true;
+      for (let j = 0; j < stateOpts.length; j++) {
+        if (stateOpts[j] !== configOpts[j]) return true;
+      }
+    }
+    return false;
+  };
+
+  const isNameDuplicate = (name: string) => {
+    return allWizards.some(w => w.id !== wizardConfig.id && w.name.toLowerCase().trim() === name.toLowerCase().trim());
+  };
+
+  const getConflictingActiveWizard = (category: string, shop: string) => {
+    if (!category) return null;
+    return allWizards.find(w => 
+      w.id !== wizardConfig.id && 
+      w.active && 
+      w.category.toLowerCase().trim() === category.toLowerCase().trim() && 
+      (w.shop || 'Global').toLowerCase().trim() === shop.toLowerCase().trim()
+    );
+  };
+
+  const getActionOrderScore = (action: string): number => {
+    if (!action || action === 'NONE') return 0;
+    const gate = gates.find(g => g.id === action);
+    if (!gate || !gate.triggers || gate.triggers.length === 0) return 0;
+    const orders = gate.triggers.map(t => STATUS_ORDER[t]).filter(o => o !== undefined);
+    if (orders.length === 0) return 0;
+    return Math.max(...orders);
+  };
+
+  const validateChronologicalGates = (): string | null => {
+    let lastScore = 0;
+    let lastStepName = '';
+    const sortedSteps = [...wizardState.steps].sort((a, b) => a.order - b.order);
+    
+    for (const step of sortedSteps) {
+      const score = getActionOrderScore(step.associatedAction);
+      if (score > 0) {
+        if (score < lastScore) {
+          const gateName = gates.find(g => g.id === step.associatedAction)?.name || step.associatedAction;
+          const prevStep = sortedSteps.find(s => getActionOrderScore(s.associatedAction) === lastScore);
+          const prevGateName = gates.find(g => g.id === prevStep?.associatedAction)?.name || 'previous';
+          return `Workflow gates must follow chronological status progression. Step "${step.name}" (${gateName}) cannot trigger a status before Step "${lastStepName}" (${prevGateName}).`;
+        }
+        lastScore = score;
+        lastStepName = step.name;
+      }
+    }
+    return null;
+  };
+
   const executeSave = () => {
     const stepActions: Record<string, AssociatedAction> = {};
     wizardState.steps.forEach(s => {
@@ -117,6 +208,7 @@ export function DealWizardBuilder({ wizardConfig, onBack, onSave, onDelete }: De
       name: wizardState.name,
       active: wizardState.active,
       category: wizardState.category,
+      shop: wizardState.shop,
       updatedAt: new Date().toLocaleDateString('en-US', { month: 'short', day: 'numeric', year: 'numeric' }),
       stepActions,
       fields: wizardState.fields.map(f => ({
@@ -137,11 +229,82 @@ export function DealWizardBuilder({ wizardConfig, onBack, onSave, onDelete }: De
   };
 
   const handleSave = () => {
+    if (isNameDuplicate(wizardState.name)) {
+      showToast(`A wizard named "${wizardState.name}" already exists. Please choose a unique name.`, 'error');
+      return;
+    }
+
+    if (wizardState.active && !wizardState.category) {
+      showToast('Please select an Item Category in the Assignments panel before activating this wizard.', 'error');
+      return;
+    }
+
+    const gateOrderError = validateChronologicalGates();
+    if (gateOrderError) {
+      showToast(gateOrderError, 'error');
+      return;
+    }
+
     if (wizardConfig.active && !wizardState.active) {
       setShowDeactivateConfirmation(true);
       return;
     }
+
+    const conflict = getConflictingActiveWizard(wizardState.category, wizardState.shop);
+    if (wizardState.active && conflict) {
+      setConflictingWizard(conflict);
+      setPendingCategoryUpdate(null);
+      setPendingShopUpdate(null);
+      setPendingActiveUpdate(null);
+      setShowCollisionConfirmation(true);
+      return;
+    }
+
     executeSave();
+  };
+
+  const handleBackWithCheck = () => {
+    if (isStateModified()) {
+      setShowBackConfirmation(true);
+    } else {
+      onBack();
+    }
+  };
+
+  const handleCollisionConfirm = () => {
+    if (!conflictingWizard) return;
+    const updatedWizards = allWizards.map(w => {
+      if (w.id === conflictingWizard.id) {
+        return { ...w, active: false };
+      }
+      return w;
+    });
+    localStorage.setItem('cashy_wizards_v2', JSON.stringify(updatedWizards));
+    showToast(`Wizard "${conflictingWizard.name}" has been deactivated to resolve category-shop collision.`, 'info');
+
+    if (pendingCategoryUpdate !== null) {
+      setWizardState(prev => ({ ...prev, category: pendingCategoryUpdate }));
+      setPendingCategoryUpdate(null);
+    } else if (pendingShopUpdate !== null) {
+      setWizardState(prev => ({ ...prev, shop: pendingShopUpdate }));
+      setPendingShopUpdate(null);
+    } else if (pendingActiveUpdate !== null) {
+      setWizardState(prev => ({ ...prev, active: true }));
+      setPendingActiveUpdate(null);
+    } else {
+      executeSave();
+    }
+    
+    setShowCollisionConfirmation(false);
+    setConflictingWizard(null);
+  };
+
+  const handleCollisionCancel = () => {
+    setPendingCategoryUpdate(null);
+    setPendingShopUpdate(null);
+    setPendingActiveUpdate(null);
+    setConflictingWizard(null);
+    setShowCollisionConfirmation(false);
   };
 
   const addField = (fieldType: FieldType) => {
@@ -180,6 +343,10 @@ export function DealWizardBuilder({ wizardConfig, onBack, onSave, onDelete }: De
 
 
   const updateWizardName = (name: string) => {
+    if (isNameDuplicate(name)) {
+      showToast(`A wizard named "${name}" already exists. Please choose a unique name.`, 'error');
+      return;
+    }
     setWizardState(prev => ({
       ...prev,
       name
@@ -194,13 +361,36 @@ export function DealWizardBuilder({ wizardConfig, onBack, onSave, onDelete }: De
   };
 
   const toggleWizardActive = () => {
+    const newActive = !wizardState.active;
+    if (newActive) {
+      if (!wizardState.category) {
+        showToast('Please select an Item Category in the Assignments panel before activating this wizard.', 'error');
+        return;
+      }
+      const conflict = getConflictingActiveWizard(wizardState.category, wizardState.shop);
+      if (conflict) {
+        setConflictingWizard(conflict);
+        setPendingActiveUpdate(true);
+        setShowCollisionConfirmation(true);
+        return;
+      }
+    }
     setWizardState(prev => ({
       ...prev,
-      active: !prev.active
+      active: newActive
     }));
   };
 
   const updateCategory = (category: string) => {
+    if (wizardState.active) {
+      const conflict = getConflictingActiveWizard(category, wizardState.shop);
+      if (conflict) {
+        setConflictingWizard(conflict);
+        setPendingCategoryUpdate(category);
+        setShowCollisionConfirmation(true);
+        return;
+      }
+    }
     setWizardState(prev => ({
       ...prev,
       category
@@ -208,6 +398,15 @@ export function DealWizardBuilder({ wizardConfig, onBack, onSave, onDelete }: De
   };
 
   const updateShop = (shop: string) => {
+    if (wizardState.active) {
+      const conflict = getConflictingActiveWizard(wizardState.category, shop);
+      if (conflict) {
+        setConflictingWizard(conflict);
+        setPendingShopUpdate(shop);
+        setShowCollisionConfirmation(true);
+        return;
+      }
+    }
     setWizardState(prev => ({
       ...prev,
       shop
@@ -250,7 +449,7 @@ export function DealWizardBuilder({ wizardConfig, onBack, onSave, onDelete }: De
               onToggleActive={toggleWizardActive}
               onReorderFields={reorderFields}
               onUpdateWizardName={updateWizardName}
-              onBack={onBack}
+              onBack={handleBackWithCheck}
               gates={gates}
             />
              <AssignmentsPanel
@@ -279,6 +478,27 @@ export function DealWizardBuilder({ wizardConfig, onBack, onSave, onDelete }: De
         title="Deactivate Active Wizard?"
         description="Warning: This wizard template is currently active and assigned to a category. Deactivating it will leave that category layout disabled, which will affect step progress validations for active deals in that category."
         confirmText="Yes, Deactivate"
+        confirmVariant="danger"
+      />
+      <ConfirmationModal
+        isOpen={showBackConfirmation}
+        onClose={() => setShowBackConfirmation(false)}
+        onConfirm={() => {
+          setShowBackConfirmation(false);
+          onBack();
+        }}
+        title="Discard Unsaved Changes?"
+        description="You have unsaved changes. Are you sure you want to go back? Unsaved changes will be permanently lost."
+        confirmText="Discard Changes"
+        confirmVariant="danger"
+      />
+      <ConfirmationModal
+        isOpen={showCollisionConfirmation}
+        onClose={handleCollisionCancel}
+        onConfirm={handleCollisionConfirm}
+        title="Deactivate Conflicting Active Wizard?"
+        description={`This category and shop combination already has an active wizard: "${conflictingWizard?.name || ''}". Activating this wizard will automatically deactivate "${conflictingWizard?.name || ''}". Do you want to proceed?`}
+        confirmText="Deactivate and Activate"
         confirmVariant="danger"
       />
     </DndProvider>

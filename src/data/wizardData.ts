@@ -15,6 +15,7 @@ export interface WizardConfig {
   name: string;
   businessArea: string;
   category: string;
+  shop?: string;
   active: boolean;
   fields: WizardField[];
   stepNames: Record<string, string>; // Maps step ID to custom display name

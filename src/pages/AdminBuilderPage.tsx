@@ -11,7 +11,26 @@ export const WizardBuilderPage: React.FC = () => {
     const navigate = useNavigate();
     const [wizards, setWizards] = useState<WizardConfig[]>(() => {
         const saved = localStorage.getItem('cashy_wizards_v2');
-        return saved ? JSON.parse(saved) : MOCK_WIZARDS;
+        const parsed: WizardConfig[] = saved ? JSON.parse(saved) : MOCK_WIZARDS;
+        
+        let hasChanges = false;
+        const activeKeys = new Set<string>();
+        const cleaned = parsed.map(w => {
+            if (w.active && w.category) {
+                const key = `${w.category.toLowerCase().trim()}_${(w.shop || 'Global').toLowerCase().trim()}`;
+                if (activeKeys.has(key)) {
+                    hasChanges = true;
+                    return { ...w, active: false };
+                }
+                activeKeys.add(key);
+            }
+            return w;
+        });
+
+        if (hasChanges) {
+            localStorage.setItem('cashy_wizards_v2', JSON.stringify(cleaned));
+        }
+        return cleaned;
     });
     const selectedWizard = useMemo(() => {
         if (!id) return null;

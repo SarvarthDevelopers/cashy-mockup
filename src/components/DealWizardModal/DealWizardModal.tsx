@@ -211,7 +211,7 @@ export const DealWizardModal: React.FC<DealWizardModalProps> = ({
         if (!validateStepFields(stepId)) {
             setStepErrors(prev => ({
                 ...prev,
-                [stepId]: "Please fill out all required fields in this step before triggering this workflow gate."
+                [stepId]: "Please fill out all required fields in this step before triggering this deal checkpoint."
             }));
             showToast("Please fill out all required fields.", "error");
             return;
@@ -246,7 +246,7 @@ export const DealWizardModal: React.FC<DealWizardModalProps> = ({
                     nextStatus = finalTrigger;
                 }
                 isDeclinedOrCanceled = gate.triggers.includes('DECLINED') || gate.triggers.includes('CANCELED');
-                statusText = `Workflow Gate "${gate.name}" triggered: Deal status transitioned to ${nextStatus}!`;
+                statusText = `Deal Checkpoint "${gate.name}" triggered: Deal status transitioned to ${nextStatus}!`;
             }
 
             showToast(statusText);

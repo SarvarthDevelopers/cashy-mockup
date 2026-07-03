@@ -188,7 +188,7 @@ export function DealWizardBuilder({ wizardConfig, onBack, onSave, onDelete }: De
           const gateName = gates.find(g => g.id === step.associatedAction)?.name || step.associatedAction;
           const prevStep = sortedSteps.find(s => getActionOrderScore(s.associatedAction) === lastScore);
           const prevGateName = gates.find(g => g.id === prevStep?.associatedAction)?.name || 'previous';
-          return `Workflow gates must follow chronological status progression. Step "${step.name}" (${gateName}) cannot trigger a status before Step "${lastStepName}" (${prevGateName}).`;
+          return `Deal checkpoints must follow chronological status progression. Step "${step.name}" (${gateName}) cannot trigger a status before Step "${lastStepName}" (${prevGateName}).`;
         }
         lastScore = score;
         lastStepName = step.name;

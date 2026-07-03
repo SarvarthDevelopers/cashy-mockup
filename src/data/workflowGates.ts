@@ -110,44 +110,7 @@ export const ALL_DEAL_STATUSES: DealStatusInfo[] = [
   }
 ];
 
-export const DEFAULT_WORKFLOW_GATES: WorkflowGate[] = [
-  {
-    id: 'SET_REVIEWING',
-    name: 'Start Review',
-    triggers: ['REVIEWING'],
-    title: 'Start Item Review',
-    description: 'Ready to start the review process and transition the status to REVIEWING.',
-    buttonText: 'Start Review',
-    system: true,
-  },
-  {
-    id: 'VERIFY_DEAL',
-    name: 'Verify Deal',
-    triggers: ['VERIFIED'],
-    title: 'Verify Calculations',
-    description: 'Validates all input data, locks appraisal/pricing, and marks the deal as VERIFIED.',
-    buttonText: 'Verify & Lock',
-    system: true,
-  },
-  {
-    id: 'EXECUTE_PAYOUT',
-    name: 'Confirm Payout',
-    triggers: ['PAYED_AND_STORED'],
-    title: 'Execute Payout',
-    description: 'Processes the cashbook entry and marks the deal as PAYED_AND_STORED (Live).',
-    buttonText: 'Confirm Payout',
-    system: true,
-  },
-  {
-    id: 'DECLINE_DEAL',
-    name: 'Reject & Close',
-    triggers: ['DECLINED'],
-    title: 'Decline Deal',
-    description: 'Marks the deal as DECLINED. This terminates the wizard process.',
-    buttonText: 'Decline Deal',
-    system: true,
-  }
-];
+export const DEFAULT_WORKFLOW_GATES: WorkflowGate[] = [];
 
 export const getWorkflowGates = (): WorkflowGate[] => {
   const saved = localStorage.getItem('cashy_workflow_gates');
@@ -155,7 +118,7 @@ export const getWorkflowGates = (): WorkflowGate[] => {
     try {
       return JSON.parse(saved);
     } catch (e) {
-      console.error('Failed to parse workflow gates', e);
+      console.error('Failed to parse deal checkpoints', e);
     }
   }
   return DEFAULT_WORKFLOW_GATES;

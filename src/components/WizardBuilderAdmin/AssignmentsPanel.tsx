@@ -69,7 +69,7 @@ export function AssignmentsPanel({
     else if (firstTrigger === 'ON_SELL') colorClass = 'bg-purple-500';
     else if (firstTrigger === 'ITEM_RECEIVED_ID_MISSING') colorClass = 'bg-orange-500';
     
-    return <span className={`w-2 h-2 rounded-full ${colorClass} shrink-0`} title={`Workflow Gate: ${gate.name}`} />;
+    return <span className={`w-2 h-2 rounded-full ${colorClass} shrink-0`} title={`Deal Checkpoint: ${gate.name}`} />;
   };
 
   const handleCategorySelect = (cat: string) => {
@@ -189,11 +189,11 @@ export function AssignmentsPanel({
               {/* Divider */}
               <div className="h-px w-full bg-[var(--border-subtle)] my-1" />
 
-              {/* Workflow Gates Section */}
+              {/* Deal Checkpoints Section */}
               <div className="content-stretch flex flex-col gap-[12px] items-start relative shrink-0 w-full">
                 <div className="flex gap-[10px] items-center relative rounded-[4px] w-full">
                   <div className="font-['Inter',sans-serif] font-bold leading-[0] relative shrink-0 text-[var(--text-subtle)] text-[12px] tracking-widest whitespace-nowrap">
-                    <p className="leading-[1.4]">WORKFLOW GATES</p>
+                    <p className="leading-[1.4]">DEAL CHECKPOINTS</p>
                   </div>
                 </div>
 

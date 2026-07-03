@@ -208,9 +208,6 @@ export const CategoryTreeCheckbox: React.FC<CategoryTreeCheckboxProps> = ({
                   <span className={`text-[13px] truncate ${isChecked ? 'text-[var(--text-brand)] font-bold' : 'text-[var(--text-primary)] font-semibold'}`}>
                     {node.displayName}
                   </span>
-                  {isLeaf && (
-                    <span className="text-[9px] text-[var(--text-placeholder)] font-mono tracking-tight">{node.fullPath}</span>
-                  )}
                 </div>
               </div>
   

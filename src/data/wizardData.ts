@@ -8,7 +8,7 @@ export interface WizardField {
   required?: boolean;
 }
 
-export type AssociatedAction = string; // Allows any dynamic workflow gate ID or 'NONE'
+export type AssociatedAction = string; // Allows any dynamic deal checkpoint ID or 'NONE'
 
 export interface WizardConfig {
   id: string;

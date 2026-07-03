@@ -68,7 +68,7 @@ export function DraggableStepTab({ step, index, isActive, onClick, onReorder, ga
 
     return (
       <span 
-        title={`Workflow Gate: ${gate.name}`}
+        title={`Deal Checkpoint: ${gate.name}`}
         className={`w-2 h-2 rounded-full ${colorClass} shrink-0`} 
       />
     );

@@ -1,15 +1,15 @@
-import React, { useState, useEffect } from 'react';
+import React, { useState, useEffect, useRef } from 'react';
 import { Button, Input, Dropdown, Toggle } from '../';
 import type { DealData } from '../../data/mockData';
 
 // Re-importing Lucide icons explicitly to avoid index mismatches
 import { 
   X as XIcon, 
-  RefreshCw as RefreshCwIcon, 
   Calendar as CalendarIcon,
   Trash2 as TrashIcon,
   Plus as PlusIcon,
-  AlertTriangle as AlertTriangleIcon
+  AlertTriangle as AlertTriangleIcon,
+  ArrowUpRight as ArrowUpRightIcon
 } from 'lucide-react';
 
 export interface FeeComponent {
@@ -52,14 +52,7 @@ export interface ExtendDealModalProps {
     onUpdateDeal?: (deal: DealData) => void;
 }
 
-// Step labels matching the spec exactly
-const STEP_LABELS = [
-    'Deal Summary',
-    'Duration & Base Fees',
-    'Loan Adjustment',
-    'Fee & Policy Overrides',
-    'Payment & Final Review',
-];
+
 
 // Helper: format euro
 function fmtEur(n: number) {
@@ -163,7 +156,14 @@ export const ExtendDealModal: React.FC<ExtendDealModalProps> = ({
     const [selectModeIds, setSelectModeIds] = useState<Set<string>>(new Set());
     const [editingItemIds, setEditingItemIds] = useState<string[]>([]);
     const [feeOverrideReason, setFeeOverrideReason] = useState('');
-    const [childFeeRateOverride, setChildFeeRateOverride] = useState('4.0');
+    
+    // Child Fee States
+    const [carryForwardFees, setCarryForwardFees] = useState(true);
+    const [childFeeComponents, setChildFeeComponents] = useState<FeeComponent[]>([]);
+    const [isEditingChildDeal, setIsEditingChildDeal] = useState(false);
+    const [editingChildItemIds, setEditingChildItemIds] = useState<string[]>([]);
+    const [selectModeChildIds, setSelectModeChildIds] = useState<Set<string>>(new Set());
+
     const [allowOnlineExtension, setAllowOnlineExtension] = useState(true);
 
     // Step 5: Payment states
@@ -171,6 +171,48 @@ export const ExtendDealModal: React.FC<ExtendDealModalProps> = ({
     const [cashBookName, setCashBookName] = useState(() => {
         return dealData?.countryCode === 'DE' ? 'Munich Main Cash' : 'Vienna Main Cash';
     });
+
+    const scrollContainerRef = useRef<HTMLDivElement>(null);
+    const isAutoScrollingRef = useRef(false);
+
+    const scrollToSection = (targetStep: number) => {
+        const container = scrollContainerRef.current;
+        if (!container) return;
+        
+        const element = container.querySelector(`#extend-step-${targetStep}`);
+        if (element) {
+            isAutoScrollingRef.current = true;
+            setStep(targetStep);
+            element.scrollIntoView({ behavior: 'smooth', block: 'start' });
+            setTimeout(() => {
+                isAutoScrollingRef.current = false;
+            }, 800);
+        }
+    };
+
+    const handleScroll = () => {
+        if (isAutoScrollingRef.current) return;
+        const container = scrollContainerRef.current;
+        if (!container) return;
+        
+        const containerRect = container.getBoundingClientRect();
+        const stepIds = [1, 2, 3, 4, 5];
+        let active = step;
+        
+        for (const s of stepIds) {
+            const el = container.querySelector(`#extend-step-${s}`);
+            if (el) {
+                const rect = el.getBoundingClientRect();
+                if (rect.top - containerRect.top <= 120) {
+                    active = s;
+                }
+            }
+        }
+        
+        if (active !== step) {
+            setStep(active);
+        }
+    };
 
     useEffect(() => {
         if (isOpen) {
@@ -201,10 +243,17 @@ export const ExtendDealModal: React.FC<ExtendDealModalProps> = ({
                 setIsEditingDeal(false);
                 setEditingItemIds([]);
                 setFeeOverrideReason('');
-                setChildFeeRateOverride('4.0');
+                setCarryForwardFees(true);
+                setChildFeeComponents(components);
+                setIsEditingChildDeal(false);
+                setEditingChildItemIds([]);
+                setSelectModeChildIds(new Set());
                 setAllowOnlineExtension(true);
                 setPaymentType('Cash');
                 setCashBookName(dealData?.countryCode === 'DE' ? 'Munich Main Cash' : 'Vienna Main Cash');
+                if (scrollContainerRef.current) {
+                    scrollContainerRef.current.scrollTop = 0;
+                }
                 setIsSubmitting(false);
             }, 0);
             return () => clearTimeout(timer);
@@ -263,6 +312,66 @@ export const ExtendDealModal: React.FC<ExtendDealModalProps> = ({
         setFeeComponents(feeComponents.filter(comp => comp.id !== id));
     };
 
+    // Keep child components in sync with parent when carry-forward is active
+    useEffect(() => {
+        if (carryForwardFees) {
+            // eslint-disable-next-line react-hooks/set-state-in-effect
+            setChildFeeComponents(feeComponents);
+        }
+    }, [feeComponents, carryForwardFees]);
+
+    // Child Fee modification handlers
+    const handleAddChildDealFeeComponent = () => {
+        const newComp: FeeComponent = {
+            id: String(Math.floor(Math.random() * 1000000)),
+            level: 'deal',
+            type: 'Other',
+            customName: 'Other Fee',
+            amount: 0,
+            taxRate: 20,
+            isDefault: false
+        };
+        setChildFeeComponents([...childFeeComponents, newComp]);
+    };
+
+    const handleAddChildItemFeeComponent = (itemName: string) => {
+        const newComp: FeeComponent = {
+            id: String(Math.floor(Math.random() * 1000000)),
+            level: 'item',
+            itemId: itemName,
+            type: 'Other',
+            customName: 'Other Fee',
+            amount: 0,
+            taxRate: 20,
+            isDefault: false
+        };
+        setChildFeeComponents([...childFeeComponents, newComp]);
+    };
+
+    const handleUpdateChildComponent = (id: string, updates: Partial<FeeComponent>) => {
+        setChildFeeComponents(childFeeComponents.map(comp => {
+            if (comp.id === id) {
+                const updated = { ...comp, ...updates };
+                if (updates.type) {
+                    if (updates.type === 'Interest' || updates.type === 'Discount' || updates.type === 'No Interest & Fees (1 month)') {
+                        updated.taxRate = 0;
+                    } else {
+                        updated.taxRate = 20;
+                    }
+                }
+                return updated;
+            }
+            return comp;
+        }));
+    };
+
+    const enterChildSelectMode = (id: string) => setSelectModeChildIds(prev => new Set([...prev, id]));
+    const exitChildSelectMode = (id: string) => setSelectModeChildIds(prev => { const s = new Set(prev); s.delete(id); return s; });
+
+    const handleDeleteChildComponent = (id: string) => {
+        setChildFeeComponents(childFeeComponents.filter(comp => comp.id !== id));
+    };
+
     if (!isOpen || !dealData) return null;
 
     // --- Calculations ---
@@ -286,11 +395,11 @@ export const ExtendDealModal: React.FC<ExtendDealModalProps> = ({
     const TOTAL_STEPS = 5;
 
     const goNext = () => {
-        setStep(s => s + 1);
+        scrollToSection(step + 1);
     };
 
     const goBack = () => {
-        setStep(s => s - 1);
+        scrollToSection(step - 1);
     };
 
     const handleConfirm = () => {
@@ -314,7 +423,15 @@ export const ExtendDealModal: React.FC<ExtendDealModalProps> = ({
                         amount: c.amount,
                         taxRate: c.taxRate
                     })),
-                    childFeeRate: parseFloat(childFeeRateOverride),
+                    carryForwardFees: carryForwardFees,
+                    childFeeBreakdown: carryForwardFees ? undefined : childFeeComponents.map(c => ({
+                        level: c.level,
+                        itemId: c.itemId,
+                        type: c.type,
+                        name: c.type === 'Other' ? c.customName : c.type,
+                        amount: c.amount,
+                        taxRate: c.taxRate
+                    })),
                     allowOnlineExtension: allowOnlineExtension,
                     paymentType: paymentType,
                     cashBookName: ['Cash', 'Debit/Credit Card'].includes(paymentType) ? cashBookName : undefined,
@@ -361,591 +478,992 @@ export const ExtendDealModal: React.FC<ExtendDealModalProps> = ({
         { label: 'Graz Main Cash', value: 'Graz Main Cash' }
     ];
 
-    const renderContent = () => {
-        switch (step) {
-            // ── Step 1: Current Deal Summary ──────────────────────────────────
-            case 1:
-                return (
-                    <div className="space-y-4 animate-in fade-in slide-in-from-right-4 duration-300">
-                        <p className="text-[13px] text-[var(--text-subtle)] leading-relaxed">
-                            Review the current deal details before proceeding with the extension.
-                        </p>
-                        <div className="bg-[var(--background-secondary)]/40 rounded-xl border border-[var(--border-subtlest)] overflow-hidden">
-                            {[
-                                { label: 'Current Payout', value: `€ ${fmtEur(currentPayout)}` },
-                                { label: 'Due Date', value: dealData.dueDate || '—' },
-                                { label: 'Duration', value: currentDuration ? `${currentDuration} days` : (dealData.wizardData?.dealDuration || '—') },
-                                { label: 'Est. Item Market Value', value: `€ ${fmtEur(mockMarketValue)}` },
-                            ].map(({ label, value }, i, arr) => (
-                                <div key={label} className={`flex justify-between items-center px-5 py-3.5 ${i < arr.length - 1 ? 'border-b border-[var(--border-subtlest)]' : ''}`}>
-                                    <span className="text-[13px] text-[var(--text-subtle)] font-medium">{label}</span>
-                                    <span className="text-[13px] font-bold text-[var(--text-primary)]">{value}</span>
+    const renderStep1 = () => {
+        return (
+            <div className="space-y-4 animate-in fade-in slide-in-from-right-4 duration-300">
+                <p className="text-[13px] text-[var(--text-subtle)] leading-relaxed">
+                    Review the current deal details before proceeding with the extension.
+                </p>
+                <div className="bg-[var(--background-secondary)]/40 rounded-xl border border-[var(--border-subtlest)] overflow-hidden">
+                    {[
+                        { label: 'Current Payout', value: `€ ${fmtEur(currentPayout)}` },
+                        { label: 'Due Date', value: dealData.dueDate || '—' },
+                        { label: 'Duration', value: currentDuration ? `${currentDuration} days` : (dealData.wizardData?.dealDuration || '—') },
+                        { label: 'Est. Item Market Value', value: `€ ${fmtEur(mockMarketValue)}` },
+                    ].map(({ label, value }, i, arr) => (
+                        <div key={label} className={`flex justify-between items-center px-5 py-3.5 ${i < arr.length - 1 ? 'border-b border-[var(--border-subtlest)]' : ''}`}>
+                            <span className="text-[13px] text-[var(--text-subtle)] font-medium">{label}</span>
+                            <span className="text-[13px] font-bold text-[var(--text-primary)]">{value}</span>
+                        </div>
+                    ))}
+                </div>
+                {dealData.items.length > 0 && (
+                    <div>
+                        <p className="text-[10px] font-black uppercase tracking-widest text-[var(--text-subtlest)] mb-2">Collateral Items</p>
+                        <div className="space-y-1.5">
+                            {dealData.items.map((item, i) => (
+                                <div key={i} className="flex items-center gap-2 px-3 py-2 bg-[var(--background-secondary)] rounded-lg border border-[var(--border-subtlest)]">
+                                    <div className="w-1.5 h-1.5 rounded-full bg-[var(--brand-500)] shrink-0" />
+                                    <span className="text-[13px] font-semibold text-[var(--text-primary)]">{item}</span>
                                 </div>
                             ))}
                         </div>
-                        {dealData.items.length > 0 && (
-                            <div>
-                                <p className="text-[10px] font-black uppercase tracking-widest text-[var(--text-subtlest)] mb-2">Collateral Items</p>
-                                <div className="space-y-1.5">
-                                    {dealData.items.map((item, i) => (
-                                        <div key={i} className="flex items-center gap-2 px-3 py-2 bg-[var(--background-secondary)] rounded-lg border border-[var(--border-subtlest)]">
-                                            <div className="w-1.5 h-1.5 rounded-full bg-[var(--brand-500)] shrink-0" />
-                                            <span className="text-[13px] font-semibold text-[var(--text-primary)]">{item}</span>
-                                        </div>
-                                    ))}
+                    </div>
+                )}
+            </div>
+        );
+    };
+
+    const renderStep2 = () => {
+        return (
+            <div className="space-y-5 animate-in fade-in slide-in-from-right-4 duration-300">
+                <p className="text-[13px] text-[var(--text-subtle)] leading-relaxed">
+                    Select the number of additional days to extend this pawn deal.
+                </p>
+                <Dropdown
+                    label="Extend By (Days)"
+                    value={extensionDays}
+                    onChange={(val) => setExtensionDays(val)}
+                    options={[
+                        { label: '30 Days', value: '30' },
+                        { label: '60 Days', value: '60' },
+                        { label: '90 Days', value: '90' },
+                    ]}
+                />
+                <div className="p-4 bg-[var(--background-brand-primary)] border border-[var(--border-brand-subtle)] rounded-xl flex items-center gap-3">
+                    <CalendarIcon size={20} className="text-[var(--text-brand)] shrink-0" />
+                    <div>
+                        <span className="text-[10px] font-extrabold uppercase tracking-widest text-[var(--text-brand)]">New Due Date</span>
+                        <p className="text-[16px] font-extrabold text-[var(--text-brand)] mt-0.5">{fmtDate(newDueDate)}</p>
+                        <p className="text-[11px] text-[var(--text-brand)]/70 font-medium mt-0.5">Extended from {dealData.dueDate || '—'} by {extensionDays} days</p>
+                    </div>
+                </div>
+                <div className="p-4 bg-[var(--background-secondary)]/40 border border-[var(--border-subtlest)] rounded-xl">
+                    <span className="text-[10px] font-black uppercase tracking-widest text-[var(--text-subtlest)] block mb-1">Base Parent Fees Accumulated</span>
+                    <p className="text-[18px] font-black text-[var(--text-primary)]">€ {fmtEur(calculatedBaseFees)}</p>
+                    <p className="text-[11px] text-[var(--text-subtlest)] mt-1.5">
+                        Calculated at 4% for {elapsedDays} elapsed days on current payout of € {fmtEur(currentPayout)}.
+                    </p>
+                </div>
+            </div>
+        );
+    };
+
+    const renderStep3 = () => {
+        return (
+            <div className="space-y-4 animate-in fade-in slide-in-from-right-4 duration-300">
+                <p className="text-[13px] text-[var(--text-subtle)] leading-relaxed">
+                    Configure any loan adjustments to the pawn principal.
+                </p>
+                <div className="space-y-3">
+                    {[
+                        { value: 'none', label: 'No Adjustment', sub: 'Extend due date only. Keep the current payout principal.' },
+                        { value: 'payback', label: 'Partial Payback (Redemption)', sub: 'Customer pays back a portion of the loan principal today.' },
+                        { value: 'payout', label: 'Request Additional Payout', sub: `Disburse extra funds today. Up to € ${fmtEur(additionalPossible)} available based on current LTV.` },
+                    ].map(({ value, label, sub }) => (
+                        <button
+                            key={value}
+                            type="button"
+                            onClick={() => {
+                                setAdjustmentMode(value as 'none' | 'payback' | 'payout');
+                                setAdjustmentAmountInput('');
+                            }}
+                            className={`w-full text-left p-4 rounded-xl border-2 transition-all duration-150 ${
+                                adjustmentMode === value
+                                    ? 'border-[var(--border-brand)] bg-[var(--background-brand-primary)]'
+                                    : 'border-[var(--border-subtlest)] bg-[var(--background-secondary)]/30 hover:border-[var(--border-brand-subtle)]'
+                            } cursor-pointer`}
+                        >
+                            <div className="flex items-center gap-3">
+                                <div className={`w-4 h-4 rounded-full border-2 flex items-center justify-center shrink-0 ${
+                                    adjustmentMode === value ? 'border-[var(--border-brand)] bg-[var(--background-brand-solid)]' : 'border-[var(--border-subtle)]'
+                                }`}>
+                                    {adjustmentMode === value && <div className="w-1.5 h-1.5 rounded-full bg-white" />}
+                                </div>
+                                <div>
+                                    <p className={`text-[13px] font-bold ${adjustmentMode === value ? 'text-[var(--text-brand)]' : 'text-[var(--text-primary)]'}`}>{label}</p>
+                                    <p className="text-[11px] text-[var(--text-subtle)] mt-0.5">{sub}</p>
                                 </div>
                             </div>
-                        )}
-                    </div>
-                );
+                        </button>
+                    ))}
+                </div>
 
-            // ── Step 2: Duration & Base Fees ────────────────────────────────────
-            case 2:
-                return (
-                    <div className="space-y-5 animate-in fade-in slide-in-from-right-4 duration-300">
-                        <p className="text-[13px] text-[var(--text-subtle)] leading-relaxed">
-                            Select the number of additional days to extend this pawn deal.
-                        </p>
-                        <Dropdown
-                            label="Extend By (Days)"
-                            value={extensionDays}
-                            onChange={(val) => setExtensionDays(val)}
-                            options={[
-                                { label: '30 Days', value: '30' },
-                                { label: '60 Days', value: '60' },
-                                { label: '90 Days', value: '90' },
-                            ]}
+                {adjustmentMode !== 'none' && (
+                    <div className="space-y-3 pt-2">
+                        <Input
+                            label={adjustmentMode === 'payback' ? 'Redemption Amount (€)' : 'Additional Payout Amount (€)'}
+                            type="number"
+                            step="0.01"
+                            min="0.01"
+                            placeholder="0.00"
+                            value={adjustmentAmountInput}
+                            onChange={(e: React.ChangeEvent<HTMLInputElement>) => setAdjustmentAmountInput(e.target.value)}
+                            error={
+                                adjustmentMode === 'payback' 
+                                    ? (adjustmentAmountNum > currentPayout || (adjustmentAmountNum <= 0 && adjustmentAmountInput !== ''))
+                                    : (adjustmentAmountNum > additionalPossible || (adjustmentAmountNum <= 0 && adjustmentAmountInput !== ''))
+                            }
+                            errorMessage={
+                                adjustmentMode === 'payback' 
+                                    ? `Must be between €0.01 and €${fmtEur(currentPayout)}`
+                                    : `Must be between €0.01 and €${fmtEur(additionalPossible)}`
+                            }
                         />
-                        <div className="p-4 bg-[var(--background-brand-primary)] border border-[var(--border-brand-subtle)] rounded-xl flex items-center gap-3">
-                            <CalendarIcon size={20} className="text-[var(--text-brand)] shrink-0" />
-                            <div>
-                                <span className="text-[10px] font-extrabold uppercase tracking-widest text-[var(--text-brand)]">New Due Date</span>
-                                <p className="text-[16px] font-extrabold text-[var(--text-brand)] mt-0.5">{fmtDate(newDueDate)}</p>
-                                <p className="text-[11px] text-[var(--text-brand)]/70 font-medium mt-0.5">Extended from {dealData.dueDate || '—'} by {extensionDays} days</p>
-                            </div>
-                        </div>
-                        <div className="p-4 bg-[var(--background-secondary)]/40 border border-[var(--border-subtlest)] rounded-xl">
-                            <span className="text-[10px] font-black uppercase tracking-widest text-[var(--text-subtlest)] block mb-1">Base Parent Fees Accumulated</span>
-                            <p className="text-[18px] font-black text-[var(--text-primary)]">€ {fmtEur(calculatedBaseFees)}</p>
-                            <p className="text-[11px] text-[var(--text-subtlest)] mt-1.5">
-                                Calculated at 4% for {elapsedDays} elapsed days on current payout of € {fmtEur(currentPayout)}.
-                            </p>
-                        </div>
-                    </div>
-                );
-
-            // ── Step 3: Loan Adjustment ─────────────────────────────
-            case 3:
-                return (
-                    <div className="space-y-4 animate-in fade-in slide-in-from-right-4 duration-300">
-                        <p className="text-[13px] text-[var(--text-subtle)] leading-relaxed">
-                            Configure any loan adjustments to the pawn principal.
-                        </p>
-                        <div className="space-y-3">
-                            {[
-                                { value: 'none', label: 'No Adjustment', sub: 'Extend due date only. Keep the current payout principal.' },
-                                { value: 'payback', label: 'Partial Payback (Redemption)', sub: 'Customer pays back a portion of the loan principal today.' },
-                                { value: 'payout', label: 'Request Additional Payout', sub: `Disburse extra funds today. Up to € ${fmtEur(additionalPossible)} available based on current LTV.` },
-                            ].map(({ value, label, sub }) => (
-                                <button
-                                    key={value}
-                                    type="button"
-                                    onClick={() => {
-                                        setAdjustmentMode(value as 'none' | 'payback' | 'payout');
-                                        setAdjustmentAmountInput('');
-                                    }}
-                                    className={`w-full text-left p-4 rounded-xl border-2 transition-all duration-150 ${
-                                        adjustmentMode === value
-                                            ? 'border-[var(--border-brand)] bg-[var(--background-brand-primary)]'
-                                            : 'border-[var(--border-subtlest)] bg-[var(--background-secondary)]/30 hover:border-[var(--border-brand-subtle)]'
-                                    } cursor-pointer`}
-                                >
-                                    <div className="flex items-center gap-3">
-                                        <div className={`w-4 h-4 rounded-full border-2 flex items-center justify-center shrink-0 ${
-                                            adjustmentMode === value ? 'border-[var(--border-brand)] bg-[var(--background-brand-solid)]' : 'border-[var(--border-subtle)]'
-                                        }`}>
-                                            {adjustmentMode === value && <div className="w-1.5 h-1.5 rounded-full bg-white" />}
-                                        </div>
-                                        <div>
-                                            <p className={`text-[13px] font-bold ${adjustmentMode === value ? 'text-[var(--text-brand)]' : 'text-[var(--text-primary)]'}`}>{label}</p>
-                                            <p className="text-[11px] text-[var(--text-subtle)] mt-0.5">{sub}</p>
-                                        </div>
-                                    </div>
-                                </button>
-                            ))}
-                        </div>
-
-                        {adjustmentMode !== 'none' && (
-                            <div className="space-y-3 pt-2">
-                                <Input
-                                    label={adjustmentMode === 'payback' ? 'Redemption Amount (€)' : 'Additional Payout Amount (€)'}
-                                    type="number"
-                                    step="0.01"
-                                    min="0.01"
-                                    placeholder="0.00"
-                                    value={adjustmentAmountInput}
-                                    onChange={(e: React.ChangeEvent<HTMLInputElement>) => setAdjustmentAmountInput(e.target.value)}
-                                    error={
-                                        adjustmentMode === 'payback' 
-                                            ? (adjustmentAmountNum > currentPayout || (adjustmentAmountNum <= 0 && adjustmentAmountInput !== ''))
-                                            : (adjustmentAmountNum > additionalPossible || (adjustmentAmountNum <= 0 && adjustmentAmountInput !== ''))
-                                    }
-                                    errorMessage={
-                                        adjustmentMode === 'payback' 
-                                            ? `Must be between €0.01 and €${fmtEur(currentPayout)}`
-                                            : `Must be between €0.01 and €${fmtEur(additionalPossible)}`
-                                    }
-                                />
-                                {adjustmentAmountNum > 0 && (
-                                    <div className="p-3 bg-[var(--background-secondary)] rounded-xl border border-[var(--border-subtlest)] flex justify-between items-center text-xs">
-                                        <span className="text-[var(--text-subtle)] font-medium">New Total Loan Principal</span>
-                                        <span className="text-[var(--text-primary)] font-bold">€ {fmtEur(newTotalPayout)}</span>
-                                    </div>
-                                )}
+                        {adjustmentAmountNum > 0 && (
+                            <div className="p-3 bg-[var(--background-secondary)] rounded-xl border border-[var(--border-subtlest)] flex justify-between items-center text-xs">
+                                <span className="text-[var(--text-subtle)] font-medium">New Total Loan Principal</span>
+                                <span className="text-[var(--text-primary)] font-bold">€ {fmtEur(newTotalPayout)}</span>
                             </div>
                         )}
                     </div>
-                );
+                )}
+            </div>
+        );
+    };
 
-            // ── Step 4: Fee & Policy Overrides ─────────────────────────────
-            case 4:
-                return (
-                    <div className="space-y-5 animate-in fade-in slide-in-from-right-4 duration-300">
-                        <div className="flex justify-between items-start border-b border-[var(--border-subtlest)] pb-4 gap-4">
-                            <div className="pr-6 max-w-[75%]">
-                                <h3 className="text-[13px] font-bold text-[var(--text-primary)] mb-1">Maturity & Fee Adjustments</h3>
-                                <p className="text-[11px] text-[var(--text-subtle)] leading-relaxed">
-                                    Review and edit calculated maturity fees at the deal and item levels. Add extra components as needed.
-                                </p>
-                            </div>
-                            <div className="text-right shrink-0 mt-0.5">
-                                <span className="text-[9px] uppercase font-black tracking-widest text-[var(--text-subtlest)] block mb-0.5">Total Fees</span>
-                                <span className="text-[16px] font-extrabold text-[var(--text-primary)]">€ {fmtEur(finalParentFees)}</span>
-                            </div>
-                        </div>
-                        
-                        {/* Deal Level Fees */}
-                        <div className="space-y-2">
-                            <div className="flex justify-between items-center">
-                                <span className="text-[11px] font-black uppercase tracking-widest text-[var(--text-subtlest)] block">Deal Level Fees</span>
-                                <button
-                                    type="button"
-                                    onClick={() => setIsEditingDeal(!isEditingDeal)}
-                                    className="text-[11px] font-bold text-[var(--text-brand)] hover:underline flex items-center gap-1 cursor-pointer bg-transparent border-0 outline-none"
-                                >
-                                    {isEditingDeal ? 'Done Editing' : 'Edit'}
-                                </button>
-                            </div>
-                            
-                            <div className="border border-[var(--border-subtlest)] rounded-xl overflow-hidden bg-[var(--background-secondary)]/10">
-                                <table className="w-full text-left border-collapse text-[12px] table-layout-fixed" style={{ tableLayout: 'fixed' }}>
-                                    <colgroup>
-                                        <col className="w-[50%]" />
-                                        <col className="w-[25%]" />
-                                        <col className="w-[25%]" />
-                                    </colgroup>
-                                    <thead>
-                                        <tr className="bg-[var(--background-secondary)]/60 text-[var(--text-subtle)] border-b border-[var(--border-subtlest)] font-bold">
-                                            <th className="px-4 py-2">Fee Component</th>
-                                            <th className="px-3 py-2 text-right whitespace-nowrap">% of Principal</th>
-                                            <th className="px-3 py-2 text-right">Amount</th>
-                                        </tr>
-                                    </thead>
-                                    <tbody>
-                                        {feeComponents.filter(c => c.level === 'deal').map((comp) => {
-                                            const principalPercentage = currentPayout > 0 ? ((comp.amount / currentPayout) * 100).toFixed(2) : '0.00';
-                                            return (
-                                                <tr key={comp.id} className="border-b border-[var(--border-subtlest)] hover:bg-[var(--background-secondary)]/20 transition-colors">
-                                                    <td className="px-4 py-2.5">
-                                                        {isEditingDeal ? (
-                                                            comp.isDefault ? (
-                                                                <span className="font-normal text-[var(--text-primary)]">{comp.type}</span>
-                                                            ) : (
-                                                                <div className="w-full">
-                                                                    {comp.type === 'Other' && !selectModeIds.has(comp.id) ? (
-                                                                        <div className="flex items-center gap-1">
-                                                                            <button type="button" onClick={() => enterSelectMode(comp.id)} className="text-[var(--text-subtlest)] hover:text-[var(--text-brand)] transition-colors flex-shrink-0" title="Change type">
-                                                                                <svg width="12" height="12" viewBox="0 0 12 12" fill="none" stroke="currentColor" strokeWidth="1.8" strokeLinecap="round" strokeLinejoin="round"><path d="M7.5 2L4 6l3.5 4"/></svg>
-                                                                            </button>
-                                                                            <input
-                                                                                type="text"
-                                                                                autoFocus
-                                                                                className="flex-1 text-[12px] px-2 py-1.5 bg-[var(--background-primary)] border border-[var(--border-brand)] rounded-lg focus:outline-none focus:ring-1 focus:ring-[var(--brand-500)] text-[var(--text-primary)] font-normal"
-                                                                                placeholder="Custom fee name…"
-                                                                                value={comp.customName || ''}
-                                                                                onChange={(e) => handleUpdateComponent(comp.id, { customName: e.target.value })}
-                                                                            />
-                                                                        </div>
-                                                                    ) : (
-                                                                        <select
-                                                                            className="bg-[var(--background-primary)] border border-[var(--border-subtle)] text-[12px] rounded-lg px-2 py-1.5 focus:outline-none focus:ring-1 focus:ring-[var(--brand-500)] text-[var(--text-primary)] w-full font-normal"
-                                                                            value={comp.type}
-                                                                            onChange={(e) => { handleUpdateComponent(comp.id, { type: e.target.value }); if (e.target.value === 'Other') exitSelectMode(comp.id); }}
-                                                                        >
-                                                                            {DEAL_FEE_TYPES.map(t => (
-                                                                                <option key={t} value={t} disabled={feeComponents.some(c => c.level === 'deal' && c.id !== comp.id && c.type === t && t !== 'Other')}>{t}</option>
-                                                                            ))}
-                                                                        </select>
-                                                                    )}
-                                                                </div>
-                                                            )
-                                                        ) : (
-                                                            <span className="font-normal text-[var(--text-primary)]">
-                                                                {comp.type === 'Other' ? (comp.customName || 'Other') : comp.type}
-                                                            </span>
-                                                        )}
-                                                    </td>
-                                                    <td className="px-3 py-2.5 text-right font-medium text-[var(--text-subtle)]">
-                                                        {principalPercentage}%
-                                                    </td>
-                                                    <td className="px-3 py-2.5 text-right font-normal text-[var(--text-primary)]">
-                                                        {isEditingDeal ? (
-                                                            <div className="flex items-center gap-1.5 justify-end">
-                                                                <div className="relative flex items-center justify-end flex-1">
-                                                                    <span className="absolute left-2.5 text-[var(--text-subtle)] text-[12px] font-semibold select-none">€</span>
+    const renderChildFeeStructureOverrides = () => {
+        const childDealComps = childFeeComponents.filter(c => c.level === 'deal');
+
+        const toggleEditChildDeal = () => {
+            setIsEditingChildDeal(!isEditingChildDeal);
+        };
+
+        return (
+            <div className="space-y-4 p-4 rounded-2xl bg-amber-500/5 border border-amber-500/10 animate-in fade-in slide-in-from-top-4 duration-300">
+                <div className="flex items-center gap-2 pb-1 border-b border-[var(--border-subtlest)]">
+                    <span className="w-1.5 h-3 bg-amber-500 rounded-full" />
+                    <h3 className="text-[13px] font-extrabold uppercase tracking-wide text-[var(--text-primary)]">Child Deal Fee Structure Overrides</h3>
+                </div>
+
+                {/* Deal Level Fees */}
+                <div className="space-y-3">
+                    <div className="flex justify-between items-center">
+                        <span className="text-[11px] font-black uppercase tracking-widest text-[var(--text-subtlest)]">Deal Level Fees</span>
+                        <button
+                            type="button"
+                            onClick={toggleEditChildDeal}
+                            className={`text-[11px] font-bold ${
+                                isEditingChildDeal ? 'text-[var(--text-success)]' : 'text-[var(--text-brand)]'
+                            } underline flex items-center gap-1 cursor-pointer bg-transparent border-0 outline-none`}
+                        >
+                            {isEditingChildDeal ? 'Done Editing' : 'Edit'}
+                        </button>
+                    </div>
+                    <div className="border border-[var(--border-subtlest)] rounded-lg overflow-hidden bg-white/5">
+                        <table className="w-full text-left border-collapse text-[12px] table-layout-fixed" style={{ tableLayout: 'fixed' }}>
+                            <colgroup>
+                                <col className="w-[45%]" />
+                                <col className="w-[20%]" />
+                                <col className="w-[15%]" />
+                                <col className="w-[20%]" />
+                            </colgroup>
+                            <thead>
+                                <tr className="bg-[var(--background-secondary)]/60 text-[var(--text-subtle)] border-b border-[var(--border-subtlest)] font-bold">
+                                    <th className="px-4 py-2">Fee Component</th>
+                                    <th className="px-3 py-2 text-right">NET</th>
+                                    <th className="px-3 py-2 text-right">VAT</th>
+                                    <th className="px-3 py-2 text-right">Amount (Gross)</th>
+                                </tr>
+                            </thead>
+                            <tbody>
+                                {childDealComps.map((comp) => {
+                                    const amount = isNaN(comp.amount) ? 0 : comp.amount;
+                                    const taxRate = isNaN(comp.taxRate) ? 0 : comp.taxRate;
+                                    const netAmount = taxRate === -100 ? 0 : amount / (1 + taxRate / 100);
+                                    return (
+                                        <tr key={comp.id} className="border-b border-[var(--border-subtlest)] hover:bg-[var(--background-secondary)]/20 transition-colors">
+                                            <td className="px-4 py-2.5">
+                                                {isEditingChildDeal ? (
+                                                    comp.isDefault ? (
+                                                        <span className="font-normal text-[var(--text-primary)]">{comp.type}</span>
+                                                    ) : (
+                                                        <div className="w-full">
+                                                            {comp.type === 'Other' && !selectModeChildIds.has(comp.id) ? (
+                                                                <div className="flex items-center gap-1">
+                                                                    <button type="button" onClick={() => enterChildSelectMode(comp.id)} className="text-[var(--text-subtlest)] hover:text-[var(--text-brand)] transition-colors flex-shrink-0" title="Change type">
+                                                                        <svg width="12" height="12" viewBox="0 0 12 12" fill="none" stroke="currentColor" strokeWidth="1.8" strokeLinecap="round" strokeLinejoin="round"><path d="M7.5 2L4 6l3.5 4"/></svg>
+                                                                    </button>
                                                                     <input
-                                                                        type="number"
-                                                                        step="0.01"
-                                                                        className="w-full text-[12px] pl-6 pr-2 py-1 bg-[var(--background-primary)] border border-[var(--border-subtle)] rounded-lg focus:outline-none focus:ring-1 focus:ring-[var(--brand-500)] text-[var(--text-primary)] font-normal text-right [appearance:textfield] [&::-webkit-outer-spin-button]:appearance-none [&::-webkit-inner-spin-button]:appearance-none"
-                                                                        value={isNaN(comp.amount) ? '' : comp.amount}
-                                                                        onChange={(e) => handleUpdateComponent(comp.id, { amount: parseFloat(e.target.value) })}
+                                                                        type="text"
+                                                                        autoFocus
+                                                                        className="flex-1 text-[12px] px-2 py-1.5 bg-[var(--background-primary)] border border-[var(--border-brand)] rounded-lg focus:outline-none focus:ring-1 focus:ring-[var(--brand-500)] text-[var(--text-primary)] font-normal"
+                                                                        placeholder="Custom fee name…"
+                                                                        value={comp.customName || ''}
+                                                                        onChange={(e) => handleUpdateChildComponent(comp.id, { customName: e.target.value })}
                                                                     />
                                                                 </div>
-                                                                <button
-                                                                    type="button"
-                                                                    onClick={() => handleDeleteComponent(comp.id)}
-                                                                    className="p-1 hover:bg-red-50 dark:hover:bg-red-950/20 hover:text-red-600 rounded text-[var(--text-subtlest)] transition-colors cursor-pointer flex-shrink-0"
-                                                                    title="Delete"
+                                                            ) : (
+                                                                <select
+                                                                    className="bg-[var(--background-primary)] border border-[var(--border-subtle)] text-[12px] rounded-lg px-2 py-1.5 focus:outline-none focus:ring-1 focus:ring-[var(--brand-500)] text-[var(--text-primary)] w-full font-normal"
+                                                                    value={comp.type}
+                                                                    onChange={(e) => { handleUpdateChildComponent(comp.id, { type: e.target.value }); if (e.target.value === 'Other') exitChildSelectMode(comp.id); }}
                                                                 >
-                                                                    <TrashIcon size={14} />
-                                                                </button>
-                                                            </div>
-                                                        ) : (
-                                                            `€ ${fmtEur(comp.amount)}`
-                                                        )}
-                                                    </td>
-                                                </tr>
-                                            );
-                                        })}
-                                        {/* Subtotal Row inside Table */}
-                                        <tr className="bg-[var(--background-secondary)]/30 border-t border-[var(--border-subtlest)] font-bold text-[12px]">
-                                            <td className="px-4 py-2.5">
-                                                {isEditingDeal && (
-                                                    <button
-                                                        type="button"
-                                                        onClick={handleAddDealFeeComponent}
-                                                        className="text-[11px] font-bold text-[var(--text-brand)] hover:underline flex items-center gap-1 cursor-pointer"
-                                                    >
-                                                        <PlusIcon size={12} /> Add Deal Fee Component
-                                                    </button>
+                                                                    {DEAL_FEE_TYPES.map(t => (
+                                                                        <option key={t} value={t} disabled={childFeeComponents.some(c => c.level === 'deal' && c.id !== comp.id && c.type === t && t !== 'Other')}>{t}</option>
+                                                                    ))}
+                                                                </select>
+                                                            )}
+                                                        </div>
+                                                    )
+                                                ) : (
+                                                    <span className="font-normal text-[var(--text-primary)]">
+                                                        {comp.type === 'Other' ? (comp.customName || 'Other') : comp.type}
+                                                    </span>
                                                 )}
                                             </td>
-                                            <td className="px-3 py-2.5 text-right text-[var(--text-subtle)]">
-                                                Subtotal:
+                                            <td className="px-3 py-2.5 text-right font-medium text-[var(--text-subtle)]">
+                                                € {fmtEur(netAmount)}
                                             </td>
-                                            <td className="px-3 py-2.5 text-right text-[var(--text-primary)]">
-                                                € {fmtEur(feeComponents.filter(c => c.level === 'deal').reduce((sum, c) => sum + (c.amount || 0), 0))}
+                                            <td className="px-3 py-2.5 text-right font-normal text-[var(--text-primary)]">
+                                                {isEditingChildDeal ? (
+                                                    <div className="relative flex items-center justify-end w-[70px] ml-auto">
+                                                        <input
+                                                            type="number"
+                                                            step="0.1"
+                                                            className="w-full text-[12px] pr-5 pl-2 py-1 bg-[var(--background-primary)] border border-[var(--border-subtle)] rounded-lg focus:outline-none focus:ring-1 focus:ring-[var(--brand-500)] text-[var(--text-primary)] font-normal text-right [appearance:textfield] [&::-webkit-outer-spin-button]:appearance-none [&::-webkit-inner-spin-button]:appearance-none"
+                                                            value={isNaN(comp.taxRate) ? '' : comp.taxRate}
+                                                            onChange={(e) => handleUpdateChildComponent(comp.id, { taxRate: parseFloat(e.target.value) })}
+                                                        />
+                                                        <span className="absolute right-1.5 text-[var(--text-subtle)] text-[12px] font-semibold select-none">%</span>
+                                                    </div>
+                                                ) : (
+                                                    `${taxRate}%`
+                                                )}
                                             </td>
-                                            <td className="px-3 py-2.5"></td>
+                                            <td className="px-3 py-2.5 text-right font-normal text-[var(--text-primary)]">
+                                                {isEditingChildDeal ? (
+                                                    <div className="flex items-center gap-1.5 justify-end">
+                                                        <div className="relative flex items-center justify-end w-[100px]">
+                                                            <span className="absolute left-2.5 text-[var(--text-subtle)] text-[12px] font-semibold select-none">€</span>
+                                                            <input
+                                                                type="number"
+                                                                step="0.01"
+                                                                className="w-full text-[12px] pl-6 pr-2 py-1 bg-[var(--background-primary)] border border-[var(--border-subtle)] rounded-lg focus:outline-none focus:ring-1 focus:ring-[var(--brand-500)] text-[var(--text-primary)] font-normal text-right [appearance:textfield] [&::-webkit-outer-spin-button]:appearance-none [&::-webkit-inner-spin-button]:appearance-none"
+                                                                value={isNaN(comp.amount) ? '' : comp.amount}
+                                                                onChange={(e) => handleUpdateChildComponent(comp.id, { amount: parseFloat(e.target.value) })}
+                                                            />
+                                                        </div>
+                                                        <button
+                                                            type="button"
+                                                            onClick={() => handleDeleteChildComponent(comp.id)}
+                                                            className="p-1 hover:bg-red-50 dark:hover:bg-red-950/20 hover:text-red-600 rounded text-[var(--text-subtlest)] transition-colors cursor-pointer flex-shrink-0"
+                                                            title="Delete"
+                                                        >
+                                                            <TrashIcon size={14} />
+                                                        </button>
+                                                    </div>
+                                                ) : (
+                                                    `€ ${fmtEur(comp.amount)}`
+                                                )}
+                                            </td>
                                         </tr>
-                                    </tbody>
-                                </table>
-                            </div>
-                        </div>
-
-                        {/* Item Level Fees */}
-                        <div className="space-y-3">
-                            <span className="text-[11px] font-black uppercase tracking-widest text-[var(--text-subtlest)] block">Item Level Fees</span>
-                            {dealData.items.map((itemName, itemIdx) => {
-                                const itemComps = feeComponents.filter(c => c.level === 'item' && c.itemId === itemName);
-                                const isEditingItem = editingItemIds.includes(itemName);
-                                
-                                const toggleEditItem = () => {
-                                    if (isEditingItem) {
-                                        setEditingItemIds(editingItemIds.filter(id => id !== itemName));
-                                    } else {
-                                        setEditingItemIds([...editingItemIds, itemName]);
-                                    }
-                                };
-
-                                return (
-                                    <div key={`item-card-${itemIdx}`} className="bg-[var(--background-secondary)]/20 rounded-xl border border-[var(--border-subtlest)] p-4 space-y-3">
-                                        <div className="flex justify-between items-center">
-                                            <span className="text-[12px] font-bold text-[var(--text-primary)] flex items-center gap-1.5">
-                                                <span className="w-1.5 h-1.5 rounded-full bg-[var(--brand-500)]" />
-                                                Item: {itemName}
-                                            </span>
+                                    );
+                                })}
+                                {/* Subtotal Row inside Table */}
+                                <tr className="bg-[var(--background-secondary)]/30 border-t border-[var(--border-subtlest)] font-bold text-[12px]">
+                                    <td className="px-4 py-2.5">
+                                        {isEditingChildDeal && (
                                             <button
                                                 type="button"
-                                                onClick={toggleEditItem}
+                                                onClick={handleAddChildDealFeeComponent}
                                                 className="text-[11px] font-bold text-[var(--text-brand)] hover:underline flex items-center gap-1 cursor-pointer bg-transparent border-0 outline-none"
                                             >
-                                                {isEditingItem ? 'Done Editing' : 'Edit'}
+                                                <PlusIcon size={12} /> Add Deal Fee Component
                                             </button>
-                                        </div>
-                                        <div className="border border-[var(--border-subtlest)] rounded-lg overflow-hidden bg-white/5">
-                                            <table className="w-full text-left border-collapse text-[11px] table-layout-fixed" style={{ tableLayout: 'fixed' }}>
-                                                <colgroup>
-                                                    <col className="w-[50%]" />
-                                                    <col className="w-[25%]" />
-                                                    <col className="w-[25%]" />
-                                                </colgroup>
-                                                <thead>
-                                                    <tr className="bg-[var(--background-secondary)]/40 text-[var(--text-subtle)] border-b border-[var(--border-subtlest)] font-bold">
-                                                        <th className="px-3 py-1.5">Fee Component</th>
-                                                        <th className="px-2 py-1.5 text-right whitespace-nowrap">% of Principal</th>
-                                                        <th className="px-2 py-1.5 text-right">Amount</th>
-                                                    </tr>
-                                                </thead>
-                                                <tbody>
-                                                    {itemComps.map((comp) => {
-                                                        const principalPercentage = currentPayout > 0 ? ((comp.amount / currentPayout) * 100).toFixed(2) : '0.00';
-                                                        return (
-                                                            <tr key={comp.id} className="border-b border-[var(--border-subtlest)] hover:bg-[var(--background-secondary)]/20 transition-colors">
-                                                                <td className="px-3 py-2">
-                                                                    {isEditingItem ? (
-                                                                        comp.isDefault ? (
-                                                                            <span className="font-normal text-[var(--text-primary)]">{comp.type}</span>
-                                                                        ) : (
-                                                                            <div className="w-full">
-                                                                                {comp.type === 'Other' && !selectModeIds.has(comp.id) ? (
-                                                                                    <div className="flex items-center gap-1">
-                                                                                        <button type="button" onClick={() => enterSelectMode(comp.id)} className="text-[var(--text-subtlest)] hover:text-[var(--text-brand)] transition-colors flex-shrink-0" title="Change type">
-                                                                                            <svg width="11" height="11" viewBox="0 0 12 12" fill="none" stroke="currentColor" strokeWidth="1.8" strokeLinecap="round" strokeLinejoin="round"><path d="M7.5 2L4 6l3.5 4"/></svg>
-                                                                                        </button>
-                                                                                        <input
-                                                                                            type="text"
-                                                                                            autoFocus
-                                                                                            className="flex-1 text-[11px] px-1.5 py-1 bg-[var(--background-primary)] border border-[var(--border-brand)] rounded-md focus:outline-none focus:ring-1 focus:ring-[var(--brand-500)] text-[var(--text-primary)] font-normal"
-                                                                                            placeholder="Custom fee name…"
-                                                                                            value={comp.customName || ''}
-                                                                                            onChange={(e) => handleUpdateComponent(comp.id, { customName: e.target.value })}
-                                                                                        />
-                                                                                    </div>
-                                                                                ) : (
-                                                                                    <select
-                                                                                        className="bg-[var(--background-primary)] border border-[var(--border-subtle)] text-[11px] rounded-md px-1.5 py-1 focus:outline-none focus:ring-1 focus:ring-[var(--brand-500)] text-[var(--text-primary)] w-full font-normal"
-                                                                                        value={comp.type}
-                                                                                        onChange={(e) => { handleUpdateComponent(comp.id, { type: e.target.value }); if (e.target.value === 'Other') exitSelectMode(comp.id); }}
-                                                                                    >
-                                                                                        {ITEM_FEE_TYPES.map(t => (
-                                                                                            <option key={t} value={t} disabled={feeComponents.some(c => c.level === 'item' && c.itemId === comp.itemId && c.id !== comp.id && c.type === t && t !== 'Other')}>{t}</option>
-                                                                                        ))}
-                                                                                    </select>
-                                                                                )}
-                                                                            </div>
-                                                                        )
-                                                                    ) : (
-                                                                        <span className="font-normal text-[var(--text-primary)]">
-                                                                            {comp.type === 'Other' ? (comp.customName || 'Other') : comp.type}
-                                                                        </span>
-                                                                    )}
-                                                                </td>
-                                                                <td className="px-2 py-2 text-right font-medium text-[var(--text-subtle)]">
-                                                                    {principalPercentage}%
-                                                                </td>
-                                                                <td className="px-2 py-2 text-right font-normal text-[var(--text-primary)]">
-                                                                    {isEditingItem ? (
-                                                                        <div className="flex items-center gap-1 justify-end">
-                                                                            <div className="relative flex items-center justify-end flex-1">
-                                                                                <span className="absolute left-1.5 text-[var(--text-subtle)] text-[11px] font-semibold select-none">€</span>
+                                        )}
+                                    </td>
+                                    <td className="px-3 py-2.5 text-right text-[var(--text-primary)]">
+                                        € {fmtEur(childFeeComponents.filter(c => c.level === 'deal').reduce((sum, c) => {
+                                            const amt = isNaN(c.amount) ? 0 : c.amount;
+                                            const rate = isNaN(c.taxRate) ? 0 : c.taxRate;
+                                            return sum + (rate === -100 ? 0 : amt / (1 + rate / 100));
+                                        }, 0))}
+                                    </td>
+                                    <td className="px-3 py-2.5"></td>
+                                    <td className="px-3 py-2.5 text-right text-[var(--text-primary)]">
+                                        € {fmtEur(childFeeComponents.filter(c => c.level === 'deal').reduce((sum, c) => sum + (isNaN(c.amount) ? 0 : c.amount), 0))}
+                                    </td>
+                                </tr>
+                            </tbody>
+                        </table>
+                    </div>
+                </div>
+
+                {/* Item Level Fees */}
+                <div className="space-y-3">
+                    <span className="text-[11px] font-black uppercase tracking-widest text-[var(--text-subtlest)] block">Item Level Fees</span>
+                    {dealData.items.map((itemName, itemIdx) => {
+                        const itemComps = childFeeComponents.filter(c => c.level === 'item' && c.itemId === itemName);
+                        const isEditingItem = editingChildItemIds.includes(itemName);
+                        
+                        const toggleEditItem = () => {
+                            if (isEditingItem) {
+                                setEditingChildItemIds(editingChildItemIds.filter(id => id !== itemName));
+                            } else {
+                                setEditingChildItemIds([...editingChildItemIds, itemName]);
+                            }
+                        };
+
+                        const itemGrossSubtotal = itemComps.reduce((sum, c) => sum + (isNaN(c.amount) ? 0 : c.amount), 0);
+                        const itemNetSubtotal = itemComps.reduce((sum, c) => {
+                            const amt = isNaN(c.amount) ? 0 : c.amount;
+                            const rate = isNaN(c.taxRate) ? 0 : c.taxRate;
+                            return sum + (rate === -100 ? 0 : amt / (1 + rate / 100));
+                        }, 0);
+
+                        return (
+                            <div key={`child-item-card-${itemIdx}`} className="bg-[var(--background-secondary)]/20 rounded-xl border border-[var(--border-subtlest)] p-4 space-y-3">
+                                <div className="flex justify-between items-center">
+                                    <span className="text-[12px] font-bold text-[var(--text-primary)] flex items-center gap-1.5">
+                                        <span className="w-1.5 h-1.5 rounded-full bg-amber-500" />
+                                        Item: {itemName}
+                                    </span>
+                                    <button
+                                        type="button"
+                                        onClick={toggleEditItem}
+                                        className={`text-[11px] font-bold ${
+                                            isEditingItem ? 'text-[var(--text-success)]' : 'text-[var(--text-brand)]'
+                                        } underline flex items-center gap-1 cursor-pointer bg-transparent border-0 outline-none`}
+                                    >
+                                        {isEditingItem ? 'Done Editing' : 'Edit'}
+                                    </button>
+                                </div>
+                                <div className="border border-[var(--border-subtlest)] rounded-lg overflow-hidden bg-white/5">
+                                    <table className="w-full text-left border-collapse text-[12px] table-layout-fixed" style={{ tableLayout: 'fixed' }}>
+                                        <colgroup>
+                                            <col className="w-[45%]" />
+                                            <col className="w-[20%]" />
+                                            <col className="w-[15%]" />
+                                            <col className="w-[20%]" />
+                                        </colgroup>
+                                        <thead>
+                                            <tr className="bg-[var(--background-secondary)]/40 text-[var(--text-subtle)] border-b border-[var(--border-subtlest)] font-bold">
+                                                <th className="px-4 py-2">Fee Component</th>
+                                                <th className="px-3 py-2 text-right">NET</th>
+                                                <th className="px-3 py-2 text-right">VAT</th>
+                                                <th className="px-3 py-2 text-right">Amount (Gross)</th>
+                                            </tr>
+                                        </thead>
+                                        <tbody>
+                                            {itemComps.map((comp) => {
+                                                const amount = isNaN(comp.amount) ? 0 : comp.amount;
+                                                const taxRate = isNaN(comp.taxRate) ? 0 : comp.taxRate;
+                                                const netAmount = taxRate === -100 ? 0 : amount / (1 + taxRate / 100);
+                                                return (
+                                                    <tr key={comp.id} className="border-b border-[var(--border-subtlest)] hover:bg-[var(--background-secondary)]/20 transition-colors">
+                                                        <td className="px-4 py-2.5">
+                                                            {isEditingItem ? (
+                                                                comp.isDefault ? (
+                                                                    <span className="font-normal text-[var(--text-primary)]">{comp.type}</span>
+                                                                ) : (
+                                                                    <div className="w-full">
+                                                                        {comp.type === 'Other' && !selectModeChildIds.has(comp.id) ? (
+                                                                            <div className="flex items-center gap-1">
+                                                                                <button type="button" onClick={() => enterChildSelectMode(comp.id)} className="text-[var(--text-subtlest)] hover:text-[var(--text-brand)] transition-colors flex-shrink-0" title="Change type">
+                                                                                    <svg width="12" height="12" viewBox="0 0 12 12" fill="none" stroke="currentColor" strokeWidth="1.8" strokeLinecap="round" strokeLinejoin="round"><path d="M7.5 2L4 6l3.5 4"/></svg>
+                                                                                </button>
                                                                                 <input
-                                                                                    type="number"
-                                                                                    step="0.01"
-                                                                                    className="w-full text-[11px] pl-4 pr-1 py-0.5 bg-[var(--background-primary)] border border-[var(--border-subtle)] rounded focus:outline-none focus:ring-1 focus:ring-[var(--brand-500)] text-[var(--text-primary)] font-normal text-right [appearance:textfield] [&::-webkit-outer-spin-button]:appearance-none [&::-webkit-inner-spin-button]:appearance-none"
-                                                                                    value={isNaN(comp.amount) ? '' : comp.amount}
-                                                                                    onChange={(e) => handleUpdateComponent(comp.id, { amount: parseFloat(e.target.value) })}
+                                                                                    type="text"
+                                                                                    autoFocus
+                                                                                    className="flex-1 text-[12px] px-2 py-1.5 bg-[var(--background-primary)] border border-[var(--border-brand)] rounded-lg focus:outline-none focus:ring-1 focus:ring-[var(--brand-500)] text-[var(--text-primary)] font-normal"
+                                                                                    placeholder="Custom fee name…"
+                                                                                    value={comp.customName || ''}
+                                                                                    onChange={(e) => handleUpdateChildComponent(comp.id, { customName: e.target.value })}
                                                                                 />
                                                                             </div>
-                                                                            <button
-                                                                                type="button"
-                                                                                onClick={() => handleDeleteComponent(comp.id)}
-                                                                                className="p-1 hover:bg-red-50 dark:hover:bg-red-950/20 hover:text-red-600 rounded text-[var(--text-subtlest)] transition-colors cursor-pointer flex-shrink-0"
-                                                                                title="Delete"
+                                                                        ) : (
+                                                                            <select
+                                                                                className="bg-[var(--background-primary)] border border-[var(--border-subtle)] text-[12px] rounded-lg px-2 py-1.5 focus:outline-none focus:ring-1 focus:ring-[var(--brand-500)] text-[var(--text-primary)] w-full font-normal"
+                                                                                value={comp.type}
+                                                                                onChange={(e) => { handleUpdateChildComponent(comp.id, { type: e.target.value }); if (e.target.value === 'Other') exitChildSelectMode(comp.id); }}
                                                                             >
-                                                                                <TrashIcon size={12} />
-                                                                            </button>
-                                                                        </div>
-                                                                    ) : (
-                                                                        `€ ${fmtEur(comp.amount)}`
-                                                                    )}
-                                                                </td>
-                                                            </tr>
-                                                        );
-                                                    })}
-                                                    {/* Subtotal Row inside Table */}
-                                                    <tr className="bg-[var(--background-secondary)]/30 border-t border-[var(--border-subtlest)] font-bold text-[11px]">
-                                                        <td className="px-3 py-1.5">
-                                                            {isEditingItem && (
-                                                                <button
-                                                                    type="button"
-                                                                    onClick={() => handleAddItemFeeComponent(itemName)}
-                                                                    className="text-[10px] font-bold text-[var(--text-brand)] hover:underline flex items-center gap-1 cursor-pointer"
-                                                                >
-                                                                    <PlusIcon size={10} /> Add Item Fee
-                                                                </button>
+                                                                                {ITEM_FEE_TYPES.map(t => (
+                                                                                    <option key={t} value={t} disabled={childFeeComponents.some(c => c.level === 'item' && c.itemId === comp.itemId && c.id !== comp.id && c.type === t && t !== 'Other')}>{t}</option>
+                                                                                ))}
+                                                                            </select>
+                                                                        )}
+                                                                    </div>
+                                                                )
+                                                            ) : (
+                                                                <span className="font-normal text-[var(--text-primary)]">
+                                                                    {comp.type === 'Other' ? (comp.customName || 'Other') : comp.type}
+                                                                </span>
                                                             )}
                                                         </td>
-                                                        <td className="px-2 py-1.5 text-right text-[var(--text-subtle)]">
-                                                            Subtotal:
+                                                        <td className="px-3 py-2.5 text-right font-medium text-[var(--text-subtle)]">
+                                                            € {fmtEur(netAmount)}
                                                         </td>
-                                                        <td className="px-2 py-1.5 text-right text-[var(--text-primary)]">
-                                                            € {fmtEur(itemComps.reduce((sum, c) => sum + (c.amount || 0), 0))}
+                                                        <td className="px-3 py-2.5 text-right font-normal text-[var(--text-primary)]">
+                                                            {isEditingItem ? (
+                                                                <div className="relative flex items-center justify-end w-[65px] ml-auto">
+                                                                    <input
+                                                                        type="number"
+                                                                        step="0.1"
+                                                                        className="w-full text-[12px] pr-5 pl-2 py-1 bg-[var(--background-primary)] border border-[var(--border-subtle)] rounded-lg focus:outline-none focus:ring-1 focus:ring-[var(--brand-500)] text-[var(--text-primary)] font-normal text-right [appearance:textfield] [&::-webkit-outer-spin-button]:appearance-none [&::-webkit-inner-spin-button]:appearance-none"
+                                                                        value={isNaN(comp.taxRate) ? '' : comp.taxRate}
+                                                                        onChange={(e) => handleUpdateChildComponent(comp.id, { taxRate: parseFloat(e.target.value) })}
+                                                                    />
+                                                                    <span className="absolute right-1.5 text-[var(--text-subtle)] text-[12px] font-semibold select-none">%</span>
+                                                                </div>
+                                                            ) : (
+                                                                `${taxRate}%`
+                                                            )}
                                                         </td>
-                                                        <td className="px-2 py-1.5"></td>
+                                                        <td className="px-3 py-2.5 text-right font-normal text-[var(--text-primary)]">
+                                                            {isEditingItem ? (
+                                                                <div className="flex items-center gap-1 justify-end">
+                                                                    <div className="relative flex items-center justify-end w-[90px]">
+                                                                        <span className="absolute left-2.5 text-[var(--text-subtle)] text-[12px] font-semibold select-none">€</span>
+                                                                        <input
+                                                                            type="number"
+                                                                            step="0.01"
+                                                                            className="w-full text-[12px] pl-6 pr-2 py-1 bg-[var(--background-primary)] border border-[var(--border-subtle)] rounded-lg focus:outline-none focus:ring-1 focus:ring-[var(--brand-500)] text-[var(--text-primary)] font-normal text-right [appearance:textfield] [&::-webkit-outer-spin-button]:appearance-none [&::-webkit-inner-spin-button]:appearance-none"
+                                                                            value={isNaN(comp.amount) ? '' : comp.amount}
+                                                                            onChange={(e) => handleUpdateChildComponent(comp.id, { amount: parseFloat(e.target.value) })}
+                                                                        />
+                                                                    </div>
+                                                                    <button
+                                                                        type="button"
+                                                                        onClick={() => handleDeleteChildComponent(comp.id)}
+                                                                        className="p-1 hover:bg-red-50 dark:hover:bg-red-950/20 hover:text-red-600 rounded text-[var(--text-subtlest)] transition-colors cursor-pointer flex-shrink-0"
+                                                                        title="Delete"
+                                                                    >
+                                                                        <TrashIcon size={14} />
+                                                                    </button>
+                                                                </div>
+                                                            ) : (
+                                                                `€ ${fmtEur(comp.amount)}`
+                                                            )}
+                                                        </td>
                                                     </tr>
-                                                </tbody>
-                                            </table>
-                                        </div>
-                                    </div>
-                                );
-                            })}
-                        </div>
-
-                        {/* Notes / Justification Section */}
-                        {isFeesOverridden && (
-                            <div className="flex flex-col">
-                                <label className="text-[12px] font-bold text-[var(--text-primary)] mb-1.5 flex items-center justify-between">
-                                    <span>Notes / Justification <span className="text-red-500">*</span></span>
-                                    <span className="text-[10px] text-amber-600 dark:text-amber-400 font-semibold bg-amber-50 dark:bg-amber-950/20 px-2 py-0.5 rounded border border-amber-200">
-                                        Adjustment Reason Required
-                                    </span>
-                                </label>
-                                <textarea
-                                    className={`w-full text-[13px] px-3.5 py-3 bg-white dark:bg-[#1f2937] border rounded-xl focus:outline-none focus:ring-2 focus:ring-[var(--brand-500)] text-[var(--text-primary)] transition-all min-h-[75px] ${
-                                        isNotesRequired ? 'border-red-300 bg-red-50/10' : 'border-[var(--border-subtle)]'
-                                    }`}
-                                    placeholder="Enter operator reason for fee adjustment..."
-                                    value={feeOverrideReason}
-                                    onChange={(e) => setFeeOverrideReason(e.target.value)}
-                                />
-                                {isNotesRequired && (
-                                    <span className="text-[11px] font-semibold text-red-600 dark:text-red-400 mt-1.5 flex items-center gap-1.5">
-                                        <AlertTriangleIcon size={12} />
-                                        Written justification is mandatory when fees are overridden.
-                                    </span>
-                                )}
+                                                );
+                                            })}
+                                            {/* Subtotal Row inside Table */}
+                                            <tr className="bg-[var(--background-secondary)]/30 border-t border-[var(--border-subtlest)] font-bold text-[12px]">
+                                                <td className="px-4 py-2.5">
+                                                    {isEditingItem && (
+                                                        <button
+                                                            type="button"
+                                                            onClick={() => handleAddChildItemFeeComponent(itemName)}
+                                                            className="text-[11px] font-bold text-[var(--text-brand)] hover:underline flex items-center gap-1 cursor-pointer bg-transparent border-0 outline-none"
+                                                        >
+                                                            <PlusIcon size={12} /> Add Item Fee
+                                                        </button>
+                                                    )}
+                                                </td>
+                                                <td className="px-3 py-2.5 text-right text-[var(--text-primary)]">
+                                                    € {fmtEur(itemNetSubtotal)}
+                                                </td>
+                                                <td className="px-3 py-2.5"></td>
+                                                <td className="px-3 py-2.5 text-right text-[var(--text-primary)]">
+                                                    € {fmtEur(itemGrossSubtotal)}
+                                                </td>
+                                            </tr>
+                                        </tbody>
+                                    </table>
+                                </div>
                             </div>
-                        )}
+                        );
+                    })}
+                </div>
+            </div>
+        );
+    };
 
-                        {/* Policy Overrides */}
-                        <div className="space-y-4 pt-3 border-t border-[var(--border-subtlest)]">
-                            <span className="text-[11px] font-black uppercase tracking-widest text-[var(--text-subtlest)] block">Extension Policy Overrides</span>
-                            <Dropdown
-                                label="Next Contract Child Fee Rate"
-                                value={childFeeRateOverride}
-                                onChange={(val) => setChildFeeRateOverride(val)}
-                                options={[
-                                    { label: 'Standard (4% / month)', value: '4.0' },
-                                    { label: 'Override to 3%', value: '3.0' },
-                                    { label: 'Override to 2%', value: '2.0' },
-                                    { label: 'Override to 0%', value: '0.0' },
-                                ]}
-                            />
-                            <div className="pt-2">
-                                <Toggle
-                                    label="Allow Online Extension"
-                                    description="Customer can perform future extensions themselves via portal"
-                                    checked={allowOnlineExtension}
-                                    onChange={(e) => setAllowOnlineExtension(e.target.checked)}
-                                />
-                            </div>
-                        </div>
-                    </div>
-                );
-
-            // ── Step 5: Payment & Final Review ──────────────────────────────────────
-            case 5: {
-                const dueToday = finalParentFees + (adjustmentMode === 'payback' ? adjustmentAmountNum : adjustmentMode === 'payout' ? -adjustmentAmountNum : 0);
-                const isCardOrCash = ['Cash', 'Debit/Credit Card'].includes(paymentType);
-
-                return (
-                    <div className="space-y-4 animate-in fade-in slide-in-from-right-4 duration-300">
-                        <p className="text-[13px] text-[var(--text-subtle)] leading-relaxed">
-                            Select payment details and verify the final transaction sums before executing.
+    const renderStep4 = () => {
+        return (
+            <div className="space-y-5 animate-in fade-in slide-in-from-right-4 duration-300">
+                <div className="flex justify-between items-start border-b border-[var(--border-subtlest)] pb-4 gap-4">
+                    <div className="pr-6 max-w-[75%]">
+                        <h3 className="text-[13px] font-bold text-[var(--text-primary)] mb-1">Maturity & Fee Adjustments</h3>
+                        <p className="text-[11px] text-[var(--text-subtle)] leading-relaxed">
+                            Review and edit calculated maturity fees at the deal and item levels. Add extra components as needed.
                         </p>
+                    </div>
+                    <div className="text-right shrink-0 mt-0.5">
+                        <span className="text-[9px] uppercase font-black tracking-widest text-[var(--text-subtlest)] block mb-0.5">Total Fees</span>
+                        <span className="text-[16px] font-extrabold text-[var(--text-primary)]">€ {fmtEur(finalParentFees)}</span>
+                    </div>
+                </div>
+                
+                {/* Deal Level Fees */}
+                <div className="space-y-2">
+                    <div className="flex justify-between items-center">
+                        <span className="text-[11px] font-black uppercase tracking-widest text-[var(--text-subtlest)] block">Deal Level Fees</span>
+                        <button
+                            type="button"
+                            onClick={() => setIsEditingDeal(!isEditingDeal)}
+                            className={`text-[11px] font-bold ${
+                                isEditingDeal ? 'text-[var(--text-success)]' : 'text-[var(--text-brand)]'
+                            } underline flex items-center gap-1 cursor-pointer bg-transparent border-0 outline-none`}
+                        >
+                            {isEditingDeal ? 'Done Editing' : 'Edit'}
+                        </button>
+                    </div>
+                    
+                    <div className="border border-[var(--border-subtlest)] rounded-xl overflow-hidden bg-[var(--background-secondary)]/10">
+                        <table className="w-full text-left border-collapse text-[12px] table-layout-fixed" style={{ tableLayout: 'fixed' }}>
+                            <colgroup>
+                                <col className="w-[45%]" />
+                                <col className="w-[20%]" />
+                                <col className="w-[15%]" />
+                                <col className="w-[20%]" />
+                            </colgroup>
+                            <thead>
+                                <tr className="bg-[var(--background-secondary)]/60 text-[var(--text-subtle)] border-b border-[var(--border-subtlest)] font-bold">
+                                    <th className="px-4 py-2">Fee Component</th>
+                                    <th className="px-3 py-2 text-right">NET</th>
+                                    <th className="px-3 py-2 text-right">VAT</th>
+                                    <th className="px-3 py-2 text-right">Amount (Gross)</th>
+                                </tr>
+                            </thead>
+                            <tbody>
+                                {feeComponents.filter(c => c.level === 'deal').map((comp) => {
+                                    const amount = isNaN(comp.amount) ? 0 : comp.amount;
+                                    const taxRate = isNaN(comp.taxRate) ? 0 : comp.taxRate;
+                                    const netAmount = taxRate === -100 ? 0 : amount / (1 + taxRate / 100);
+                                    return (
+                                        <tr key={comp.id} className="border-b border-[var(--border-subtlest)] hover:bg-[var(--background-secondary)]/20 transition-colors">
+                                            <td className="px-4 py-2.5">
+                                                {isEditingDeal ? (
+                                                    comp.isDefault ? (
+                                                        <span className="font-normal text-[var(--text-primary)]">{comp.type}</span>
+                                                    ) : (
+                                                        <div className="w-full">
+                                                            {comp.type === 'Other' && !selectModeIds.has(comp.id) ? (
+                                                                <div className="flex items-center gap-1">
+                                                                    <button type="button" onClick={() => enterSelectMode(comp.id)} className="text-[var(--text-subtlest)] hover:text-[var(--text-brand)] transition-colors flex-shrink-0" title="Change type">
+                                                                        <svg width="12" height="12" viewBox="0 0 12 12" fill="none" stroke="currentColor" strokeWidth="1.8" strokeLinecap="round" strokeLinejoin="round"><path d="M7.5 2L4 6l3.5 4"/></svg>
+                                                                    </button>
+                                                                    <input
+                                                                        type="text"
+                                                                        autoFocus
+                                                                        className="flex-1 text-[12px] px-2 py-1.5 bg-[var(--background-primary)] border border-[var(--border-brand)] rounded-lg focus:outline-none focus:ring-1 focus:ring-[var(--brand-500)] text-[var(--text-primary)] font-normal"
+                                                                        placeholder="Custom fee name…"
+                                                                        value={comp.customName || ''}
+                                                                        onChange={(e) => handleUpdateComponent(comp.id, { customName: e.target.value })}
+                                                                    />
+                                                                </div>
+                                                            ) : (
+                                                                <select
+                                                                    className="bg-[var(--background-primary)] border border-[var(--border-subtle)] text-[12px] rounded-lg px-2 py-1.5 focus:outline-none focus:ring-1 focus:ring-[var(--brand-500)] text-[var(--text-primary)] w-full font-normal"
+                                                                    value={comp.type}
+                                                                    onChange={(e) => { handleUpdateComponent(comp.id, { type: e.target.value }); if (e.target.value === 'Other') exitSelectMode(comp.id); }}
+                                                                >
+                                                                    {DEAL_FEE_TYPES.map(t => (
+                                                                        <option key={t} value={t} disabled={feeComponents.some(c => c.level === 'deal' && c.id !== comp.id && c.type === t && t !== 'Other')}>{t}</option>
+                                                                    ))}
+                                                                </select>
+                                                            )}
+                                                        </div>
+                                                    )
+                                                ) : (
+                                                    <span className="font-normal text-[var(--text-primary)]">
+                                                        {comp.type === 'Other' ? (comp.customName || 'Other') : comp.type}
+                                                    </span>
+                                                )}
+                                            </td>
+                                            <td className="px-3 py-2.5 text-right font-medium text-[var(--text-subtle)]">
+                                                € {fmtEur(netAmount)}
+                                            </td>
+                                            <td className="px-3 py-2.5 text-right font-normal text-[var(--text-primary)]">
+                                                {isEditingDeal ? (
+                                                    <div className="relative flex items-center justify-end w-[70px] ml-auto">
+                                                        <input
+                                                            type="number"
+                                                            step="0.1"
+                                                            className="w-full text-[12px] pr-5 pl-2 py-1 bg-[var(--background-primary)] border border-[var(--border-subtle)] rounded-lg focus:outline-none focus:ring-1 focus:ring-[var(--brand-500)] text-[var(--text-primary)] font-normal text-right [appearance:textfield] [&::-webkit-outer-spin-button]:appearance-none [&::-webkit-inner-spin-button]:appearance-none"
+                                                            value={isNaN(comp.taxRate) ? '' : comp.taxRate}
+                                                            onChange={(e) => handleUpdateComponent(comp.id, { taxRate: parseFloat(e.target.value) })}
+                                                        />
+                                                        <span className="absolute right-1.5 text-[var(--text-subtle)] text-[12px] font-semibold select-none">%</span>
+                                                    </div>
+                                                ) : (
+                                                    `${taxRate}%`
+                                                )}
+                                            </td>
+                                            <td className="px-3 py-2.5 text-right font-normal text-[var(--text-primary)]">
+                                                {isEditingDeal ? (
+                                                    <div className="flex items-center gap-1.5 justify-end">
+                                                        <div className="relative flex items-center justify-end w-[100px]">
+                                                            <span className="absolute left-2.5 text-[var(--text-subtle)] text-[12px] font-semibold select-none">€</span>
+                                                            <input
+                                                                type="number"
+                                                                step="0.01"
+                                                                className="w-full text-[12px] pl-6 pr-2 py-1 bg-[var(--background-primary)] border border-[var(--border-subtle)] rounded-lg focus:outline-none focus:ring-1 focus:ring-[var(--brand-500)] text-[var(--text-primary)] font-normal text-right [appearance:textfield] [&::-webkit-outer-spin-button]:appearance-none [&::-webkit-inner-spin-button]:appearance-none"
+                                                                value={isNaN(comp.amount) ? '' : comp.amount}
+                                                                onChange={(e) => handleUpdateComponent(comp.id, { amount: parseFloat(e.target.value) })}
+                                                            />
+                                                        </div>
+                                                        <button
+                                                            type="button"
+                                                            onClick={() => handleDeleteComponent(comp.id)}
+                                                            className="p-1 hover:bg-red-50 dark:hover:bg-red-950/20 hover:text-red-600 rounded text-[var(--text-subtlest)] transition-colors cursor-pointer flex-shrink-0"
+                                                            title="Delete"
+                                                        >
+                                                            <TrashIcon size={14} />
+                                                        </button>
+                                                    </div>
+                                                ) : (
+                                                    `€ ${fmtEur(comp.amount)}`
+                                                )}
+                                            </td>
+                                        </tr>
+                                    );
+                                })}
+                                {/* Subtotal Row inside Table */}
+                                <tr className="bg-[var(--background-secondary)]/30 border-t border-[var(--border-subtlest)] font-bold text-[12px]">
+                                    <td className="px-4 py-2.5">
+                                        {isEditingDeal && (
+                                            <button
+                                                type="button"
+                                                onClick={handleAddDealFeeComponent}
+                                                className="text-[11px] font-bold text-[var(--text-brand)] hover:underline flex items-center gap-1 cursor-pointer bg-transparent border-0 outline-none"
+                                            >
+                                                <PlusIcon size={12} /> Add Deal Fee Component
+                                            </button>
+                                        )}
+                                    </td>
+                                    <td className="px-3 py-2.5 text-right text-[var(--text-primary)]">
+                                        € {fmtEur(feeComponents.filter(c => c.level === 'deal').reduce((sum, c) => {
+                                            const amt = isNaN(c.amount) ? 0 : c.amount;
+                                            const rate = isNaN(c.taxRate) ? 0 : c.taxRate;
+                                            return sum + (rate === -100 ? 0 : amt / (1 + rate / 100));
+                                        }, 0))}
+                                    </td>
+                                    <td className="px-3 py-2.5"></td>
+                                    <td className="px-3 py-2.5 text-right text-[var(--text-primary)]">
+                                        € {fmtEur(feeComponents.filter(c => c.level === 'deal').reduce((sum, c) => sum + (isNaN(c.amount) ? 0 : c.amount), 0))}
+                                    </td>
+                                </tr>
+                            </tbody>
+                        </table>
+                    </div>
+                </div>
 
-                        <div className="grid grid-cols-2 gap-4">
-                            <Dropdown
-                                label="Payment Type"
-                                value={paymentType}
-                                onChange={(val) => setPaymentType(val)}
-                                options={[
-                                    { label: 'Cash', value: 'Cash' },
-                                    { label: 'Debit/Credit Card', value: 'Debit/Credit Card' },
-                                    { label: 'Bank Transfer', value: 'Bank Transfer' },
-                                    { label: 'PayPal', value: 'PayPal' },
-                                ]}
-                            />
+                {/* Item Level Fees */}
+                <div className="space-y-3">
+                    <span className="text-[11px] font-black uppercase tracking-widest text-[var(--text-subtlest)] block">Item Level Fees</span>
+                    {dealData.items.map((itemName, itemIdx) => {
+                        const itemComps = feeComponents.filter(c => c.level === 'item' && c.itemId === itemName);
+                        const isEditingItem = editingItemIds.includes(itemName);
+                        
+                        const toggleEditItem = () => {
+                            if (isEditingItem) {
+                                setEditingItemIds(editingItemIds.filter(id => id !== itemName));
+                            } else {
+                                setEditingItemIds([...editingItemIds, itemName]);
+                            }
+                        };
 
-                            {isCardOrCash && (
-                                <Dropdown
-                                    label="Cash Book"
-                                    value={cashBookName}
-                                    onChange={(val) => setCashBookName(val)}
-                                    options={cashBookOptions}
-                                />
-                            )}
-                        </div>
+                        const itemGrossSubtotal = itemComps.reduce((sum, c) => sum + (isNaN(c.amount) ? 0 : c.amount), 0);
+                        const itemNetSubtotal = itemComps.reduce((sum, c) => {
+                            const amt = isNaN(c.amount) ? 0 : c.amount;
+                            const rate = isNaN(c.taxRate) ? 0 : c.taxRate;
+                            return sum + (rate === -100 ? 0 : amt / (1 + rate / 100));
+                        }, 0);
 
-                        <div className="bg-[var(--background-secondary)]/40 rounded-xl border border-[var(--border-subtlest)] overflow-hidden text-xs">
-                            <div className="flex justify-between items-center px-4 py-3 border-b border-[var(--border-subtlest)]">
-                                <span className="text-[var(--text-subtle)] font-medium">New Contract Due Date</span>
-                                <span className="font-bold text-[var(--text-primary)]">{fmtDate(newDueDate)}</span>
-                            </div>
-                            <div className="flex justify-between items-center px-4 py-3 border-b border-[var(--border-subtlest)]">
-                                <span className="text-[var(--text-subtle)] font-medium">New Total Loan Principal</span>
-                                <span className="font-bold text-[var(--text-primary)]">€ {fmtEur(newTotalPayout)}</span>
-                            </div>
-                            <div className="flex justify-between items-center px-4 py-3 border-b border-[var(--border-subtlest)]">
-                                <span className="text-[var(--text-subtle)] font-medium">Parent Fees Charged</span>
-                                <span className="font-bold text-[var(--text-primary)]">€ {fmtEur(finalParentFees)}</span>
-                            </div>
-                            {adjustmentMode !== 'none' && (
-                                <div className="flex justify-between items-center px-4 py-3 border-b border-[var(--border-subtlest)]">
-                                    <span className="text-[var(--text-subtle)] font-medium">
-                                        {adjustmentMode === 'payback' ? 'Principal Payback' : 'Principal Payout'}
+                        return (
+                            <div key={`item-card-${itemIdx}`} className="bg-[var(--background-secondary)]/20 rounded-xl border border-[var(--border-subtlest)] p-4 space-y-3">
+                                <div className="flex justify-between items-center">
+                                    <span className="text-[12px] font-bold text-[var(--text-primary)] flex items-center gap-1.5">
+                                        <span className="w-1.5 h-1.5 rounded-full bg-[var(--brand-500)]" />
+                                        Item: {itemName}
                                     </span>
-                                    <span className={`font-bold ${adjustmentMode === 'payback' ? 'text-[var(--text-success)]' : 'text-blue-600'}`}>
-                                        {adjustmentMode === 'payback' ? '-' : '+'} € {fmtEur(adjustmentAmountNum)}
-                                    </span>
+                                    <button
+                                        type="button"
+                                        onClick={toggleEditItem}
+                                        className={`text-[11px] font-bold ${
+                                            isEditingItem ? 'text-[var(--text-success)]' : 'text-[var(--text-brand)]'
+                                        } underline flex items-center gap-1 cursor-pointer bg-transparent border-0 outline-none`}
+                                    >
+                                        {isEditingItem ? 'Done Editing' : 'Edit'}
+                                    </button>
                                 </div>
-                            )}
-                            <div className="flex justify-between items-center px-4 py-3">
-                                <span className="text-[var(--text-subtle)] font-semibold">Next Contract Fee Rate</span>
-                                <span className="font-bold text-[var(--text-primary)]">{childFeeRateOverride}%</span>
+                                <div className="border border-[var(--border-subtlest)] rounded-lg overflow-hidden bg-white/5">
+                                    <table className="w-full text-left border-collapse text-[12px] table-layout-fixed" style={{ tableLayout: 'fixed' }}>
+                                        <colgroup>
+                                            <col className="w-[45%]" />
+                                            <col className="w-[20%]" />
+                                            <col className="w-[15%]" />
+                                            <col className="w-[20%]" />
+                                        </colgroup>
+                                        <thead>
+                                            <tr className="bg-[var(--background-secondary)]/40 text-[var(--text-subtle)] border-b border-[var(--border-subtlest)] font-bold">
+                                                <th className="px-4 py-2">Fee Component</th>
+                                                <th className="px-3 py-2 text-right">NET</th>
+                                                <th className="px-3 py-2 text-right">VAT</th>
+                                                <th className="px-3 py-2 text-right">Amount (Gross)</th>
+                                            </tr>
+                                        </thead>
+                                        <tbody>
+                                            {itemComps.map((comp) => {
+                                                const amount = isNaN(comp.amount) ? 0 : comp.amount;
+                                                const taxRate = isNaN(comp.taxRate) ? 0 : comp.taxRate;
+                                                const netAmount = taxRate === -100 ? 0 : amount / (1 + taxRate / 100);
+                                                return (
+                                                    <tr key={comp.id} className="border-b border-[var(--border-subtlest)] hover:bg-[var(--background-secondary)]/20 transition-colors">
+                                                        <td className="px-4 py-2.5">
+                                                            {isEditingItem ? (
+                                                                comp.isDefault ? (
+                                                                    <span className="font-normal text-[var(--text-primary)]">{comp.type}</span>
+                                                                ) : (
+                                                                    <div className="w-full">
+                                                                        {comp.type === 'Other' && !selectModeIds.has(comp.id) ? (
+                                                                            <div className="flex items-center gap-1">
+                                                                                <button type="button" onClick={() => enterSelectMode(comp.id)} className="text-[var(--text-subtlest)] hover:text-[var(--text-brand)] transition-colors flex-shrink-0" title="Change type">
+                                                                                    <svg width="12" height="12" viewBox="0 0 12 12" fill="none" stroke="currentColor" strokeWidth="1.8" strokeLinecap="round" strokeLinejoin="round"><path d="M7.5 2L4 6l3.5 4"/></svg>
+                                                                                </button>
+                                                                                <input
+                                                                                    type="text"
+                                                                                    autoFocus
+                                                                                    className="flex-1 text-[12px] px-2 py-1.5 bg-[var(--background-primary)] border border-[var(--border-brand)] rounded-lg focus:outline-none focus:ring-1 focus:ring-[var(--brand-500)] text-[var(--text-primary)] font-normal"
+                                                                                    placeholder="Custom fee name…"
+                                                                                    value={comp.customName || ''}
+                                                                                    onChange={(e) => handleUpdateComponent(comp.id, { customName: e.target.value })}
+                                                                                />
+                                                                            </div>
+                                                                        ) : (
+                                                                            <select
+                                                                                className="bg-[var(--background-primary)] border border-[var(--border-subtle)] text-[12px] rounded-lg px-2 py-1.5 focus:outline-none focus:ring-1 focus:ring-[var(--brand-500)] text-[var(--text-primary)] w-full font-normal"
+                                                                                value={comp.type}
+                                                                                onChange={(e) => { handleUpdateComponent(comp.id, { type: e.target.value }); if (e.target.value === 'Other') exitSelectMode(comp.id); }}
+                                                                            >
+                                                                                {ITEM_FEE_TYPES.map(t => (
+                                                                                    <option key={t} value={t} disabled={feeComponents.some(c => c.level === 'item' && c.itemId === comp.itemId && c.id !== comp.id && c.type === t && t !== 'Other')}>{t}</option>
+                                                                                ))}
+                                                                            </select>
+                                                                        )}
+                                                                    </div>
+                                                                )
+                                                            ) : (
+                                                                <span className="font-normal text-[var(--text-primary)]">
+                                                                    {comp.type === 'Other' ? (comp.customName || 'Other') : comp.type}
+                                                                </span>
+                                                            )}
+                                                        </td>
+                                                        <td className="px-3 py-2.5 text-right font-medium text-[var(--text-subtle)]">
+                                                            € {fmtEur(netAmount)}
+                                                        </td>
+                                                        <td className="px-3 py-2.5 text-right font-normal text-[var(--text-primary)]">
+                                                            {isEditingItem ? (
+                                                                <div className="relative flex items-center justify-end w-[65px] ml-auto">
+                                                                    <input
+                                                                        type="number"
+                                                                        step="0.1"
+                                                                        className="w-full text-[12px] pr-5 pl-2 py-1 bg-[var(--background-primary)] border border-[var(--border-subtle)] rounded-lg focus:outline-none focus:ring-1 focus:ring-[var(--brand-500)] text-[var(--text-primary)] font-normal text-right [appearance:textfield] [&::-webkit-outer-spin-button]:appearance-none [&::-webkit-inner-spin-button]:appearance-none"
+                                                                        value={isNaN(comp.taxRate) ? '' : comp.taxRate}
+                                                                        onChange={(e) => handleUpdateComponent(comp.id, { taxRate: parseFloat(e.target.value) })}
+                                                                    />
+                                                                    <span className="absolute right-1.5 text-[var(--text-subtle)] text-[12px] font-semibold select-none">%</span>
+                                                                </div>
+                                                            ) : (
+                                                                `${taxRate}%`
+                                                            )}
+                                                        </td>
+                                                        <td className="px-3 py-2.5 text-right font-normal text-[var(--text-primary)]">
+                                                            {isEditingItem ? (
+                                                                <div className="flex items-center gap-1 justify-end">
+                                                                    <div className="relative flex items-center justify-end w-[90px]">
+                                                                        <span className="absolute left-2.5 text-[var(--text-subtle)] text-[12px] font-semibold select-none">€</span>
+                                                                        <input
+                                                                            type="number"
+                                                                            step="0.01"
+                                                                            className="w-full text-[12px] pl-6 pr-2 py-1 bg-[var(--background-primary)] border border-[var(--border-subtle)] rounded-lg focus:outline-none focus:ring-1 focus:ring-[var(--brand-500)] text-[var(--text-primary)] font-normal text-right [appearance:textfield] [&::-webkit-outer-spin-button]:appearance-none [&::-webkit-inner-spin-button]:appearance-none"
+                                                                            value={isNaN(comp.amount) ? '' : comp.amount}
+                                                                            onChange={(e) => handleUpdateComponent(comp.id, { amount: parseFloat(e.target.value) })}
+                                                                        />
+                                                                    </div>
+                                                                    <button
+                                                                        type="button"
+                                                                        onClick={() => handleDeleteComponent(comp.id)}
+                                                                        className="p-1 hover:bg-red-50 dark:hover:bg-red-950/20 hover:text-red-600 rounded text-[var(--text-subtlest)] transition-colors cursor-pointer flex-shrink-0"
+                                                                        title="Delete"
+                                                                    >
+                                                                        <TrashIcon size={14} />
+                                                                    </button>
+                                                                </div>
+                                                            ) : (
+                                                                `€ ${fmtEur(comp.amount)}`
+                                                            )}
+                                                        </td>
+                                                    </tr>
+                                                );
+                                            })}
+                                            {/* Subtotal Row inside Table */}
+                                            <tr className="bg-[var(--background-secondary)]/30 border-t border-[var(--border-subtlest)] font-bold text-[12px]">
+                                                <td className="px-4 py-2.5">
+                                                    {isEditingItem && (
+                                                        <button
+                                                            type="button"
+                                                            onClick={() => handleAddItemFeeComponent(itemName)}
+                                                            className="text-[11px] font-bold text-[var(--text-brand)] hover:underline flex items-center gap-1 cursor-pointer bg-transparent border-0 outline-none"
+                                                        >
+                                                            <PlusIcon size={12} /> Add Item Fee
+                                                        </button>
+                                                    )}
+                                                </td>
+                                                <td className="px-3 py-2.5 text-right text-[var(--text-primary)]">
+                                                    € {fmtEur(itemNetSubtotal)}
+                                                </td>
+                                                <td className="px-3 py-2.5"></td>
+                                                <td className="px-3 py-2.5 text-right text-[var(--text-primary)]">
+                                                    € {fmtEur(itemGrossSubtotal)}
+                                                </td>
+                                            </tr>
+                                        </tbody>
+                                    </table>
+                                </div>
                             </div>
-                        </div>
+                        );
+                    })}
+                </div>
 
-                        {/* Financial Net Sum Card */}
-                        {dueToday > 0 ? (
-                            <div className="p-4 border border-red-200 bg-red-50/50 rounded-xl flex items-center justify-between shadow-sm animate-in fade-in duration-200">
-                                <div>
-                                    <p className="text-[10px] font-extrabold uppercase tracking-widest text-red-700">Customer Pays Today</p>
-                                    <p className="text-[11px] text-red-600 mt-0.5">Parent fees + principal payback</p>
-                                </div>
-                                <span className="text-[20px] font-extrabold text-[var(--text-error)]">€ {fmtEur(dueToday)}</span>
-                            </div>
-                        ) : dueToday < 0 ? (
-                            <div className="p-4 border border-green-200 bg-green-50/50 rounded-xl flex items-center justify-between shadow-sm animate-in fade-in duration-200">
-                                <div>
-                                    <p className="text-[10px] font-extrabold uppercase tracking-widest text-green-700">Customer Receives Today</p>
-                                    <p className="text-[11px] text-green-600 mt-0.5">Net additional payout amount</p>
-                                </div>
-                                <span className="text-[20px] font-extrabold text-[var(--text-success)]">€ {fmtEur(Math.abs(dueToday))}</span>
-                            </div>
-                        ) : (
-                            <div className="p-4 border border-gray-200 bg-gray-50 rounded-xl text-center text-xs font-semibold text-gray-500 shadow-sm animate-in fade-in duration-200">
-                                No payment due today
-                            </div>
+                {/* Notes / Justification Section */}
+                {isFeesOverridden && (
+                    <div className="flex flex-col">
+                        <label className="text-[12px] font-bold text-[var(--text-primary)] mb-1.5 flex items-center justify-between">
+                            <span>Notes / Justification <span className="text-red-500">*</span></span>
+                            <span className="text-[10px] text-amber-600 dark:text-amber-400 font-semibold bg-amber-50 dark:bg-amber-950/20 px-2 py-0.5 rounded border border-amber-200">
+                                Adjustment Reason Required
+                            </span>
+                        </label>
+                        <textarea
+                            className={`w-full text-[13px] px-3.5 py-3 bg-white dark:bg-[#1f2937] border rounded-xl focus:outline-none focus:ring-2 focus:ring-[var(--brand-500)] text-[var(--text-primary)] transition-all min-h-[75px] ${
+                                isNotesRequired ? 'border-red-300 bg-red-50/10' : 'border-[var(--border-subtle)]'
+                            }`}
+                            placeholder="Enter operator reason for fee adjustment..."
+                            value={feeOverrideReason}
+                            onChange={(e) => setFeeOverrideReason(e.target.value)}
+                        />
+                        {isNotesRequired && (
+                            <span className="text-[11px] font-semibold text-red-600 dark:text-red-400 mt-1.5 flex items-center gap-1.5">
+                                <AlertTriangleIcon size={12} />
+                                Written justification is mandatory when fees are overridden.
+                            </span>
                         )}
                     </div>
-                );
-            }
+                )}
 
-            default:
-                return null;
-        }
+                {/* Policy Overrides */}
+                <div className="space-y-4 pt-3 border-t border-[var(--border-subtlest)]">
+                    <span className="text-[11px] font-black uppercase tracking-widest text-[var(--text-subtlest)] block">Extension Policy Overrides</span>
+                    <div className="pt-1">
+                        <Toggle
+                            label="Carry forward this fee structure to extended (child) deal."
+                            checked={carryForwardFees}
+                            onChange={(e) => setCarryForwardFees(e.target.checked)}
+                        />
+                    </div>
+
+                    {!carryForwardFees && renderChildFeeStructureOverrides()}
+
+                    <div className="pt-2 border-t border-[var(--border-subtlest)]">
+                        <Toggle
+                            label="Allow Online Extension"
+                            description="Customer can perform future extensions themselves via portal"
+                            checked={allowOnlineExtension}
+                            onChange={(e) => setAllowOnlineExtension(e.target.checked)}
+                        />
+                    </div>
+                </div>
+            </div>
+        );
+    };
+
+    const renderStep5 = () => {
+        const dueToday = finalParentFees + (adjustmentMode === 'payback' ? adjustmentAmountNum : adjustmentMode === 'payout' ? -adjustmentAmountNum : 0);
+        const isCardOrCash = ['Cash', 'Debit/Credit Card'].includes(paymentType);
+
+        return (
+            <div className="space-y-4 animate-in fade-in slide-in-from-right-4 duration-300">
+                <p className="text-[13px] text-[var(--text-subtle)] leading-relaxed">
+                    Select payment details and verify the final transaction sums before executing.
+                </p>
+
+                <div className="grid grid-cols-2 gap-4">
+                    <Dropdown
+                        label="Payment Type"
+                        value={paymentType}
+                        onChange={(val) => setPaymentType(val)}
+                        options={[
+                            { label: 'Cash', value: 'Cash' },
+                            { label: 'Debit/Credit Card', value: 'Debit/Credit Card' },
+                            { label: 'Bank Transfer', value: 'Bank Transfer' },
+                            { label: 'PayPal', value: 'PayPal' },
+                        ]}
+                    />
+
+                    {isCardOrCash && (
+                        <Dropdown
+                            label="Cash Book"
+                            value={cashBookName}
+                            onChange={(val) => setCashBookName(val)}
+                            options={cashBookOptions}
+                        />
+                    )}
+                </div>
+
+                <div className="bg-[var(--background-secondary)]/40 rounded-xl border border-[var(--border-subtlest)] overflow-hidden text-xs">
+                    <div className="flex justify-between items-center px-4 py-3 border-b border-[var(--border-subtlest)]">
+                        <span className="text-[var(--text-subtle)] font-medium">New Contract Due Date</span>
+                        <span className="font-bold text-[var(--text-primary)]">{fmtDate(newDueDate)}</span>
+                    </div>
+                    <div className="flex justify-between items-center px-4 py-3 border-b border-[var(--border-subtlest)]">
+                        <span className="text-[var(--text-subtle)] font-medium">New Total Loan Principal</span>
+                        <span className="font-bold text-[var(--text-primary)]">€ {fmtEur(newTotalPayout)}</span>
+                    </div>
+                    <div className="flex justify-between items-center px-4 py-3 border-b border-[var(--border-subtlest)]">
+                        <span className="text-[var(--text-subtle)] font-medium">Parent Fees Charged</span>
+                        <span className="font-bold text-[var(--text-primary)]">€ {fmtEur(finalParentFees)}</span>
+                    </div>
+                    {adjustmentMode !== 'none' && (
+                        <div className="flex justify-between items-center px-4 py-3 border-b border-[var(--border-subtlest)]">
+                            <span className="text-[var(--text-subtle)] font-medium">
+                                {adjustmentMode === 'payback' ? 'Partial Payback' : 'Additional Payout'}
+                            </span>
+                            <span className={`font-bold ${adjustmentMode === 'payback' ? 'text-[var(--text-success)]' : 'text-blue-600'}`}>
+                                {adjustmentMode === 'payback' ? '-' : '+'} € {fmtEur(adjustmentAmountNum)}
+                            </span>
+                        </div>
+                    )}
+                    <div className="flex justify-between items-center px-4 py-3">
+                        <span className="text-[var(--text-subtle)] font-semibold">Next Contract Fee Structure</span>
+                        <span className={`text-[12px] px-2.5 py-0.5 rounded-full font-bold ${
+                            carryForwardFees
+                                ? 'bg-green-50 dark:bg-green-950/20 text-[var(--text-success)] border border-green-200'
+                                : 'bg-amber-50 dark:bg-amber-950/20 text-amber-600 dark:text-amber-400 border border-amber-200'
+                        }`}>
+                            {carryForwardFees ? 'Same as Parent' : 'Custom Override'}
+                        </span>
+                    </div>
+                </div>
+
+                {/* Financial Net Sum Card */}
+                {dueToday > 0 ? (
+                    <div className="p-4 border border-red-200 bg-red-50/50 rounded-xl flex items-center justify-between shadow-sm animate-in fade-in duration-200">
+                        <div>
+                            <p className="text-[10px] font-extrabold uppercase tracking-widest text-red-700">Customer Pays Today</p>
+                            <p className="text-[11px] text-red-600 mt-0.5">Parent fees + principal payback</p>
+                        </div>
+                        <span className="text-[20px] font-extrabold text-[var(--text-error)]">€ {fmtEur(dueToday)}</span>
+                    </div>
+                ) : dueToday < 0 ? (
+                    <div className="p-4 border border-green-200 bg-green-50/50 rounded-xl flex items-center justify-between shadow-sm animate-in fade-in duration-200">
+                        <div>
+                            <p className="text-[10px] font-extrabold uppercase tracking-widest text-green-700">Customer Receives Today</p>
+                            <p className="text-[11px] text-green-600 mt-0.5">Net additional payout amount</p>
+                        </div>
+                        <span className="text-[20px] font-extrabold text-[var(--text-success)]">€ {fmtEur(Math.abs(dueToday))}</span>
+                    </div>
+                ) : (
+                    <div className="p-4 border border-gray-200 bg-gray-50 rounded-xl text-center text-xs font-semibold text-gray-500 shadow-sm animate-in fade-in duration-200">
+                        No payment due today
+                    </div>
+                )}
+            </div>
+        );
     };
 
     const isLastStep = step === TOTAL_STEPS;
@@ -956,14 +1474,14 @@ export const ExtendDealModal: React.FC<ExtendDealModalProps> = ({
             onClick={(e) => { e.stopPropagation(); }}
         >
             <div
-                className="w-full md:max-w-[560px] h-full md:h-auto md:max-h-[90vh] flex flex-col bg-[var(--background-primary)] overflow-hidden rounded-none md:rounded-[24px] shadow-none md:shadow-[0_32px_64px_-16px_rgba(0,0,0,0.3)] animate-in slide-in-from-bottom-8 duration-300"
+                className="w-full md:max-w-[760px] h-full md:h-[680px] md:max-h-[90vh] flex flex-col bg-[var(--background-primary)] overflow-hidden rounded-none md:rounded-[24px] shadow-none md:shadow-[0_32px_64px_-16px_rgba(0,0,0,0.3)] animate-in slide-in-from-bottom-8 duration-300"
                 onClick={(e) => e.stopPropagation()}
             >
                 {/* Desktop Header */}
                 <div className="hidden md:flex px-6 py-5 border-b border-[var(--border-subtlest)] items-center justify-between shrink-0">
                     <div className="flex items-center gap-3">
                         <div className="w-9 h-9 rounded-full bg-[var(--background-brand-primary)] flex items-center justify-center">
-                            <RefreshCwIcon size={16} strokeWidth={2} className="text-[var(--text-brand)]" />
+                            <ArrowUpRightIcon size={16} strokeWidth={2} className="text-[var(--text-brand)]" />
                         </div>
                         <div>
                             <h2 className="text-[15px] font-extrabold text-[var(--text-primary)] m-0 leading-tight">Extend Deal</h2>
@@ -999,26 +1517,94 @@ export const ExtendDealModal: React.FC<ExtendDealModalProps> = ({
                     </button>
                 </div>
 
-                {/* Step indicator */}
-                <div className="px-6 pt-4 pb-2 shrink-0">
-                    <div className="flex items-center gap-2 mb-3">
-                        {Array.from({ length: TOTAL_STEPS }, (_, i) => (
-                            <div
-                                key={i}
-                                className={`flex-1 h-1 rounded-full transition-all duration-300 ${
-                                    i < step ? 'bg-[var(--background-brand-solid)]' : 'bg-[var(--background-secondary)]'
-                                }`}
-                            />
-                        ))}
-                    </div>
-                    <p className="text-[10px] font-black uppercase tracking-widest text-[var(--text-subtlest)]">
-                        Step {step} of {TOTAL_STEPS} — {STEP_LABELS[step - 1]}
-                    </p>
+                {/* Slick clickable adjacent tab-stepper */}
+                <div className="flex border-b border-[var(--border-subtlest)] bg-[var(--background-secondary)]/20 shrink-0 select-none">
+                    {[
+                        { num: 1, name: 'Summary', short: 'Summ' },
+                        { num: 2, name: 'Duration', short: 'Dur' },
+                        { num: 3, name: 'Adjustment', short: 'Adj' },
+                        { num: 4, name: 'Fees', short: 'Fees' },
+                        { num: 5, name: 'Payment', short: 'Pay' }
+                    ].map((t) => (
+                        <button
+                            key={t.num}
+                            type="button"
+                            onClick={() => scrollToSection(t.num)}
+                            className={`flex-1 py-3.5 text-center border-b-2 font-bold text-[11px] md:text-[13px] transition-all cursor-pointer bg-transparent outline-none flex items-center justify-center gap-1.5 ${
+                                step === t.num
+                                    ? 'border-[var(--brand-500)] text-[var(--text-brand)] bg-[var(--background-primary)]'
+                                    : 'border-transparent text-[var(--text-subtle)] hover:text-[var(--text-primary)] hover:bg-[var(--background-hover)]'
+                            }`}
+                        >
+                            <span className={`w-4 h-4 md:w-5 md:h-5 rounded-full flex items-center justify-center text-[9px] md:text-[10px] font-black ${
+                                step === t.num
+                                    ? 'bg-[var(--brand-500)] text-white'
+                                    : 'bg-[var(--background-secondary)] text-[var(--text-subtle)]'
+                            }`}>
+                                {t.num}
+                            </span>
+                            <span className="block sm:hidden">{t.short}</span>
+                            <span className="hidden sm:block">{t.name}</span>
+                        </button>
+                    ))}
                 </div>
 
-                {/* Scrollable content */}
-                <div className="flex-1 overflow-y-auto px-6 py-4 slick-scrollbar">
-                    {renderContent()}
+                {/* Scrollable content container */}
+                <div 
+                    ref={scrollContainerRef}
+                    onScroll={handleScroll}
+                    className="flex-1 overflow-y-auto px-6 py-6 slick-scrollbar scroll-smooth"
+                    style={{ height: '100%' }}
+                >
+                    <div className="space-y-10 pb-12">
+                        <div id="extend-step-1" className="scroll-mt-4">
+                            <div className="flex items-center gap-2 mb-4">
+                                <span className="w-1.5 h-6 bg-[var(--brand-500)] rounded-full" />
+                                <h2 className="text-sm font-black uppercase tracking-wider text-[var(--text-primary)]">1. Current Deal Summary</h2>
+                            </div>
+                            {renderStep1()}
+                        </div>
+                        
+                        <div className="h-px bg-[var(--border-subtlest)]" />
+                        
+                        <div id="extend-step-2" className="scroll-mt-4">
+                            <div className="flex items-center gap-2 mb-4">
+                                <span className="w-1.5 h-6 bg-[var(--brand-500)] rounded-full" />
+                                <h2 className="text-sm font-black uppercase tracking-wider text-[var(--text-primary)]">2. Duration & Base Fees</h2>
+                            </div>
+                            {renderStep2()}
+                        </div>
+                        
+                        <div className="h-px bg-[var(--border-subtlest)]" />
+                        
+                        <div id="extend-step-3" className="scroll-mt-4">
+                            <div className="flex items-center gap-2 mb-4">
+                                <span className="w-1.5 h-6 bg-[var(--brand-500)] rounded-full" />
+                                <h2 className="text-sm font-black uppercase tracking-wider text-[var(--text-primary)]">3. Loan Adjustment</h2>
+                            </div>
+                            {renderStep3()}
+                        </div>
+
+                        <div className="h-px bg-[var(--border-subtlest)]" />
+
+                        <div id="extend-step-4" className="scroll-mt-4">
+                            <div className="flex items-center gap-2 mb-4">
+                                <span className="w-1.5 h-6 bg-[var(--brand-500)] rounded-full" />
+                                <h2 className="text-sm font-black uppercase tracking-wider text-[var(--text-primary)]">4. Fee & Policy Overrides</h2>
+                            </div>
+                            {renderStep4()}
+                        </div>
+
+                        <div className="h-px bg-[var(--border-subtlest)]" />
+
+                        <div id="extend-step-5" className="scroll-mt-4">
+                            <div className="flex items-center gap-2 mb-4">
+                                <span className="w-1.5 h-6 bg-[var(--brand-500)] rounded-full" />
+                                <h2 className="text-sm font-black uppercase tracking-wider text-[var(--text-primary)]">5. Payment & Final Review</h2>
+                            </div>
+                            {renderStep5()}
+                        </div>
+                    </div>
                 </div>
 
                 {/* Footer */}

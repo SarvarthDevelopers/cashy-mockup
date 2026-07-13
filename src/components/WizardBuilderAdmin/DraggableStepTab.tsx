@@ -80,7 +80,7 @@ export function DraggableStepTab({ step, index, isActive, onClick, onReorder, ga
         onClick={onClick}
         className={`
           ${isActive ? 'bg-[var(--background-brand-solid)] border-[var(--background-brand-solid)]' : 'bg-[var(--background-primary)] border border-[var(--border-subtle)]'}
-          rounded-[8px] h-[40px] px-[16px] transition-all flex items-center gap-[10px] cursor-move shrink-0 whitespace-nowrap shadow-sm hover:shadow-md hover:border-[var(--border-brand-hover)]
+          rounded-[8px] h-[32px] px-[16px] transition-all flex items-center gap-[10px] cursor-move shrink-0 whitespace-nowrap shadow-sm hover:shadow-md hover:border-[var(--border-brand-hover)]
         `}
       >
         <div className="flex items-center gap-2">

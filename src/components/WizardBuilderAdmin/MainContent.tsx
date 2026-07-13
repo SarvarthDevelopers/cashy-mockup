@@ -4,7 +4,6 @@ import type { WizardState, Field } from './DealWizardBuilder';
 import type { WorkflowGate } from '../../data/workflowGates';
 import { DraggableFieldItem } from './DraggableFieldItem';
 import { DraggableStepTab } from './DraggableStepTab';
-import { Breadcrumb } from './Breadcrumb';
 import { InlineEdit } from './InlineEdit';
 import { Tooltip } from '../Tooltip/Tooltip';
 
@@ -18,7 +17,6 @@ interface MainContentProps {
   onToggleActive: () => void;
   onReorderFields: (dragIndex: number, hoverIndex: number, stepId: string) => void;
   onUpdateWizardName: (name: string) => void;
-  onBack: () => void;
   gates?: WorkflowGate[];
 }
 
@@ -30,7 +28,6 @@ export function MainContent({
   onToggleActive,
   onReorderFields,
   onUpdateWizardName,
-  onBack,
   gates
 }: MainContentProps) {
   const { showToast } = useToast();
@@ -50,20 +47,15 @@ export function MainContent({
 
   return (
     <div className="content-stretch flex flex-col gap-[10px] h-full relative flex-1 min-w-0 overflow-hidden">
-      {/* Breadcrumb */}
-      <div className="shrink-0">
-        <Breadcrumb wizardName={wizardState.name} onBack={onBack} />
-      </div>
-      
       {/* Wizard Header */}
       <div className="bg-[var(--background-primary)] relative rounded-[8px] shrink-0 w-full border border-[var(--border-subtle)]">
         <div className="flex flex-row items-center overflow-clip rounded-[inherit] size-full">
-          <div className="content-stretch flex items-center justify-between p-[24px] relative w-full">
+          <div className="content-stretch flex items-center justify-between p-[12px_24px] relative w-full">
             <InlineEdit
               value={wizardState.name}
               onSave={onUpdateWizardName}
-              textClassName="font-['Inter',sans-serif] font-bold text-[24px] text-[var(--text-primary)]"
-              containerClassName="content-stretch flex gap-[8px] items-center justify-center relative shrink-0 hover:bg-[var(--background-secondary-hover)] rounded-[4px] px-2 py-1 -ml-2 transition-colors"
+              textClassName="font-['Inter',sans-serif] font-bold text-[20px] text-[var(--text-primary)]"
+              containerClassName="content-stretch flex gap-[8px] items-center justify-center relative shrink-0 hover:bg-[var(--background-secondary-hover)] rounded-[4px] px-2 py-0.5 -ml-2 transition-colors"
               iconNode={
                 <div className="absolute inset-[7.83%_8.33%_12.5%_8.33%]">
                   <svg className="absolute block size-full" fill="none" preserveAspectRatio="none" viewBox="0 0 16.6667 15.9345">
@@ -90,16 +82,16 @@ export function MainContent({
                   }}
                   className={`content-stretch flex gap-[12px] items-center py-[2px] relative shrink-0 transition-opacity ${(!wizardState.active && !wizardState.category) ? 'opacity-50' : ''}`}
                 >
-                  <div className="flex flex-col font-['Inter',sans-serif] font-medium justify-center leading-[0] relative shrink-0 text-[var(--text-primary)] text-[16px] whitespace-nowrap">
+                  <div className="flex flex-col font-['Inter',sans-serif] font-medium justify-center leading-[0] relative shrink-0 text-[var(--text-primary)] text-[15px] whitespace-nowrap">
                     <p className="leading-[1.4]">{wizardState.active ? 'Active' : 'Inactive'}</p>
                   </div>
                   <div
                     className={`${
                       wizardState.active ? 'bg-[var(--background-brand-solid)]' : 'bg-[var(--background-disabled)]'
-                    } h-[20px] overflow-clip relative rounded-[19px] shrink-0 w-[40px] transition-colors`}
+                    } h-[18px] overflow-clip relative rounded-[19px] shrink-0 w-[36px] transition-colors`}
                   >
-                    <div className="absolute top-1/2 -translate-y-1/2 size-[16px] transition-all" style={{
-                      right: wizardState.active ? '3px' : 'calc(100% - 19px)'
+                    <div className="absolute top-1/2 -translate-y-1/2 size-[14px] transition-all" style={{
+                      right: wizardState.active ? '2px' : 'calc(100% - 16px)'
                     }}>
                       <div className="absolute inset-[-12.5%_-18.75%_-25%_-18.75%]">
                         <svg className="block size-full" fill="none" preserveAspectRatio="none" viewBox="0 0 22 22">
@@ -120,7 +112,7 @@ export function MainContent({
       {/* Main Body */}
       <div className="bg-[var(--background-primary)] relative rounded-[8px] border border-[var(--border-subtle)] w-full flex-1 min-h-0 flex flex-col overflow-hidden">
         {/* Fixed Header Area (Tabs + Divider) */}
-        <div className="flex flex-col gap-[24px] items-stretch pt-[24px] px-[24px] relative w-full shrink-0 z-10 bg-[var(--background-primary)] rounded-t-[8px]">
+        <div className="flex flex-col gap-[12px] items-stretch pt-[12px] px-[24px] relative w-full shrink-0 z-10 bg-[var(--background-primary)] rounded-t-[8px]">
           {/* Step Tabs */}
           <div className="flex gap-[12px] items-center w-full flex-nowrap overflow-x-auto pb-[4px] slick-scrollbar">
             {wizardState.steps.map((step, index) => (
@@ -144,10 +136,10 @@ export function MainContent({
 
         {/* Scrollable Step Content */}
         <div className="flex-1 overflow-y-auto slick-scrollbar bg-[var(--background-secondary)]">
-          <div className="flex flex-col gap-[24px] items-stretch p-[24px] relative w-full min-h-[500px]">
-            <div className="content-stretch flex h-[40px] items-center justify-between relative shrink-0 w-full">
+          <div className="flex flex-col gap-[12px] items-stretch p-[16px] relative w-full min-h-[500px]">
+            <div className="content-stretch flex h-[32px] items-center justify-between relative shrink-0 w-full">
               <div className="content-stretch flex gap-[8px] items-center justify-center relative shrink-0 px-2 py-1 -ml-2">
-                <h3 className="font-['Inter',sans-serif] font-bold text-[24px] text-[var(--text-primary)]">
+                <h3 className="font-['Inter',sans-serif] font-bold text-[18px] text-[var(--text-primary)]">
                   {currentStep?.name || ''}
                 </h3>
               </div>
@@ -155,10 +147,10 @@ export function MainContent({
                 {hasExpandedFields && (
                   <button
                     onClick={handleCollapseAll}
-                    className="bg-[var(--background-primary)] border border-[var(--border-primary)] hover:bg-[var(--background-secondary-hover)] transition-colors content-stretch flex items-center justify-center px-[12px] py-[8px] relative rounded-[8px] shrink-0"
+                    className="bg-[var(--background-primary)] border border-[var(--border-primary)] hover:bg-[var(--background-secondary-hover)] transition-colors content-stretch flex items-center justify-center px-[12px] py-[6px] relative rounded-[8px] shrink-0"
                   >
                     <div className="content-stretch flex items-center justify-center relative shrink-0">
-                      <div className="flex flex-col font-['Inter',sans-serif] font-bold justify-end leading-[0] relative shrink-0 text-[var(--text-subtle)] text-[14px] whitespace-nowrap">
+                      <div className="flex flex-col font-['Inter',sans-serif] font-bold justify-end leading-[0] relative shrink-0 text-[var(--text-subtle)] text-[13px] whitespace-nowrap">
                         <p className="leading-[1.4]">Collapse All</p>
                       </div>
                     </div>

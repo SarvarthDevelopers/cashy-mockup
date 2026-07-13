@@ -11,6 +11,7 @@ import type { WizardConfig, AssociatedAction } from '../../data/wizardData';
 import { getWorkflowGates, STATUS_ORDER } from '../../data/workflowGates';
 import type { WorkflowGate } from '../../data/workflowGates';
 import { useToast } from '../Toast/useToast';
+import { ArrowLeft } from 'lucide-react';
 
 export interface FieldType {
   id: string;
@@ -440,7 +441,18 @@ export function DealWizardBuilder({ wizardConfig, onBack, onSave, onDelete }: De
       <div className="bg-[var(--background-tertiary)] h-full w-full overflow-hidden flex flex-col">
         <div className="px-[24px] py-[16px] flex-1 min-h-0 min-w-0">
           <div className="flex gap-[24px] items-start h-full min-w-[1200px]">
-            <Sidebar onAddField={addField} />
+            <div className="flex flex-col gap-[12px] h-full shrink-0 w-[260px]">
+              <button 
+                onClick={handleBackWithCheck}
+                className="bg-[var(--background-secondary)] border border-[var(--border-subtle)] flex items-center justify-center gap-[8px] px-[16px] py-[8px] rounded-[8px] w-full hover:bg-[var(--background-secondary-hover)] transition-colors shadow-sm cursor-pointer text-[var(--text-subtle)] font-bold text-[14px] shrink-0"
+              >
+                <ArrowLeft size={16} className="text-[var(--text-subtle)]" />
+                <span>Back to Wizards List</span>
+              </button>
+              <div className="flex-1 min-h-0">
+                <Sidebar onAddField={addField} />
+              </div>
+            </div>
             <MainContent
               wizardState={wizardState}
               onRemoveField={removeField}
@@ -449,7 +461,6 @@ export function DealWizardBuilder({ wizardConfig, onBack, onSave, onDelete }: De
               onToggleActive={toggleWizardActive}
               onReorderFields={reorderFields}
               onUpdateWizardName={updateWizardName}
-              onBack={handleBackWithCheck}
               gates={gates}
             />
              <AssignmentsPanel

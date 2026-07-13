@@ -1194,9 +1194,9 @@ export const DealWizardModal: React.FC<DealWizardModalProps> = ({
     );
 
     return (
-        <div className="fixed inset-0 z-[200] flex items-center justify-center bg-[#131518]/60 backdrop-blur-sm animate-in fade-in duration-200 p-0 md:p-8" onClick={(e: React.MouseEvent) => { e.stopPropagation(); }}>
+        <div className="fixed inset-0 z-[200] animate-in fade-in duration-200" onClick={(e: React.MouseEvent) => { e.stopPropagation(); }}>
             <div 
-                className="w-full md:max-w-[1400px] h-full md:h-[95vh] flex flex-col bg-white overflow-hidden rounded-none md:rounded-[32px] shadow-[0_32px_64px_-16px_rgba(0,0,0,0.3)] border-none md:border md:border-white/20 animate-in slide-in-from-bottom duration-300" 
+                className="fixed inset-0 flex flex-col bg-white overflow-hidden shadow-[0_32px_64px_-16px_rgba(0,0,0,0.3)] animate-in slide-in-from-bottom duration-300" 
                 onClick={(e: React.MouseEvent) => e.stopPropagation()}
             >
                 
@@ -1430,6 +1430,7 @@ export const DealWizardModal: React.FC<DealWizardModalProps> = ({
                         <div 
                             ref={contentRef}
                             className="flex-1 overflow-y-auto slick-scrollbar scroll-smooth" 
+                            style={{ scrollBehavior: 'smooth' }}
                             onScroll={handleScroll}
                         >
                             {isCreating ? (
@@ -1465,12 +1466,12 @@ export const DealWizardModal: React.FC<DealWizardModalProps> = ({
                                         ref={(el) => { if (el) sectionRefs.current.set('step1', el); }}
                                         className="space-y-8 scroll-mt-20"
                                     >
-                                        <div className="px-2">
-                                            <div className="inline-flex items-center gap-2 px-2.5 py-1 rounded-full bg-[var(--background-secondary)] border border-[var(--border-subtlest)] text-[10px] font-extrabold uppercase tracking-widest text-[var(--text-placeholder)] mb-3">
-                                                Step 1 of {steps.length}
+                                        <div className="sticky top-0 z-10 flex items-center gap-4 -mx-4 md:-mx-8 px-6 md:px-10 py-3 bg-[#F4F5F7] border-b border-[var(--border-subtlest)]">
+                                            <span className="w-8 h-8 rounded-full bg-[var(--brand-500)] text-white text-[13px] font-black flex items-center justify-center shrink-0">1</span>
+                                            <div>
+                                                <p className="text-[10px] font-extrabold uppercase tracking-widest text-[var(--text-placeholder)] m-0 mb-0.5">Step 1 of {steps.length}</p>
+                                                <h2 className="text-xl font-bold text-[#131518] m-0">Basic Information</h2>
                                             </div>
-                                            <h2 className="text-2xl font-bold text-[#131518]">Basic Information</h2>
-                                            <p className="text-sm text-gray-400">Initialize the core deal and customer details.</p>
                                         </div>
 
                                         {/* --- Customer Section --- */}
@@ -1777,11 +1778,10 @@ export const DealWizardModal: React.FC<DealWizardModalProps> = ({
                                                             <Plus size={20} />
                                                         </div>
                                                         <span className="text-sm font-bold uppercase tracking-widest">Add Another Item</span>
-                                                    </button>
-                                                )}
+                                                     </button>
+                                                 )}
                                             </div>
                                         </div>
-                                    </div>
 
                                     {/* --- Deal Metadata --- */}
                                     <div className="bg-white rounded-2xl border border-[var(--border-subtlest)] shadow-sm overflow-hidden transition-all duration-300 hover:shadow-md">
@@ -1865,48 +1865,55 @@ export const DealWizardModal: React.FC<DealWizardModalProps> = ({
                                         </div>
                                     </div>
 
-                                    {/* Mobile Deal Summary */}
                                     {activeStep === 'step1' && (
                                         <div className="lg:hidden mt-8 bg-white rounded-2xl border border-[var(--border-subtlest)] shadow-sm overflow-hidden">
                                             {renderDealSummary()}
                                         </div>
                                     )}
 
+                                    </div>
+
                                     {/* --- Dynamic Phases Sections --- */}
-                                    {creationFinalized && steps.slice(1).map((step, idx) => (
-                                        <div 
-                                            key={step.id} 
-                                            id={`section-${step.id}`}
-                                            ref={(el) => { if (el) sectionRefs.current.set(step.id, el); }}
-                                            className="space-y-10 scroll-mt-20 pt-4"
-                                        >
-                                            {/* Integrated Line & Pill Separator */}
-                                            <div className="flex items-center gap-3 px-2 select-none">
-                                                <span className="inline-flex items-center gap-2 px-2.5 py-1 rounded-full bg-[var(--background-secondary)] border border-[var(--border-subtlest)] text-[10px] font-extrabold uppercase tracking-widest text-[var(--text-placeholder)] shrink-0 shadow-sm">
-                                                    Step {idx + 2} of {steps.length}
-                                                </span>
-                                                <div className="flex-1 h-[1px] bg-[var(--border-subtlest)]" />
-                                            </div>
-
-                                            <div className="px-2">
-                                                <h2 className="text-2xl font-bold text-[#131518]">{step.title}</h2>
-                                                <p className="text-sm text-gray-400">Complete the {step.title.toLowerCase()} process for all deal items.</p>
-                                            </div>
-
-                                            <div className="space-y-8">
-                                                {items.map((_, idx) => (
-                                                    <div 
-                                                        key={`${step.id}-${idx}`}
-                                                        id={`section-${step.id}-${idx}`}
-                                                        ref={(el) => { if (el) sectionRefs.current.set(`${step.id}-${idx}`, el); }}
-                                                        className="scroll-mt-40"
-                                                    >
-                                                        {renderStepItemFields(step.id, idx)}
+                                    {creationFinalized && steps.slice(1).map((step, idx) => {
+                                        const isActive = activeStep === step.id;
+                                        const currentStepNum = idx + 2;
+                                        return (
+                                            <div 
+                                                key={step.id} 
+                                                id={`section-${step.id}`}
+                                                ref={(el) => { if (el) sectionRefs.current.set(step.id, el); }}
+                                                className="space-y-6 scroll-mt-20 pt-4"
+                                            >
+                                                {/* Section Chapter Heading — sticky within section */}
+                                                <div className="sticky top-0 z-10 flex items-center gap-4 -mx-4 md:-mx-8 px-6 md:px-10 py-3 bg-[#F4F5F7] border-b border-[var(--border-subtlest)]">
+                                                    <span className="w-8 h-8 rounded-full flex items-center justify-center text-[13px] font-black shrink-0 bg-[var(--brand-500)] text-white">
+                                                        {currentStepNum}
+                                                    </span>
+                                                    <div>
+                                                        <p className="text-[10px] font-extrabold uppercase tracking-widest text-[var(--text-placeholder)] m-0 mb-0.5">
+                                                            Step {currentStepNum} of {steps.length}
+                                                        </p>
+                                                        <h2 className={`text-xl font-bold m-0 ${
+                                                            isActive ? 'text-[#131518]' : 'text-[var(--text-subtle)]'
+                                                        }`}>{step.title}</h2>
                                                     </div>
-                                                ))}
+                                                </div>
+
+                                                <div className="space-y-6">
+                                                    {items.map((_, idx) => (
+                                                        <div 
+                                                            key={`${step.id}-${idx}`}
+                                                            id={`section-${step.id}-${idx}`}
+                                                            ref={(el) => { if (el) sectionRefs.current.set(`${step.id}-${idx}`, el); }}
+                                                            className="scroll-mt-40"
+                                                        >
+                                                            {renderStepItemFields(step.id, idx)}
+                                                        </div>
+                                                    ))}
+                                                </div>
                                             </div>
-                                        </div>
-                                    ))}
+                                        );
+                                    })}
                                 </div>
                             )}
                         </div>

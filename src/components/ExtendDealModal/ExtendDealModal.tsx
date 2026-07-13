@@ -1474,7 +1474,7 @@ export const ExtendDealModal: React.FC<ExtendDealModalProps> = ({
             onClick={(e) => { e.stopPropagation(); }}
         >
             <div
-                className="w-full md:max-w-[760px] h-full md:h-[680px] md:max-h-[90vh] flex flex-col bg-[var(--background-primary)] overflow-hidden rounded-none md:rounded-[24px] shadow-none md:shadow-[0_32px_64px_-16px_rgba(0,0,0,0.3)] animate-in slide-in-from-bottom-8 duration-300"
+                className="w-full md:max-w-[1200px] h-full md:h-[95vh] md:max-h-[95vh] flex flex-col bg-[var(--background-primary)] overflow-hidden rounded-none md:rounded-[24px] shadow-none md:shadow-[0_32px_64px_-16px_rgba(0,0,0,0.3)] animate-in slide-in-from-bottom-8 duration-300"
                 onClick={(e) => e.stopPropagation()}
             >
                 {/* Desktop Header */}
@@ -1530,18 +1530,22 @@ export const ExtendDealModal: React.FC<ExtendDealModalProps> = ({
                             key={t.num}
                             type="button"
                             onClick={() => scrollToSection(t.num)}
-                            className={`flex-1 py-3.5 text-center border-b-2 font-bold text-[11px] md:text-[13px] transition-all cursor-pointer bg-transparent outline-none flex items-center justify-center gap-1.5 ${
+                            className={`flex-1 py-3.5 text-center border-b-[3px] font-bold text-[11px] md:text-[13px] transition-all cursor-pointer bg-transparent outline-none flex items-center justify-center gap-1.5 ${
                                 step === t.num
                                     ? 'border-[var(--brand-500)] text-[var(--text-brand)] bg-[var(--background-primary)]'
-                                    : 'border-transparent text-[var(--text-subtle)] hover:text-[var(--text-primary)] hover:bg-[var(--background-hover)]'
+                                    : 'border-transparent text-[var(--text-subtlest)] hover:text-[var(--text-primary)] hover:bg-[var(--background-hover)]'
                             }`}
                         >
                             <span className={`w-4 h-4 md:w-5 md:h-5 rounded-full flex items-center justify-center text-[9px] md:text-[10px] font-black ${
                                 step === t.num
                                     ? 'bg-[var(--brand-500)] text-white'
-                                    : 'bg-[var(--background-secondary)] text-[var(--text-subtle)]'
+                                    : step > t.num
+                                    ? 'bg-emerald-500 text-white'
+                                    : 'bg-[var(--border-subtlest)] text-[var(--text-subtlest)]'
                             }`}>
-                                {t.num}
+                                {step > t.num ? (
+                                    <svg width="7" height="5" viewBox="0 0 8 6" fill="none"><path d="M1 3L3 5L7 1" stroke="white" strokeWidth="1.5" strokeLinecap="round" strokeLinejoin="round"/></svg>
+                                ) : t.num}
                             </span>
                             <span className="block sm:hidden">{t.short}</span>
                             <span className="hidden sm:block">{t.name}</span>
@@ -1553,57 +1557,55 @@ export const ExtendDealModal: React.FC<ExtendDealModalProps> = ({
                 <div 
                     ref={scrollContainerRef}
                     onScroll={handleScroll}
-                    className="flex-1 overflow-y-auto px-6 py-6 slick-scrollbar scroll-smooth"
-                    style={{ height: '100%' }}
+                    className="flex-1 overflow-y-auto px-5 pb-5 pt-0 slick-scrollbar scroll-smooth bg-[#F5F6F8]"
+                    style={{ height: '100%', scrollBehavior: 'smooth' }}
                 >
-                    <div className="space-y-10 pb-12">
-                        <div id="extend-step-1" className="scroll-mt-4">
-                            <div className="flex items-center gap-2 mb-4">
-                                <span className="w-1.5 h-6 bg-[var(--brand-500)] rounded-full" />
-                                <h2 className="text-sm font-black uppercase tracking-wider text-[var(--text-primary)]">1. Current Deal Summary</h2>
-                            </div>
-                            {renderStep1()}
-                        </div>
-                        
-                        <div className="h-px bg-[var(--border-subtlest)]" />
-                        
-                        <div id="extend-step-2" className="scroll-mt-4">
-                            <div className="flex items-center gap-2 mb-4">
-                                <span className="w-1.5 h-6 bg-[var(--brand-500)] rounded-full" />
-                                <h2 className="text-sm font-black uppercase tracking-wider text-[var(--text-primary)]">2. Duration & Base Fees</h2>
-                            </div>
-                            {renderStep2()}
-                        </div>
-                        
-                        <div className="h-px bg-[var(--border-subtlest)]" />
-                        
-                        <div id="extend-step-3" className="scroll-mt-4">
-                            <div className="flex items-center gap-2 mb-4">
-                                <span className="w-1.5 h-6 bg-[var(--brand-500)] rounded-full" />
-                                <h2 className="text-sm font-black uppercase tracking-wider text-[var(--text-primary)]">3. Loan Adjustment</h2>
-                            </div>
-                            {renderStep3()}
-                        </div>
+                    <div className="space-y-4 pb-12 pt-5">
+                        {[
+                            { num: 1, label: 'Current Deal Summary', content: renderStep1() },
+                            { num: 2, label: 'Duration & Base Fees', content: renderStep2() },
+                            { num: 3, label: 'Loan Adjustment', content: renderStep3() },
+                            { num: 4, label: 'Fee & Policy Overrides', content: renderStep4() },
+                            { num: 5, label: 'Payment & Final Review', content: renderStep5() },
+                        ].map(({ num, label, content }) => {
+                            const isActive = step === num;
+                            const isCompleted = step > num;
+                            return (
+                                <div
+                                    key={num}
+                                    id={`extend-step-${num}`}
+                                    className={`scroll-mt-20 space-y-4 pt-4 transition-opacity duration-200 ${isCompleted ? 'opacity-75' : 'opacity-100'}`}
+                                >
+                                    {/* Section Chapter Heading — sticky within section */}
+                                    <div className="sticky top-0 z-10 flex items-center gap-4 -mx-5 px-6 py-3 bg-[#F5F6F8] border-b border-[var(--border-subtlest)]">
+                                        <span className={`w-8 h-8 rounded-full flex items-center justify-center text-[13px] font-black shrink-0 ${
+                                            isCompleted
+                                                ? 'bg-emerald-500 text-white'
+                                                : 'bg-[var(--brand-500)] text-white'
+                                        }`}>
+                                            {isCompleted ? (
+                                                <svg width="10" height="8" viewBox="0 0 8 6" fill="none"><path d="M1 3L3 5L7 1" stroke="white" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round"/></svg>
+                                            ) : num}
+                                        </span>
+                                        <div>
+                                            <p className="text-[10px] font-extrabold uppercase tracking-widest text-[var(--text-placeholder)] m-0 mb-0.5">
+                                                Step {num} of 5
+                                            </p>
+                                            <h2 className={`text-xl font-bold m-0 ${
+                                                isActive ? 'text-[#131518]' : 'text-[var(--text-subtle)]'
+                                            }`}>{label}</h2>
+                                        </div>
+                                        {isCompleted && (
+                                            <span className="ml-auto text-[10px] font-bold text-emerald-600 uppercase tracking-wide">Done</span>
+                                        )}
+                                    </div>
 
-                        <div className="h-px bg-[var(--border-subtlest)]" />
-
-                        <div id="extend-step-4" className="scroll-mt-4">
-                            <div className="flex items-center gap-2 mb-4">
-                                <span className="w-1.5 h-6 bg-[var(--brand-500)] rounded-full" />
-                                <h2 className="text-sm font-black uppercase tracking-wider text-[var(--text-primary)]">4. Fee & Policy Overrides</h2>
-                            </div>
-                            {renderStep4()}
-                        </div>
-
-                        <div className="h-px bg-[var(--border-subtlest)]" />
-
-                        <div id="extend-step-5" className="scroll-mt-4">
-                            <div className="flex items-center gap-2 mb-4">
-                                <span className="w-1.5 h-6 bg-[var(--brand-500)] rounded-full" />
-                                <h2 className="text-sm font-black uppercase tracking-wider text-[var(--text-primary)]">5. Payment & Final Review</h2>
-                            </div>
-                            {renderStep5()}
-                        </div>
+                                    <div className="bg-[var(--background-primary)] rounded-2xl border border-[var(--border-subtlest)] shadow-sm overflow-hidden p-5">
+                                        {content}
+                                    </div>
+                                </div>
+                            );
+                        })}
                     </div>
                 </div>
 

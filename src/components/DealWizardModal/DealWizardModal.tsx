@@ -1466,7 +1466,7 @@ export const DealWizardModal: React.FC<DealWizardModalProps> = ({
                                         ref={(el) => { if (el) sectionRefs.current.set('step1', el); }}
                                         className="space-y-8 scroll-mt-20"
                                     >
-                                        <div className="sticky top-0 z-10 flex items-center gap-4 -mx-4 md:-mx-8 px-6 md:px-10 py-3 bg-[#F4F5F7] border-b border-[var(--border-subtlest)]">
+                                        <div className="flex items-center gap-4 py-2">
                                             <span className="w-8 h-8 rounded-full bg-[var(--brand-500)] text-white text-[13px] font-black flex items-center justify-center shrink-0">1</span>
                                             <div>
                                                 <p className="text-[10px] font-extrabold uppercase tracking-widest text-[var(--text-placeholder)] m-0 mb-0.5">Step 1 of {steps.length}</p>
@@ -1884,8 +1884,8 @@ export const DealWizardModal: React.FC<DealWizardModalProps> = ({
                                                 ref={(el) => { if (el) sectionRefs.current.set(step.id, el); }}
                                                 className="space-y-6 scroll-mt-20 pt-4"
                                             >
-                                                {/* Section Chapter Heading — sticky within section */}
-                                                <div className="sticky top-0 z-10 flex items-center gap-4 -mx-4 md:-mx-8 px-6 md:px-10 py-3 bg-[#F4F5F7] border-b border-[var(--border-subtlest)]">
+                                                {/* Section Chapter Heading */}
+                                                <div className="flex items-center gap-4 py-2">
                                                     <span className="w-8 h-8 rounded-full flex items-center justify-center text-[13px] font-black shrink-0 bg-[var(--brand-500)] text-white">
                                                         {currentStepNum}
                                                     </span>

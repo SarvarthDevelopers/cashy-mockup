@@ -1576,16 +1576,10 @@ export const ExtendDealModal: React.FC<ExtendDealModalProps> = ({
                                     id={`extend-step-${num}`}
                                     className={`scroll-mt-20 space-y-4 pt-4 transition-opacity duration-200 ${isCompleted ? 'opacity-75' : 'opacity-100'}`}
                                 >
-                                    {/* Section Chapter Heading — sticky within section */}
-                                    <div className="sticky top-0 z-10 flex items-center gap-4 -mx-5 px-6 py-3 bg-[#F5F6F8] border-b border-[var(--border-subtlest)]">
-                                        <span className={`w-8 h-8 rounded-full flex items-center justify-center text-[13px] font-black shrink-0 ${
-                                            isCompleted
-                                                ? 'bg-emerald-500 text-white'
-                                                : 'bg-[var(--brand-500)] text-white'
-                                        }`}>
-                                            {isCompleted ? (
-                                                <svg width="10" height="8" viewBox="0 0 8 6" fill="none"><path d="M1 3L3 5L7 1" stroke="white" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round"/></svg>
-                                            ) : num}
+                                    {/* Section Chapter Heading */}
+                                    <div className="flex items-center gap-4 py-2">
+                                        <span className="w-8 h-8 rounded-full flex items-center justify-center text-[13px] font-black shrink-0 bg-[var(--brand-500)] text-white">
+                                            {num}
                                         </span>
                                         <div>
                                             <p className="text-[10px] font-extrabold uppercase tracking-widest text-[var(--text-placeholder)] m-0 mb-0.5">

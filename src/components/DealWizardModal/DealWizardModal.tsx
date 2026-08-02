@@ -1,7 +1,8 @@
 /* eslint-disable react-hooks/set-state-in-effect, @typescript-eslint/no-explicit-any, react-hooks/refs, react-hooks/exhaustive-deps */
 import React, { useState, useEffect, useRef } from 'react';
-import { Package, MessageSquare, History, ChevronUp, ChevronDown, Plus, Trash2, AlertCircle, Loader2, X, Menu, Info, CheckCircle2, Lock } from 'lucide-react';
+import { Package, MessageSquare, History, ChevronUp, ChevronDown, Plus, Trash2, AlertCircle, Loader2, X, Menu, Info, CheckCircle2, Lock, XCircle, Archive } from 'lucide-react';
 import { useToast } from '../Toast/useToast';
+import { ConfirmationModal } from '../Modal/ConfirmationModal';
 import { 
     Button, 
     Tabs, 
@@ -112,6 +113,32 @@ export const DealWizardModal: React.FC<DealWizardModalProps> = ({
     const [creationStep, setCreationStep] = useState(0);
     const [sidebarTab, setSidebarTab] = useState('comments');
     const { showToast } = useToast();
+
+    // --- CREATE DEAL FORM STATE ---
+    const [dealMode, setDealMode] = useState<'Pawn' | 'Purchase'>('Pawn');
+    const [items, setItems] = useState<any[]>([
+        { 
+            id: '1', 
+            category: '', 
+            title: '', 
+            requestedPayout: '', 
+            condition: '', 
+            vin: '', 
+            indicataStatus: 'idle', 
+            make: '', 
+            model: '', 
+            year: '', 
+            odometer: '', 
+            suggestedValue: '',
+            expanded: true 
+        }
+    ]);
+
+    // Modal states for Decline & Archive actions
+    const [isDeclineModalOpen, setIsDeclineModalOpen] = useState(false);
+    const [declineReason, setDeclineReason] = useState('Item condition unacceptable');
+    const [declineNote, setDeclineNote] = useState('');
+    const [isArchiveModalOpen, setIsArchiveModalOpen] = useState(false);
 
     // Form inputs and status/action state
     const [dynamicFormValues, setDynamicFormValues] = useState<Record<string, any>>({});
@@ -301,6 +328,62 @@ export const DealWizardModal: React.FC<DealWizardModalProps> = ({
         }, 1500);
     };
 
+    const handleConfirmDecline = () => {
+        if (!dealData || !onUpdateDeal) return;
+
+        const updatedDeal: DealData = {
+            ...dealData,
+            status: 'DECLINED',
+            wizardData: {
+                ...dealData.wizardData,
+                customFieldValues: dynamicFormValues
+            }
+        };
+
+        const newEvent = {
+            id: `t-decline-${Date.now()}`,
+            iconType: 'x',
+            title: `Deal Declined (${declineReason})`,
+            user: "Staff",
+            time: "Just now",
+            color: 'red',
+            description: declineNote ? `Note: ${declineNote}` : undefined
+        };
+        setTimelineEvents(prev => [...prev, newEvent]);
+
+        onUpdateDeal(updatedDeal);
+        showToast(`Deal #${dealId} status updated to DECLINED`);
+        setIsDeclineModalOpen(false);
+    };
+
+    const handleConfirmArchive = () => {
+        if (!dealData || !onUpdateDeal) return;
+
+        const updatedDeal: DealData = {
+            ...dealData,
+            status: 'CLOSED',
+            wizardData: {
+                ...dealData.wizardData,
+                customFieldValues: dynamicFormValues
+            }
+        };
+
+        const newEvent = {
+            id: `t-archive-${Date.now()}`,
+            iconType: 'check-circle',
+            title: 'Deal Archived',
+            user: 'Staff',
+            time: 'Just now',
+            color: 'gray'
+        };
+        setTimelineEvents(prev => [...prev, newEvent]);
+
+        onUpdateDeal(updatedDeal);
+        showToast(`Deal #${dealId} moved to Archive.`);
+        setIsArchiveModalOpen(false);
+        onClose();
+    };
+
     useEffect(() => {
         if (isOpen && dealData) {
             setDynamicFormValues(dealData.wizardData?.customFieldValues || {});
@@ -383,25 +466,6 @@ export const DealWizardModal: React.FC<DealWizardModalProps> = ({
         }, 100);
     };
     
-    // --- CREATE DEAL FORM STATE ---
-    const [dealMode, setDealMode] = useState<'Pawn' | 'Purchase'>('Pawn');
-    const [items, setItems] = useState<any[]>([
-        { 
-            id: '1', 
-            category: '', 
-            title: '', 
-            requestedPayout: '', 
-            condition: '', 
-            vin: '', 
-            indicataStatus: 'idle', 
-            make: '', 
-            model: '', 
-            year: '', 
-            odometer: '', 
-            suggestedValue: '',
-            expanded: true 
-        }
-    ]);
     const [customerData, setCustomerData] = useState({
         mode: 'Guest',
         email: 'franz.k@example.com',
@@ -1151,34 +1215,55 @@ export const DealWizardModal: React.FC<DealWizardModalProps> = ({
 
                 {creationFinalized ? (
                     <>
-                        <button className={`${isMobile ? 'hidden' : 'flex'} w-10 h-10 items-center justify-center rounded-lg border border-gray-200 hover:bg-gray-50 transition-colors`} style={{ color: 'var(--brand-500)' }}>
-                            <div className="w-5 h-5 border-2 rounded-[4px] relative" style={{ borderColor: 'var(--brand-500)' }}>
-                                <div className="absolute top-0.5 left-0.5 right-0.5 h-0.5" style={{ backgroundColor: 'var(--brand-500)' }} />
-                            </div>
+                        <button 
+                            onClick={() => setIsArchiveModalOpen(true)}
+                            title="Archive Deal"
+                            aria-label="Archive Deal"
+                            className={`${isMobile ? 'flex-1 h-9' : 'w-10 h-10'} flex items-center justify-center rounded-lg border border-gray-200 hover:bg-gray-50 transition-colors cursor-pointer text-gray-500 hover:text-gray-700`} 
+                        >
+                            <Archive size={18} />
                         </button>
                         {isCreated ? (
                             <>
-                                <Button 
-                                    variant="secondary" 
-                                    size="small" 
-                                    className={`${isMobile ? 'flex-1' : ''} font-bold`}
-                                    onClick={() => {
-                                        if (dealData && onPayback) onPayback(dealData);
-                                    }}
-                                >
-                                    Payback
-                                </Button>
-                                {dealMode === 'Pawn' && (
+                                {dealData?.status !== 'DECLINED' && dealData?.status !== 'CLOSED' && (
                                     <Button 
                                         variant="secondary" 
                                         size="small" 
-                                        className={`${isMobile ? 'flex-1' : ''} font-bold`}
+                                        className={`${isMobile ? 'flex-1' : ''} font-bold text-red-600 border-red-200 hover:bg-red-50 hover:border-red-300`}
                                         onClick={() => {
-                                            if (dealData && onExtend) onExtend(dealData);
+                                            setDeclineReason('Item condition unacceptable');
+                                            setDeclineNote('');
+                                            setIsDeclineModalOpen(true);
                                         }}
                                     >
-                                        Extend
+                                        Decline
                                     </Button>
+                                )}
+                                {dealData?.status !== 'DECLINED' && dealData?.status !== 'CLOSED' && (
+                                    <>
+                                        <Button 
+                                            variant="secondary" 
+                                            size="small" 
+                                            className={`${isMobile ? 'flex-1' : ''} font-bold`}
+                                            onClick={() => {
+                                                if (dealData && onPayback) onPayback(dealData);
+                                            }}
+                                        >
+                                            Payback
+                                        </Button>
+                                        {dealMode === 'Pawn' && (
+                                            <Button 
+                                                variant="secondary" 
+                                                size="small" 
+                                                className={`${isMobile ? 'flex-1' : ''} font-bold`}
+                                                onClick={() => {
+                                                    if (dealData && onExtend) onExtend(dealData);
+                                                }}
+                                            >
+                                                Extend
+                                            </Button>
+                                        )}
+                                    </>
                                 )}
                                 {!isMobile && (
                                     <Button variant="primary" size="small" className="font-bold" onClick={onClose}>Close</Button>
@@ -2236,6 +2321,91 @@ export const DealWizardModal: React.FC<DealWizardModalProps> = ({
                         </div>
                     </div>
                 </div>
+
+                {/* --- DECLINE DEAL CONFIRMATION MODAL --- */}
+                {isDeclineModalOpen && (
+                    <div className="fixed inset-0 z-[300] flex items-center justify-center bg-black/50 p-4 animate-in fade-in duration-200" onClick={() => setIsDeclineModalOpen(false)}>
+                        <div 
+                            className="bg-white rounded-2xl p-6 max-w-md w-full shadow-2xl border border-gray-100 space-y-5 animate-in zoom-in-95 duration-200"
+                            onClick={(e) => e.stopPropagation()}
+                        >
+                            <div className="flex items-start gap-4">
+                                <div className="w-12 h-12 rounded-full bg-red-100 text-red-600 flex items-center justify-center shrink-0">
+                                    <XCircle size={24} />
+                                </div>
+                                <div>
+                                    <h3 className="text-lg font-bold text-[#131518] m-0">Decline Deal #{dealId}</h3>
+                                    <p className="text-xs text-gray-500 mt-1 m-0">
+                                        Declining this deal will change its status to <strong className="text-red-600">DECLINED</strong> and record an event in the timeline.
+                                    </p>
+                                </div>
+                            </div>
+
+                            <div className="space-y-4 pt-1">
+                                <div>
+                                    <label className="block text-xs font-bold text-gray-700 mb-1.5">
+                                        Reason for Declining <span className="text-red-500">*</span>
+                                    </label>
+                                    <select
+                                        value={declineReason}
+                                        onChange={(e) => setDeclineReason(e.target.value)}
+                                        className="w-full h-10 px-3 rounded-xl border border-gray-200 text-xs font-semibold text-gray-800 bg-white focus:outline-none focus:border-[#4649E5] transition-all cursor-pointer"
+                                    >
+                                        <option value="Item condition unacceptable">Item condition unacceptable</option>
+                                        <option value="Payout request too high">Payout request too high</option>
+                                        <option value="Identity / document verification failed">Identity / document verification failed</option>
+                                        <option value="Customer canceled / withdrew request">Customer canceled / withdrew request</option>
+                                        <option value="Item failed authenticity / fraud check">Item failed authenticity / fraud check</option>
+                                        <option value="Other">Other</option>
+                                    </select>
+                                </div>
+
+                                <div>
+                                    <label className="block text-xs font-bold text-gray-700 mb-1.5">
+                                        Internal Staff Note <span className="text-gray-400 font-normal">(Optional)</span>
+                                    </label>
+                                    <TextArea
+                                        placeholder="Add additional context for why this deal is being declined..."
+                                        value={declineNote}
+                                        onChange={(e) => setDeclineNote(e.target.value)}
+                                        rows={3}
+                                    />
+                                </div>
+                            </div>
+
+                            <div className="flex items-center justify-end gap-3 pt-3 border-t border-gray-100">
+                                <Button 
+                                    variant="secondary" 
+                                    size="small" 
+                                    onClick={() => setIsDeclineModalOpen(false)}
+                                    className="font-bold text-xs"
+                                >
+                                    Cancel
+                                </Button>
+                                <Button 
+                                    variant="danger-bold" 
+                                    size="small" 
+                                    onClick={handleConfirmDecline}
+                                    className="font-bold text-xs bg-red-600 hover:bg-red-700 text-white border-none"
+                                >
+                                    Confirm Decline
+                                </Button>
+                            </div>
+                        </div>
+                    </div>
+                )}
+
+                {/* --- ARCHIVE DEAL CONFIRMATION MODAL --- */}
+                <ConfirmationModal
+                    isOpen={isArchiveModalOpen}
+                    onOpenChange={setIsArchiveModalOpen}
+                    title={`Archive Deal #${dealId}`}
+                    description="Are you sure you want to archive this deal? This action will move the deal to the Archive column."
+                    variant="danger"
+                    confirmText="Archive Deal"
+                    cancelText="Cancel"
+                    onConfirm={handleConfirmArchive}
+                />
             </div>
         </div>
     );

@@ -35,7 +35,7 @@ export interface WizardDisplayData {
   pawnDueDate?: string;
   createdAt?: string;
   customFieldValues?: Record<string, unknown>;
-  itemObjects?: any[];
+  itemObjects?: Record<string, unknown>[];
 }
 
 export interface DealData {

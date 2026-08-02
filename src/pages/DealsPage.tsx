@@ -213,6 +213,7 @@ function mapDealToDealData(deal: Deal): DealData {
 
   return {
     id: deal.dealId || 'CSY-UNKNOWN',
+    status: deal.status,
     countryCode,
     firstName: deal.primaryCustomer?.firstName || '—',
     lastName: deal.primaryCustomer?.lastName || '—',

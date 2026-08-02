@@ -1,5 +1,5 @@
 /* eslint-disable react-hooks/set-state-in-effect, @typescript-eslint/no-explicit-any, react-hooks/refs, react-hooks/exhaustive-deps */
-import React, { useState, useEffect } from 'react';
+import React, { useState, useEffect, useRef } from 'react';
 import { Package, MessageSquare, History, ChevronUp, ChevronDown, Plus, Trash2, AlertCircle, Loader2, X, Menu, Info, CheckCircle2, Lock } from 'lucide-react';
 import { useToast } from '../Toast/useToast';
 import { 
@@ -131,19 +131,42 @@ export const DealWizardModal: React.FC<DealWizardModalProps> = ({
         }
     }, [isOpen]);
 
-    const getWizardForCategory = (category: string) => {
-        const norm = category.toLowerCase();
-        const match = allWizards.find(w => {
-            const wCat = w.category.toLowerCase();
-            return norm === wCat || norm.startsWith(wCat + '.') || wCat.startsWith(norm + '.');
-        });
-        if (match) return match;
+    const getWizardForCategoryAndCondition = (category: string, condition?: string) => {
+        const normCat = (category || 'car').toLowerCase();
+        const normCond = (condition || 'All').toLowerCase();
 
-        if (norm === 'car') return allWizards.find(w => w.category === 'Car') || allWizards[0];
-        if (norm.startsWith('electronics')) return allWizards.find(w => w.category === 'General Electronics') || allWizards[0];
-        if (norm === 'watches') return allWizards.find(w => w.category === 'Watches') || allWizards[0];
-        if (norm === 'bags' || norm === 'jewelry') return allWizards.find(w => w.category === 'Luxury') || allWizards[0];
-        return allWizards.find(w => w.category.toLowerCase() === norm) 
+        // 1. Active Exact match (Category + Active + Exact Condition)
+        const exactMatch = allWizards.find(w => {
+            if (!w.active) return false;
+            const wCat = w.category.toLowerCase();
+            const matchCat = normCat === wCat || normCat.startsWith(wCat + '.') || wCat.startsWith(normCat + '.');
+            const wCond = (w.condition || 'All').toLowerCase();
+            return matchCat && wCond === normCond && wCond !== 'all';
+        });
+        if (exactMatch) return exactMatch;
+
+        // 2. Active Category Default match (Category + Active + 'All' Condition)
+        const categoryMatch = allWizards.find(w => {
+            if (!w.active) return false;
+            const wCat = w.category.toLowerCase();
+            const matchCat = normCat === wCat || normCat.startsWith(wCat + '.') || wCat.startsWith(normCat + '.');
+            const wCond = (w.condition || 'All').toLowerCase();
+            return matchCat && (wCond === 'all' || !w.condition);
+        });
+        if (categoryMatch) return categoryMatch;
+
+        // 3. Fallback: match any wizard for category
+        const fallbackMatch = allWizards.find(w => {
+            const wCat = w.category.toLowerCase();
+            return normCat === wCat || normCat.startsWith(wCat + '.') || wCat.startsWith(normCat + '.');
+        });
+        if (fallbackMatch) return fallbackMatch;
+
+        if (normCat === 'car') return allWizards.find(w => w.category === 'Car') || allWizards[0];
+        if (normCat.startsWith('electronics')) return allWizards.find(w => w.category === 'General Electronics') || allWizards[0];
+        if (normCat === 'watches') return allWizards.find(w => w.category === 'Watches') || allWizards[0];
+        if (normCat === 'bags' || normCat === 'jewelry') return allWizards.find(w => w.category === 'Luxury') || allWizards[0];
+        return allWizards.find(w => w.category.toLowerCase() === normCat) 
             || allWizards.find(w => w.category === category) 
             || allWizards[0];
     };
@@ -169,8 +192,10 @@ export const DealWizardModal: React.FC<DealWizardModalProps> = ({
 
     const validateStepFields = (stepId: string): boolean => {
         if (!dealData) return true;
-        const category = dealData.items[0] ? getCategoryFromItemTitle(dealData.items[0]) : 'car';
-        const wizard = getWizardForCategory(category);
+        const firstItemObj = items[0] || (dealData.wizardData?.itemObjects?.[0]);
+        const itemCond = firstItemObj?.condition || 'Used';
+        const category = firstItemObj?.category || (dealData.items[0] ? getCategoryFromItemTitle(dealData.items[0]) : 'car');
+        const wizard = getWizardForCategoryAndCondition(category, itemCond);
         const fields = (wizard?.fields || []).filter((f: any) => f.stepId === stepId);
         
         // Return true if there are no custom fields for this step
@@ -229,8 +254,10 @@ export const DealWizardModal: React.FC<DealWizardModalProps> = ({
             setLoadingStepActions(prev => ({ ...prev, [stepId]: false }));
             setCompletedStepActions(prev => ({ ...prev, [stepId]: true }));
 
-            const category = dealData?.items[0] ? getCategoryFromItemTitle(dealData.items[0]) : 'car';
-            const wizard = getWizardForCategory(category);
+            const firstItemObj = items[0] || (dealData?.wizardData?.itemObjects?.[0]);
+            const itemCond = firstItemObj?.condition || 'Used';
+            const category = firstItemObj?.category || (dealData?.items[0] ? getCategoryFromItemTitle(dealData.items[0]) : 'car');
+            const wizard = getWizardForCategoryAndCondition(category, itemCond);
             const stepName = wizard?.stepNames?.[stepId] || stepId;
 
             const gates = getWorkflowGates();
@@ -282,8 +309,10 @@ export const DealWizardModal: React.FC<DealWizardModalProps> = ({
             setLoadingStepActions({});
 
             const completed: Record<string, boolean> = {};
-            const category = dealData.items[0] ? getCategoryFromItemTitle(dealData.items[0]) : 'car';
-            const wizard = getWizardForCategory(category);
+            const firstItemObj = items[0] || (dealData.wizardData?.itemObjects?.[0]);
+            const itemCond = firstItemObj?.condition || 'Used';
+            const category = firstItemObj?.category || (dealData.items[0] ? getCategoryFromItemTitle(dealData.items[0]) : 'car');
+            const wizard = getWizardForCategoryAndCondition(category, itemCond);
             const stepActions = wizard?.stepActions || {};
             const status = dealData.status || 'BOOKED';
             const gates = getWorkflowGates();
@@ -400,6 +429,7 @@ export const DealWizardModal: React.FC<DealWizardModalProps> = ({
     }));
 
     const [lastSyncedId, setLastSyncedId] = useState<string | null>(null);
+    const prevSavedHashRef = useRef<string>('');
 
     useEffect(() => {
         if (isOpen && dealData && (dealData.id !== lastSyncedId)) {
@@ -438,7 +468,10 @@ export const DealWizardModal: React.FC<DealWizardModalProps> = ({
                 payoutMethod: dealData.wizardData?.payoutType || 'Bank Transfer',
                 createdAt: dealData.wizardData?.createdAt || new Date(Date.now() - 5 * 24 * 60 * 60 * 1000).toISOString()
             });
-            if (dealData.items && dealData.items.length > 0) {
+
+            if (dealData.wizardData?.itemObjects && dealData.wizardData.itemObjects.length > 0) {
+                setItems(dealData.wizardData.itemObjects);
+            } else if (dealData.items && dealData.items.length > 0) {
                 setItems(dealData.items.map((it, idx) => ({
                     id: String(idx),
                     category: getCategoryFromItemTitle(it),
@@ -448,22 +481,38 @@ export const DealWizardModal: React.FC<DealWizardModalProps> = ({
                     expanded: idx === 0
                 })));
             }
+
+            // Sync hash ref to current state to prevent auto-save triggering on load
+            const saveStateObj = {
+                firstName: dealData.firstName,
+                lastName: dealData.lastName,
+                items: dealData.wizardData?.itemObjects || dealData.items,
+                metadata: {
+                    company: dealData.wizardData?.company || 'CASHY_AUT',
+                    branch: dealData.wizardData?.branch || 'Vienna Main',
+                    duration: dealData.wizardData?.dealDuration?.split(' ')[0] || '180',
+                    dueDate: finalD,
+                    payoutMethod: dealData.wizardData?.payoutType || 'Bank Transfer',
+                    createdAt: dealData.wizardData?.createdAt || new Date(Date.now() - 5 * 24 * 60 * 60 * 1000).toISOString()
+                },
+                showSecondaryCustomer: !!dealData.wizardData?.secondaryCustomer,
+                secondaryCustomerData: dealData.wizardData?.secondaryCustomer || null,
+                dynamicFormValues: dealData.wizardData?.customFieldValues || {}
+            };
+            prevSavedHashRef.current = JSON.stringify(saveStateObj);
             setLastSyncedId(dealData.id);
         }
     }, [isOpen, dealData, lastSyncedId]);
 
     useEffect(() => {
         if (isOpen) {
-            if (!isNew) {
-                // If it's not a new deal, we reset the synced ID so it re-syncs when opened
-                // Actually, if we use isNew we might need more logic
-            }
             const targetStep = isNew ? 'step1' : initialStep;
             setActiveStep(targetStep);
             setIsCreated(!isNew);
             setCreationFinalized(!isNew);
             if (isNew) {
                 setLastSyncedId(null);
+                prevSavedHashRef.current = '';
                 setCustomerData({
                     mode: 'Guest',
                     email: 'franz.k@example.com',
@@ -483,7 +532,6 @@ export const DealWizardModal: React.FC<DealWizardModalProps> = ({
                     createdAt: new Date().toISOString()
                 });
             } else {
-                // Defer scroll to ensure elements are mounted and layout has finished
                 setTimeout(() => {
                     scrollToSection(targetStep);
                 }, 300);
@@ -511,7 +559,6 @@ export const DealWizardModal: React.FC<DealWizardModalProps> = ({
             const firstCategory = items[0]?.category || 'car';
             const displayCategory = CATEGORY_DISPLAY_NAMES[firstCategory] || firstCategory;
 
-            // Convert YYYY-MM-DD → "Mon DD" format that the priority system parses
             let formattedDueDate: string;
             let targetDate: Date;
             if (metadata.dueDate) {
@@ -564,10 +611,22 @@ export const DealWizardModal: React.FC<DealWizardModalProps> = ({
                     item: items[0]?.title || 'Unknown Item',
                     createdAt: createdAtVal,
                     pawnDueDate: pawnDueDate,
-                    secondaryCustomer: (showSecondaryCustomer && secondaryCustomerData) ? secondaryCustomerData : undefined
+                    secondaryCustomer: (showSecondaryCustomer && secondaryCustomerData) ? secondaryCustomerData : undefined,
+                    itemObjects: items
                 }
             };
             
+            const saveStateObj = {
+                firstName: customerData.firstName,
+                lastName: customerData.lastName,
+                items,
+                metadata,
+                showSecondaryCustomer,
+                secondaryCustomerData: (showSecondaryCustomer && secondaryCustomerData) ? secondaryCustomerData : null,
+                dynamicFormValues: {}
+            };
+            prevSavedHashRef.current = JSON.stringify(saveStateObj);
+
             onCreateDeal?.(newDeal);
             setIsCreated(true);
             setCreationFinalized(true);
@@ -579,6 +638,22 @@ export const DealWizardModal: React.FC<DealWizardModalProps> = ({
      // --- AUTO-SAVE LOGIC ---
      useEffect(() => {
          if (isCreated && creationFinalized && onUpdateDeal && dealData) {
+             const saveStateObj = {
+                 firstName: customerData.firstName,
+                 lastName: customerData.lastName,
+                 items,
+                 metadata,
+                 showSecondaryCustomer,
+                 secondaryCustomerData: (showSecondaryCustomer && secondaryCustomerData) ? secondaryCustomerData : null,
+                 dynamicFormValues
+             };
+             const currentHash = JSON.stringify(saveStateObj);
+
+             if (prevSavedHashRef.current && prevSavedHashRef.current === currentHash) {
+                 return;
+             }
+             prevSavedHashRef.current = currentHash;
+
              const resolvedArea = getBusinessAreaForDeal(items);
              const firstCategory = items[0]?.category || 'car';
              const displayCategory = CATEGORY_DISPLAY_NAMES[firstCategory] || firstCategory;
@@ -608,12 +683,14 @@ export const DealWizardModal: React.FC<DealWizardModalProps> = ({
                      businessArea: resolvedArea,
                      categoryPath: `${resolvedArea} > ${displayCategory}`,
                      dealDuration: `${metadata.duration} days`,
+                     payoutType: dealMode,
                      amount: `€${formattedTotal}`,
                      item: items[0]?.title || 'Unknown Item',
                      createdAt: createdAtVal,
                      pawnDueDate: pawnDueDate,
                      secondaryCustomer: (showSecondaryCustomer && secondaryCustomerData) ? secondaryCustomerData : undefined,
-                     customFieldValues: dynamicFormValues
+                     customFieldValues: dynamicFormValues,
+                     itemObjects: items
                  }
              };
              onUpdateDeal(updatedDeal);
@@ -715,7 +792,7 @@ export const DealWizardModal: React.FC<DealWizardModalProps> = ({
 
     const renderStepItemFields = (stepId: string, itemIdx: number) => {
         const item = items[itemIdx];
-        const wizard = getWizardForCategory(item?.category || 'car');
+        const wizard = getWizardForCategoryAndCondition(item?.category || 'car', item?.condition || 'Used');
         const fields = (wizard?.fields || []).filter((f: { stepId: string }) => f.stepId === stepId);
         const stepAction = wizard?.stepActions?.[stepId] || 'NONE';
 

@@ -104,6 +104,7 @@ export function duplicateWizard(
     id: newId,
     name: newName,
     category: '', // Explicitly cleared per requirement
+    condition: 'All', // Default unassigned condition
     active: false, // Explicitly inactive per requirement
     shop: sourceWizard.shop || 'Global',
     businessArea: sourceWizard.businessArea || 'General',

@@ -108,15 +108,9 @@ export const FilterDropdown: React.FC<FilterDropdownProps> = ({
 
                 {/* Chevron icon — mirrors .icon */}
                 <div className={`${styles.chevron} ${open ? styles.chevronOpen : ''}`} aria-hidden="true">
-                    {open ? (
-                        <svg width="20" height="20" viewBox="0 0 20 20" fill="none" xmlns="http://www.w3.org/2000/svg">
-                            <path d="M15 12.5L10 7.5L5 12.5" stroke="currentColor" strokeWidth="1.66667" strokeLinecap="round" strokeLinejoin="round" />
-                        </svg>
-                    ) : (
-                        <svg width="20" height="20" viewBox="0 0 20 20" fill="none" xmlns="http://www.w3.org/2000/svg">
-                            <path d="M5 7.5L10 12.5L15 7.5" stroke="currentColor" strokeWidth="1.66667" strokeLinecap="round" strokeLinejoin="round" />
-                        </svg>
-                    )}
+                    <svg width="20" height="20" viewBox="0 0 20 20" fill="none" xmlns="http://www.w3.org/2000/svg">
+                        <path d="M5 7.5L10 12.5L15 7.5" stroke="currentColor" strokeWidth="1.66667" strokeLinecap="round" strokeLinejoin="round" />
+                    </svg>
                 </div>
             </button>
 

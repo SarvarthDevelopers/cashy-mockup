@@ -93,6 +93,11 @@
     width: 20px;
     height: 20px;
     flex-shrink: 0;
+    transition: transform 0.2s ease, color 0.2s ease;
+}
+
+.iconOpen {
+    transform: rotate(180deg);
 }
 
 /* ── Dropdown List (portal-rendered, not absolutely positioned) ── */

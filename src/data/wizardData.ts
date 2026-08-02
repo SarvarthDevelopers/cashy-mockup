@@ -15,6 +15,7 @@ export interface WizardConfig {
   name: string;
   businessArea: string;
   category: string;
+  condition?: string;
   shop?: string;
   active: boolean;
   fields: WizardField[];

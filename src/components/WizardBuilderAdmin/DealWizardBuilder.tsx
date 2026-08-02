@@ -49,6 +49,7 @@ export interface WizardState {
   name: string;
   active: boolean;
   category: string;
+  condition: string;
   shop: string;
   steps: Step[];
   fields: Field[];
@@ -89,6 +90,7 @@ export function DealWizardBuilder({ wizardConfig, onBack, onSave, onDelete }: De
     name: wizardConfig.name,
     active: wizardConfig.active,
     category: wizardConfig.category,
+    condition: wizardConfig.condition || 'All',
     shop: wizardConfig.shop || 'Global',
     steps: GLOBAL_STEPS.map((s, idx) => ({
       id: s.id,
@@ -125,6 +127,8 @@ export function DealWizardBuilder({ wizardConfig, onBack, onSave, onDelete }: De
     if (wizardState.name !== wizardConfig.name) return true;
     if (wizardState.active !== wizardConfig.active) return true;
     if (wizardState.category !== wizardConfig.category) return true;
+    const initialCondition = wizardConfig.condition || 'All';
+    if (wizardState.condition !== initialCondition) return true;
     const initialShop = wizardConfig.shop || 'Global';
     if (wizardState.shop !== initialShop) return true;
 
@@ -158,14 +162,16 @@ export function DealWizardBuilder({ wizardConfig, onBack, onSave, onDelete }: De
     return allWizards.some(w => w.id !== wizardConfig.id && w.name.toLowerCase().trim() === name.toLowerCase().trim());
   };
 
-  const getConflictingActiveWizard = (category: string, shop: string) => {
+  const getConflictingActiveWizard = (category: string, shop: string, condition: string = 'All') => {
     if (!category) return null;
-    return allWizards.find(w => 
-      w.id !== wizardConfig.id && 
-      w.active && 
-      w.category.toLowerCase().trim() === category.toLowerCase().trim() && 
-      (w.shop || 'Global').toLowerCase().trim() === shop.toLowerCase().trim()
-    );
+    return allWizards.find(w => {
+      if (w.id === wizardConfig.id || !w.active) return false;
+      const matchCat = w.category.toLowerCase().trim() === category.toLowerCase().trim();
+      const matchShop = (w.shop || 'Global').toLowerCase().trim() === shop.toLowerCase().trim();
+      const wCond = w.condition || 'All';
+      const matchCond = wCond === 'All' || condition === 'All' || wCond.toLowerCase() === condition.toLowerCase();
+      return matchCat && matchShop && matchCond;
+    });
   };
 
   const getActionOrderScore = (action: string): number => {
@@ -209,6 +215,7 @@ export function DealWizardBuilder({ wizardConfig, onBack, onSave, onDelete }: De
       name: wizardState.name,
       active: wizardState.active,
       category: wizardState.category,
+      condition: wizardState.condition,
       shop: wizardState.shop,
       updatedAt: new Date().toLocaleDateString('en-US', { month: 'short', day: 'numeric', year: 'numeric' }),
       stepActions,
@@ -384,7 +391,7 @@ export function DealWizardBuilder({ wizardConfig, onBack, onSave, onDelete }: De
 
   const updateCategory = (category: string) => {
     if (wizardState.active) {
-      const conflict = getConflictingActiveWizard(category, wizardState.shop);
+      const conflict = getConflictingActiveWizard(category, wizardState.shop, wizardState.condition);
       if (conflict) {
         setConflictingWizard(conflict);
         setPendingCategoryUpdate(category);
@@ -398,9 +405,24 @@ export function DealWizardBuilder({ wizardConfig, onBack, onSave, onDelete }: De
     }));
   };
 
+  const updateCondition = (condition: string) => {
+    if (wizardState.active) {
+      const conflict = getConflictingActiveWizard(wizardState.category, wizardState.shop, condition);
+      if (conflict) {
+        setConflictingWizard(conflict);
+        setShowCollisionConfirmation(true);
+        return;
+      }
+    }
+    setWizardState(prev => ({
+      ...prev,
+      condition
+    }));
+  };
+
   const updateShop = (shop: string) => {
     if (wizardState.active) {
-      const conflict = getConflictingActiveWizard(wizardState.category, shop);
+      const conflict = getConflictingActiveWizard(wizardState.category, shop, wizardState.condition);
       if (conflict) {
         setConflictingWizard(conflict);
         setPendingShopUpdate(shop);
@@ -466,8 +488,10 @@ export function DealWizardBuilder({ wizardConfig, onBack, onSave, onDelete }: De
              <AssignmentsPanel
               wizardId={wizardConfig.id}
               category={wizardState.category}
+              condition={wizardState.condition}
               shop={wizardState.shop}
               onUpdateCategory={updateCategory}
+              onUpdateCondition={updateCondition}
               onUpdateShop={updateShop}
               onSave={handleSave}
               onDelete={onDelete}

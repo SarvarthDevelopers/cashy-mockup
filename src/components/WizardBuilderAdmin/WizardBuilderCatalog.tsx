@@ -279,7 +279,7 @@ const WizardRow: React.FC<WizardRowProps> = ({ wizard, selected, isJustDuplicate
               <span className="bg-[var(--background-disabled-subtle)] text-[var(--text-disabled)] text-[9px] font-extrabold px-1.5 py-0.5 rounded uppercase tracking-wider border border-[var(--border-disabled-subtle)]">Inactive</span>
             )}
           </div>
-          <h4 className="text-base font-bold text-[var(--text-primary)]">{wizard.name} <span className="text-[var(--text-subtlest)] font-medium ml-1">[{wizard.category || 'No Category'}]</span></h4>
+          <h4 className="text-base font-bold text-[var(--text-primary)]">{wizard.name} <span className="text-[var(--text-subtlest)] font-medium ml-1">[{wizard.category || 'No Category'}{wizard.condition && wizard.condition !== 'All' ? ` • ${wizard.condition}` : ' • All Conditions'}]</span></h4>
         </div>
       </div>
 

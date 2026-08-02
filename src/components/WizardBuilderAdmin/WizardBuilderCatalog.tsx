@@ -1,5 +1,5 @@
 import React, { useState } from 'react';
-import { Search, X, Filter } from 'lucide-react';
+import { Search, X, Filter, Copy, Trash2 } from 'lucide-react';
 import type { WizardConfig } from '../../data/wizardData';
 import { ConfirmationModal } from './ConfirmationModal';
 
@@ -247,19 +247,28 @@ const CatalogSidebar: React.FC<CatalogSidebarProps> = ({
 interface WizardRowProps {
   wizard: WizardConfig;
   selected: boolean;
+  isJustDuplicated?: boolean;
   onSelect: (id: string) => void;
   onEdit: (wizard: WizardConfig) => void;
+  onDuplicate?: (wizard: WizardConfig) => void;
+  onDeleteSingle?: (wizard: WizardConfig) => void;
 }
 
-const WizardRow: React.FC<WizardRowProps> = ({ wizard, selected, onSelect, onEdit }) => {
+const WizardRow: React.FC<WizardRowProps> = ({ wizard, selected, isJustDuplicated, onSelect, onEdit, onDuplicate, onDeleteSingle }) => {
   return (
-    <div className={`bg-[var(--background-primary)] border rounded-xl p-6 flex items-center justify-between group transition-all shadow-sm ${selected ? 'border-[var(--border-brand)] bg-[var(--background-brand-primary)]' : 'border-[var(--border-subtle)] hover:border-[var(--border-brand-hover)]'}`}>
+    <div className={`bg-[var(--background-primary)] border rounded-xl p-6 flex items-center justify-between group transition-all shadow-sm ${
+      isJustDuplicated
+        ? 'border-2 border-[#4649E5] bg-[#F8F8FF] ring-4 ring-[#4649E5]/15'
+        : selected 
+        ? 'border-[var(--border-brand)] bg-[var(--background-brand-primary)]' 
+        : 'border-[var(--border-subtle)] hover:border-[var(--border-brand-hover)]'
+    }`}>
       <div className="flex items-center gap-4">
         <input 
           type="checkbox" 
           checked={selected}
           onChange={() => onSelect(wizard.id)}
-          className="w-4 h-4 rounded border-[var(--border-primary)] text-[var(--text-brand)] cursor-pointer" 
+          className="w-4 h-4 rounded border-[var(--border-primary)] text-[#4649E5] cursor-pointer" 
         />
         <div className="flex flex-col gap-1">
           <div className="flex items-center gap-2">
@@ -279,12 +288,36 @@ const WizardRow: React.FC<WizardRowProps> = ({ wizard, selected, onSelect, onEdi
           <p className="text-[10px] text-[var(--text-subtlest)] uppercase font-bold tracking-wider">Updated</p>
           <p className="text-xs font-medium text-[var(--text-subtle)]">{wizard.updatedAt} by {wizard.updatedBy}</p>
         </div>
-        <button 
-          onClick={() => onEdit(wizard)}
-          className="h-9 px-6 bg-[var(--background-primary)] border border-[var(--border-primary)] text-[var(--text-primary)] rounded-lg text-sm font-bold hover:bg-[var(--background-primary-solid)] hover:text-[var(--text-white)] transition-all shadow-sm"
-        >
-          Edit Wizard
-        </button>
+        <div className="flex items-center gap-2">
+          {onDuplicate && (
+            <button 
+              onClick={() => onDuplicate(wizard)}
+              className="size-9 rounded-lg border border-[var(--border-subtle)] bg-[var(--background-primary)] text-[var(--text-subtle)] hover:text-[#4649E5] hover:border-[#4649E5] hover:bg-[#F8F8FF] transition-all flex items-center justify-center cursor-pointer shadow-sm"
+              title="Duplicate Wizard"
+              aria-label="Duplicate Wizard"
+            >
+              <Copy size={16} />
+            </button>
+          )}
+
+          {onDeleteSingle && (
+            <button 
+              onClick={() => onDeleteSingle(wizard)}
+              className="size-9 rounded-lg border border-[var(--border-subtle)] bg-[var(--background-primary)] text-[var(--text-subtle)] hover:text-[var(--text-error)] hover:border-[var(--border-error)] hover:bg-[var(--background-error-subtle)] transition-all flex items-center justify-center cursor-pointer shadow-sm"
+              title="Delete Wizard"
+              aria-label="Delete Wizard"
+            >
+              <Trash2 size={16} />
+            </button>
+          )}
+
+          <button 
+            onClick={() => onEdit(wizard)}
+            className="h-9 px-5 bg-[var(--background-primary)] border border-[var(--border-primary)] text-[var(--text-primary)] rounded-lg text-xs font-bold hover:bg-[var(--background-primary-solid)] hover:text-[var(--text-white)] transition-all shadow-sm cursor-pointer ml-1"
+          >
+            Edit Wizard
+          </button>
+        </div>
       </div>
     </div>
   );
@@ -296,6 +329,7 @@ interface WizardBuilderCatalogProps {
     onCreateNew: () => void;
     onDeleteWizards: (ids: string[]) => void;
     onDeactivateWizards: (ids: string[]) => void;
+    onDuplicateWizard?: (wizard: WizardConfig) => WizardConfig | void;
 }
 
 export const WizardBuilderCatalog: React.FC<WizardBuilderCatalogProps> = ({ 
@@ -303,7 +337,8 @@ export const WizardBuilderCatalog: React.FC<WizardBuilderCatalogProps> = ({
   onEditWizard, 
   onCreateNew,
   onDeleteWizards,
-  onDeactivateWizards
+  onDeactivateWizards,
+  onDuplicateWizard
 }) => {
   const [searchTerm, setSearchTerm] = useState('');
   const [filterCategories, setFilterCategories] = useState<string[]>([]);
@@ -313,10 +348,21 @@ export const WizardBuilderCatalog: React.FC<WizardBuilderCatalogProps> = ({
   // Modal states
   const [isDeleteModalOpen, setIsDeleteModalOpen] = useState(false);
   const [isDeactivateModalOpen, setIsDeactivateModalOpen] = useState(false);
+  const [singleWizardToDelete, setSingleWizardToDelete] = useState<WizardConfig | null>(null);
+  const [justDuplicatedId, setJustDuplicatedId] = useState<string | null>(null);
+
+  const handleDuplicate = (wizard: WizardConfig) => {
+    if (onDuplicateWizard) {
+      const created = onDuplicateWizard(wizard);
+      if (created) {
+        setJustDuplicatedId(created.id);
+      }
+    }
+  };
 
   const filteredWizards = wizards.filter(w => {
     const matchesSearch = w.name.toLowerCase().includes(searchTerm.toLowerCase()) || 
-                         w.category.toLowerCase().includes(searchTerm.toLowerCase());
+                          w.category.toLowerCase().includes(searchTerm.toLowerCase());
     const matchesCategory = filterCategories.length === 0 || filterCategories.includes(w.category);
     const matchesShop = filterShops.length === 0 || filterShops.some(shop => {
       const wShop = (w as unknown as Record<string, unknown>).shop || 'Global';
@@ -353,9 +399,19 @@ export const WizardBuilderCatalog: React.FC<WizardBuilderCatalogProps> = ({
   const selectedWizards = wizards.filter(w => selectedIds.has(w.id));
   const hasActiveSelected = selectedWizards.some(w => w.active);
 
+  const handleRequestSingleDelete = (wizard: WizardConfig) => {
+    setSingleWizardToDelete(wizard);
+    setIsDeleteModalOpen(true);
+  };
+
   const handleDeleteConfirm = () => {
-    onDeleteWizards(Array.from(selectedIds));
-    setSelectedIds(new Set());
+    if (singleWizardToDelete) {
+      onDeleteWizards([singleWizardToDelete.id]);
+      setSingleWizardToDelete(null);
+    } else {
+      onDeleteWizards(Array.from(selectedIds));
+      setSelectedIds(new Set());
+    }
   };
 
   const handleDeactivateConfirm = () => {
@@ -404,7 +460,10 @@ export const WizardBuilderCatalog: React.FC<WizardBuilderCatalogProps> = ({
                     Deactivate Wizards
                   </button>
                   <button 
-                    onClick={() => setIsDeleteModalOpen(true)}
+                    onClick={() => {
+                      setSingleWizardToDelete(null);
+                      setIsDeleteModalOpen(true);
+                    }}
                     className="text-[var(--text-error)] text-xs font-bold hover:underline cursor-pointer"
                   >
                     Delete Wizards
@@ -427,8 +486,11 @@ export const WizardBuilderCatalog: React.FC<WizardBuilderCatalogProps> = ({
                 key={wizard.id} 
                 wizard={wizard} 
                 selected={selectedIds.has(wizard.id)}
+                isJustDuplicated={wizard.id === justDuplicatedId}
                 onSelect={handleSelectOne}
                 onEdit={onEditWizard} 
+                onDuplicate={handleDuplicate}
+                onDeleteSingle={handleRequestSingleDelete}
               />
             ))}
             {filteredWizards.length === 0 && (
@@ -444,15 +506,18 @@ export const WizardBuilderCatalog: React.FC<WizardBuilderCatalogProps> = ({
       {/* Confirmation Modals */}
       <ConfirmationModal
         isOpen={isDeleteModalOpen}
-        onClose={() => setIsDeleteModalOpen(false)}
+        onClose={() => {
+          setIsDeleteModalOpen(false);
+          setSingleWizardToDelete(null);
+        }}
         onConfirm={handleDeleteConfirm}
-        title={`Delete ${selectedIds.size} Wizard${selectedIds.size > 1 ? 's' : ''}?`}
-        description="This action cannot be undone. All configuration and field data associated with these wizards will be permanently removed."
+        title={singleWizardToDelete ? `Delete "${singleWizardToDelete.name}"?` : `Delete ${selectedIds.size} Wizard${selectedIds.size > 1 ? 's' : ''}?`}
+        description="This action cannot be undone. All configuration and field data associated with this wizard will be permanently removed."
         confirmText="Delete Permanently"
         confirmVariant="danger"
-        requireTypedConfirmation={hasActiveSelected}
+        requireTypedConfirmation={singleWizardToDelete ? singleWizardToDelete.active : hasActiveSelected}
         typedConfirmationWord="delete"
-        warningMessage={hasActiveSelected ? "Warning: Some of the selected wizards are currently ACTIVE and associated with categories. Deleting them may impact live deal workflows." : undefined}
+        warningMessage={(singleWizardToDelete ? singleWizardToDelete.active : hasActiveSelected) ? "Warning: This wizard is currently ACTIVE and associated with categories. Deleting it may impact live deal workflows." : undefined}
       />
 
       <ConfirmationModal

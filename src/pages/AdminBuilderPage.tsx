@@ -5,6 +5,7 @@ import { WizardBuilderCatalog } from '../components/WizardBuilderAdmin/WizardBui
 import { useToast } from '../components/Toast/useToast';
 import { MOCK_WIZARDS } from '../data/wizardData';
 import type { WizardConfig } from '../data/wizardData';
+import { duplicateWizard } from '../utils/wizardUtils';
 
 export const WizardBuilderPage: React.FC = () => {
     const { id } = useParams();
@@ -102,6 +103,14 @@ export const WizardBuilderPage: React.FC = () => {
         localStorage.setItem('cashy_wizards_v2', JSON.stringify(newWizards));
     };
 
+    const handleDuplicateWizard = (wizardToDuplicate: WizardConfig): WizardConfig => {
+        const { updatedWizards, newWizard } = duplicateWizard(wizardToDuplicate, wizards);
+        setWizards(updatedWizards);
+        localStorage.setItem('cashy_wizards_v2', JSON.stringify(updatedWizards));
+        showToast(`Wizard "${newWizard.name}" duplicated successfully!`, 'success');
+        return newWizard;
+    };
+
     const handleBack = () => {
         navigate('/wizard-builder');
     };
@@ -188,6 +197,7 @@ export const WizardBuilderPage: React.FC = () => {
                     onCreateNew={handleCreateNewWizard}
                     onDeleteWizards={handleDeleteWizards}
                     onDeactivateWizards={handleDeactivateWizards}
+                    onDuplicateWizard={handleDuplicateWizard}
                 />
             </div>
         );

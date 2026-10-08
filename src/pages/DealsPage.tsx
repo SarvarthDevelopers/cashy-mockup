@@ -226,6 +226,8 @@ function mapDealToDealData(deal: Deal): DealData {
     flags: deal.hasMissingDocs ? ['Missing Docs'] : [],
     specialNote: deal.notes || '',
     pickupType: deal.pickupType,
+    parentDealId: deal.parentDealId,
+    childDealId: deal.childDealId,
     wizardData: {
       customerName: fallbackCustomerName,
       email: fallbackEmail,
@@ -460,23 +462,63 @@ export function DealsPage({ onSelectDeal }: DealsPageProps) {
     }
   }, [handleOpenWizard, triggerSimulatedExport, executeBulkAction]);
 
-  const handleExtendDealUpdate = useCallback((updatedDealData: DealData) => {
-    setAllDeals(prevDeals => prevDeals.map(d => {
-      if (d.dealId === updatedDealData.id) {
-        return {
-          ...d,
-          status: 'EXTENSION_CONFIRMED' as Deal['status'],
+  const handleExtendDealUpdate = useCallback((updatedDealData: DealData, childDealData?: DealData) => {
+    setAllDeals(prevDeals => {
+      let updated = prevDeals.map(d => {
+        if (d.dealId === updatedDealData.id) {
+          return {
+            ...d,
+            status: 'EXTENSION_CONFIRMED' as Deal['status'],
+            isExtension: true,
+            childDealId: childDealData?.id,
+            dueDate: updatedDealData.dueDate || d.dueDate,
+            suggestedPayout: parseFloat(
+              (updatedDealData.amount || '0').replace(/[€\s.]/g, '').replace(',', '.')
+            ) || d.suggestedPayout,
+            notes: updatedDealData.specialNote || d.notes,
+          };
+        }
+        return d;
+      });
+
+      if (childDealData) {
+        const parent = prevDeals.find(d => d.dealId === updatedDealData.id);
+        const newChildDeal: Deal = {
+          dealId: childDealData.id,
+          mode: 'deal',
+          status: 'PAYED_AND_STORED',
+          company: parent?.company || 'CASHY_AUT',
+          branch: parent?.branch || 'Vienna HQ',
+          shop: parent?.shop || 'Vienna Main',
+          businessArea: parent?.businessArea || 'Automotive',
+          primaryCustomer: parent?.primaryCustomer || {
+            firstName: childDealData.firstName,
+            lastName: childDealData.lastName,
+            email: 'client@cashy.at',
+            phone: '+43 1 234567'
+          },
+          items: parent?.items || [],
+          totalMarketValue: parent?.totalMarketValue || 0,
+          totalRequestedPayout: parent?.totalRequestedPayout || 0,
+          suggestedPayout: parseFloat((childDealData.amount || '0').replace(/[€\s.]/g, '').replace(',', '.')) || parent?.suggestedPayout || 0,
+          durationDays: 30,
+          dueDate: childDealData.dueDate || 'Feb 20',
+          createdAt: new Date().toISOString(),
+          labels: ['Child Deal', 'Rollover'],
+          priority: 'Medium',
           isExtension: true,
-          dueDate: updatedDealData.dueDate || d.dueDate,
-          suggestedPayout: parseFloat(
-            (updatedDealData.amount || '0').replace(/[€\s.]/g, '').replace(',', '.')
-          ) || d.suggestedPayout,
-          // Store full metadata in notes for display + revert
-          notes: updatedDealData.specialNote || d.notes,
+          pickupType: 'EXTENSION',
+          hasMissingDocs: false,
+          assignedTo: parent?.assignedTo || 'Thomas Weber',
+          column: parent?.column || 'Ready to Payout',
+          lastColumnLabelAssignedAt: new Date().toISOString(),
+          notes: childDealData.specialNote || '',
+          parentDealId: updatedDealData.id,
         };
+        updated = [newChildDeal, ...updated];
       }
-      return d;
-    }));
+      return updated;
+    });
   }, []);
 
   const handlePaybackDealUpdate = useCallback((updatedDealData: DealData) => {
@@ -635,6 +677,12 @@ export function DealsPage({ onSelectDeal }: DealsPageProps) {
             }}
             dealData={dealToExtend || undefined}
             onUpdateDeal={handleExtendDealUpdate}
+            onViewChildDeal={(childDealId) => {
+              const child = allDeals.find(d => d.dealId === childDealId);
+              if (child) {
+                handleOpenWizard(child);
+              }
+            }}
           />
 
           <PaybackDealModal

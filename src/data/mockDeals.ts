@@ -57,6 +57,8 @@ export interface Deal {
   column: string;
   lastColumnLabelAssignedAt: string;
   notes: string;
+  parentDealId?: string;
+  childDealId?: string;
 }
 
 // ---- Helpers ----

@@ -1,6 +1,6 @@
 /* eslint-disable react-hooks/set-state-in-effect, @typescript-eslint/no-explicit-any, react-hooks/refs, react-hooks/exhaustive-deps */
 import React, { useState, useEffect, useRef } from 'react';
-import { Package, MessageSquare, History, ChevronUp, ChevronDown, Plus, Trash2, AlertCircle, Loader2, X, Menu, Info, CheckCircle2, Lock, XCircle, Archive } from 'lucide-react';
+import { Package, MessageSquare, History, ChevronUp, ChevronDown, Plus, Trash2, AlertCircle, Loader2, X, Menu, Info, CheckCircle2, Lock, XCircle, Archive, RefreshCw, ExternalLink } from 'lucide-react';
 import { useToast } from '../Toast/useToast';
 import { ConfirmationModal } from '../Modal/ConfirmationModal';
 import { 
@@ -93,6 +93,7 @@ export interface DealWizardModalProps {
     onUpdateDeal?: (deal: DealData) => void;
     onExtend?: (deal: DealData) => void;
     onPayback?: (deal: DealData) => void;
+    onSelectDeal?: (dealId: string) => void;
 }
 
 export const DealWizardModal: React.FC<DealWizardModalProps> = ({ 
@@ -104,7 +105,8 @@ export const DealWizardModal: React.FC<DealWizardModalProps> = ({
     onCreateDeal,
     onUpdateDeal,
     onExtend,
-    onPayback
+    onPayback,
+    onSelectDeal
 }) => {
     const [activeStep, setActiveStep] = useState(isNew ? 'step1' : initialStep);
     const [isCreated, setIsCreated] = useState(!isNew);
@@ -213,6 +215,10 @@ export const DealWizardModal: React.FC<DealWizardModalProps> = ({
             case 'plus': return <Plus size={size} />;
             case 'check-circle': return <CheckCircle2 size={size} />;
             case 'x': return <X size={size} />;
+            case 'repeat':
+            case 'refresh-cw':
+            case 'extension':
+                return <RefreshCw size={size} />;
             default: return <Info size={size} />;
         }
     };
@@ -416,6 +422,58 @@ export const DealWizardModal: React.FC<DealWizardModalProps> = ({
                 { id: 't4', iconType: 'plus', title: "Payout Updated: € 1.200,00", user: "Admin Kernel", time: "Today, 10:30", color: "purple" }
             ];
 
+            const extensionEvents: any[] = [];
+
+            // Case A: This deal is an extended Parent deal (has child contract)
+            if (dealData?.childDealId || dealData?.status === 'EXTENSION_CONFIRMED' || dealData?.specialNote?.includes('EXTENSION_META:')) {
+                let childId = dealData.childDealId;
+                let extensionDetails = 'Accrued fees settled at counter till. Child contract rollover registered.';
+                
+                if (dealData.specialNote?.includes('EXTENSION_META:')) {
+                    try {
+                        const parsed = JSON.parse(dealData.specialNote.replace('EXTENSION_META:', ''));
+                        if (parsed.childDealId) childId = parsed.childDealId;
+                        if (parsed.cashBookName) {
+                            extensionDetails = `Accrued interest & storage fees settled via ${parsed.paymentType} (${parsed.cashBookName}). Child rollover contract #${childId || 'Child'} spawned.`;
+                        }
+                    } catch {
+                        // ignore parsing error
+                    }
+                }
+                if (!childId) childId = 'Successor Deal';
+
+                extensionEvents.push({
+                    id: 't-ext-parent',
+                    iconType: 'refresh-cw',
+                    title: `Contract Extended · Rollover to #${childId}`,
+                    user: "Counter Operator",
+                    time: "Just now",
+                    color: "green",
+                    childDealId: childId,
+                    details: extensionDetails
+                });
+            }
+
+            // Case B: This deal is a Child deal spawned via extension (has parent contract)
+            if (dealData?.parentDealId || dealData?.specialNote?.includes('rollover child contract from Parent Deal')) {
+                let parentId = dealData.parentDealId;
+                if (!parentId && dealData.specialNote) {
+                    const match = dealData.specialNote.match(/Parent Deal #([A-Za-z0-9-_]+)/);
+                    if (match) parentId = match[1];
+                }
+
+                extensionEvents.push({
+                    id: 't-ext-child',
+                    iconType: 'refresh-cw',
+                    title: `Created via Rollover · Extended from #${parentId || 'Parent'}`,
+                    user: "System Rollover",
+                    time: "Contract Start",
+                    color: "indigo",
+                    parentDealId: parentId,
+                    details: `Spawned as rollover child contract from active parent agreement #${parentId || 'Parent'}. Reset maturity due date: ${dealData.dueDate || '30 days'}.`
+                });
+            }
+
             const extraTimeline: any[] = [];
             Object.entries(stepActions).forEach(([stepId, action]) => {
                 if (action === 'NONE') return;
@@ -435,7 +493,7 @@ export const DealWizardModal: React.FC<DealWizardModalProps> = ({
                 }
             });
 
-            setTimelineEvents([...baseTimeline, ...extraTimeline]);
+            setTimelineEvents([...extensionEvents, ...baseTimeline, ...extraTimeline]);
         }
     }, [isOpen, dealData]);
     const [activeItemIndex, setActiveItemIndex] = useState(0);
@@ -607,6 +665,11 @@ export const DealWizardModal: React.FC<DealWizardModalProps> = ({
     // Derived data
     const currentDeal = isCreated ? dealData : null;
     const dealId = currentDeal?.id || 'PENDING';
+    const isExtensionChild = Boolean(
+        currentDeal?.parentDealId || 
+        (currentDeal as any)?.isExtension ||
+        currentDeal?.specialNote?.includes('rollover child contract from Parent Deal')
+    );
     const totalRequestedPayout = items.reduce((sum, item) => sum + (parseFloat(item.requestedPayout) || 0), 0);
     const formattedTotal = totalRequestedPayout.toLocaleString('de-DE', { minimumFractionDigits: 2 });
     const currentBusinessArea = getBusinessAreaForDeal(items);
@@ -1379,7 +1442,7 @@ export const DealWizardModal: React.FC<DealWizardModalProps> = ({
                         </span>
                         <div className="flex items-center justify-center gap-1.5 w-full mt-0.5">
                             <span className="text-sm font-bold text-[var(--text-primary)] truncate">
-                                {creationFinalized ? `DEAL #${dealId}` : 'New Deal Creation'}
+                                {creationFinalized ? `DEAL #${dealId}${isExtensionChild ? ' (ext)' : ''}` : 'New Deal Creation'}
                             </span>
                             <Info size={15} className="text-[var(--text-primary)] shrink-0" />
                         </div>
@@ -1465,7 +1528,7 @@ export const DealWizardModal: React.FC<DealWizardModalProps> = ({
                                 </div>
                                 <div className="w-[1px] bg-gray-100 align-self-stretch self-stretch" style={{ margin: '0 var(--space-200)' }} />
                                 <div className="flex" style={{ gap: 'var(--space-800)' }}>
-                                    <DetailItem label="Deal ID" value={dealId} />
+                                    <DetailItem label="Deal ID" value={`${dealId}${isExtensionChild ? ' (ext)' : ''}`} />
                                     {showSecondaryCustomer && secondaryCustomerData && (
                                         <DetailItem 
                                             label="Secondary Customer" 
@@ -2119,6 +2182,10 @@ export const DealWizardModal: React.FC<DealWizardModalProps> = ({
                                                     user={evt.user} 
                                                     time={evt.time} 
                                                     color={evt.color}
+                                                    details={evt.details}
+                                                    childDealId={evt.childDealId}
+                                                    parentDealId={evt.parentDealId}
+                                                    onSelectDeal={onSelectDeal}
                                                 />
                                             ))}
                                         </div>
@@ -2225,7 +2292,7 @@ export const DealWizardModal: React.FC<DealWizardModalProps> = ({
                                 )}
                                 <div className="flex justify-between items-center">
                                     <span className="text-xs font-medium text-[var(--text-subtlest)]">Deal ID</span>
-                                    <span className="text-xs font-mono font-bold text-[var(--text-subtle)] bg-[var(--background-primary)] px-2 py-0.5 rounded border border-[var(--border-subtlest)]">{dealId}</span>
+                                    <span className="text-xs font-mono font-bold text-[var(--text-subtle)] bg-[var(--background-primary)] px-2 py-0.5 rounded border border-[var(--border-subtlest)]">{dealId}{isExtensionChild ? ' (ext)' : ''}</span>
                                 </div>
                                 <div className="flex justify-between items-center">
                                     <span className="text-xs font-medium text-[var(--text-subtlest)]">
@@ -2311,6 +2378,10 @@ export const DealWizardModal: React.FC<DealWizardModalProps> = ({
                                                         user={evt.user} 
                                                         time={evt.time} 
                                                         color={evt.color}
+                                                        details={evt.details}
+                                                        childDealId={evt.childDealId}
+                                                        parentDealId={evt.parentDealId}
+                                                        onSelectDeal={onSelectDeal}
                                                     />
                                                 ))}
                                             </div>
@@ -2496,7 +2567,7 @@ const CommentItem = ({ initials, name, time, text }: any) => (
     </div>
 );
 
-const TimelineItem = ({ icon, title, user, time, color }: any) => {
+const TimelineItem = ({ icon, title, user, time, color, details, childDealId, parentDealId, onSelectDeal }: any) => {
     const colorMap: Record<string, string> = {
         blue: 'bg-blue-500',
         indigo: 'bg-indigo-500',
@@ -2506,7 +2577,7 @@ const TimelineItem = ({ icon, title, user, time, color }: any) => {
     };
     
     return (
-        <div className="relative pl-8 pb-4 last:pb-0">
+        <div className="relative pl-8 pb-5 last:pb-0">
             <div className="absolute left-0 top-0 h-full w-[1px] bg-gray-100 last:hidden" style={{ left: '15px' }} />
             <div className={`absolute left-0 top-0 w-8 h-8 rounded-full border-4 border-white flex items-center justify-center text-white shadow-sm z-10 ${colorMap[color] || 'bg-gray-400'}`} style={{ 
                 left: '-1px'
@@ -2519,6 +2590,43 @@ const TimelineItem = ({ icon, title, user, time, color }: any) => {
                     <span className="text-[10px] font-bold text-gray-400 uppercase tracking-tight shrink-0 ml-4">{time}</span>
                 </div>
                 <p className="text-[11px] font-medium text-gray-400">by <span className="text-[#4649E5]">{user}</span></p>
+                {details && (
+                    <p className="text-[12px] text-gray-600 mt-1 leading-snug">{details}</p>
+                )}
+                {childDealId && (
+                    <div className="mt-2.5 flex items-center justify-between p-2.5 rounded-lg bg-emerald-50 border border-emerald-200">
+                        <div className="flex items-center gap-2">
+                            <span className="w-2 h-2 rounded-full bg-emerald-500 shrink-0" />
+                            <span className="text-[11px] font-bold text-emerald-950">Child Contract: #{childDealId}</span>
+                        </div>
+                        {onSelectDeal && (
+                            <button
+                                type="button"
+                                onClick={() => onSelectDeal(childDealId)}
+                                className="inline-flex items-center gap-1 text-[11px] font-bold text-emerald-700 hover:text-emerald-900 underline cursor-pointer"
+                            >
+                                Open Child Deal <ExternalLink size={11} />
+                            </button>
+                        )}
+                    </div>
+                )}
+                {parentDealId && (
+                    <div className="mt-2.5 flex items-center justify-between p-2.5 rounded-lg bg-indigo-50 border border-indigo-200">
+                        <div className="flex items-center gap-2">
+                            <span className="w-2 h-2 rounded-full bg-indigo-500 shrink-0" />
+                            <span className="text-[11px] font-bold text-indigo-950">Parent Contract: #{parentDealId}</span>
+                        </div>
+                        {onSelectDeal && (
+                            <button
+                                type="button"
+                                onClick={() => onSelectDeal(parentDealId)}
+                                className="inline-flex items-center gap-1 text-[11px] font-bold text-indigo-700 hover:text-indigo-900 underline cursor-pointer"
+                            >
+                                Open Parent Deal <ExternalLink size={11} />
+                            </button>
+                        )}
+                    </div>
+                )}
             </div>
         </div>
     );

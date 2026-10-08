@@ -1,5 +1,5 @@
 import { useState, useEffect } from 'react';
-import { X, ExternalLink, FileWarning, RefreshCw, MessageSquare, ArrowRight, Package } from 'lucide-react';
+import { X, ExternalLink, FileWarning, RefreshCw, MessageSquare, ArrowRight, Package, type LucideIcon } from 'lucide-react';
 import { motion } from 'motion/react';
 import type { Deal } from '../../data/mockDeals';
 import { STATUS_STYLES } from '../../data/mockDeals';
@@ -45,19 +45,47 @@ function formatDate(isoString: string): string {
   return new Date(isoString).toLocaleDateString('de-DE', { day: '2-digit', month: 'short', year: 'numeric' });
 }
 
+interface TimelineEventItem {
+  type: string;
+  label: string;
+  date: string;
+  icon: LucideIcon;
+  badge?: string;
+  badgeVariant?: string;
+}
+
 // Mock timeline events builder
 function generateTimeline(deal: Deal) {
-  const events = [
+  const events: TimelineEventItem[] = [
     { type: 'created', label: 'Deal created', date: deal.createdAt, icon: Package },
     { type: 'column', label: `Moved to ${deal.column}`, date: deal.lastColumnLabelAssignedAt, icon: ArrowRight },
   ];
   if (deal.hasMissingDocs) {
     events.push({ type: 'warning', label: 'Missing documents flagged', date: new Date(new Date(deal.createdAt).getTime() + 86400000).toISOString(), icon: FileWarning });
   }
-  if (deal.isExtension) {
+  if (deal.childDealId) {
+    events.push({
+      type: 'extension-parent',
+      label: `Contract Extended · Rollover to #${deal.childDealId}`,
+      date: new Date().toISOString(),
+      icon: RefreshCw,
+      badge: `Child Contract: #${deal.childDealId}`,
+      badgeVariant: 'child'
+    });
+  }
+  if (deal.parentDealId) {
+    events.push({
+      type: 'extension-child',
+      label: `Created via Rollover · Extended from #${deal.parentDealId}`,
+      date: deal.createdAt,
+      icon: RefreshCw,
+      badge: `Parent Contract: #${deal.parentDealId}`,
+      badgeVariant: 'parent'
+    });
+  } else if (deal.isExtension && !deal.childDealId) {
     events.push({ type: 'extension', label: 'Extension applied', date: new Date(new Date(deal.createdAt).getTime() + 172800000).toISOString(), icon: RefreshCw });
   }
-  if (deal.notes) {
+  if (deal.notes && !deal.notes.startsWith('EXTENSION_META:')) {
     events.push({ type: 'note', label: deal.notes, date: new Date(new Date(deal.createdAt).getTime() + 3600000).toISOString(), icon: MessageSquare });
   }
   return events.sort((a, b) => new Date(b.date).getTime() - new Date(a.date).getTime());
@@ -462,6 +490,17 @@ export function DealsPreviewPanel({ deal, isLoading = false, onClose, onOpenWiza
                       </div>
                       <div className="flex flex-col pb-3.5">
                         <span className="text-xs font-bold text-[var(--text-primary)] leading-tight">{event.label}</span>
+                        {event.badge && (
+                          <div className="mt-1">
+                            <span className={`inline-flex items-center text-[10px] font-bold px-2 py-0.5 rounded-full ${
+                              event.badgeVariant === 'child'
+                                ? 'bg-amber-50 text-amber-800 border border-amber-300'
+                                : 'bg-blue-50 text-blue-800 border border-blue-300'
+                            }`}>
+                              {event.badge}
+                            </span>
+                          </div>
+                        )}
                         <span className="text-[10px] font-black text-[var(--text-subtlest)] mt-0.5">{formatDate(event.date)}</span>
                       </div>
                     </div>

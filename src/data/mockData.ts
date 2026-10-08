@@ -55,6 +55,8 @@ export interface DealData {
   wizardData: WizardDisplayData;
   pickupType?: string;
   status?: string;
+  parentDealId?: string;
+  childDealId?: string;
 }
 
 /**

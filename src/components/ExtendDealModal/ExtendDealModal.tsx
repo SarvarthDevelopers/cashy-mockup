@@ -45,11 +45,15 @@ const ITEM_FEE_TYPES = [
     'Other'
 ];
 
+import { DealExtensionConfirmModal } from './DealExtensionConfirmModal';
+import { generateNewDealId } from '../../data/dealIdGenerator';
+
 export interface ExtendDealModalProps {
     isOpen: boolean;
     onClose: () => void;
     dealData?: DealData;
-    onUpdateDeal?: (deal: DealData) => void;
+    onUpdateDeal?: (deal: DealData, childDeal?: DealData) => void;
+    onViewChildDeal?: (childDealId: string) => void;
 }
 
 
@@ -116,7 +120,8 @@ export const ExtendDealModal: React.FC<ExtendDealModalProps> = ({
     isOpen,
     onClose,
     dealData,
-    onUpdateDeal
+    onUpdateDeal,
+    onViewChildDeal
 }) => {
     // --- Calculations derived from props ---
     const currentPayout = dealData ? parseEurAmount(dealData.amount || '0') : 0;
@@ -126,6 +131,15 @@ export const ExtendDealModal: React.FC<ExtendDealModalProps> = ({
 
     const [step, setStep] = useState(1);
     const [isSubmitting, setIsSubmitting] = useState(false);
+    const [showConfirmModal, setShowConfirmModal] = useState(false);
+    const [extensionResult, setExtensionResult] = useState<{
+        childDealId: string;
+        amountPaid: string;
+        newDueDate: string;
+        nextFeeRate: string;
+        cashBookName: string;
+        childDealData: DealData;
+    } | null>(null);
     const [extensionDays, setExtensionDays] = useState('30');
     
     // Step 3: Loan Adjustment states
@@ -255,6 +269,8 @@ export const ExtendDealModal: React.FC<ExtendDealModalProps> = ({
                     scrollContainerRef.current.scrollTop = 0;
                 }
                 setIsSubmitting(false);
+                setShowConfirmModal(false);
+                setExtensionResult(null);
             }, 0);
             return () => clearTimeout(timer);
         }
@@ -405,9 +421,14 @@ export const ExtendDealModal: React.FC<ExtendDealModalProps> = ({
     const handleConfirm = () => {
         setIsSubmitting(true);
         setTimeout(() => {
-            if (onUpdateDeal) {
+            setIsSubmitting(false);
+            if (dealData) {
+                const childId = generateNewDealId(dealData.id);
+
                 const monthNames = ['Jan', 'Feb', 'Mar', 'Apr', 'May', 'Jun', 'Jul', 'Aug', 'Sep', 'Oct', 'Nov', 'Dec'];
                 const formattedDueDate = `${monthNames[newDueDate.getMonth()]} ${newDueDate.getDate()}`;
+                const totalSettledNum = finalParentFees + (adjustmentMode === 'payback' ? adjustmentAmountNum : 0);
+                const totalSettledFormatted = `€ ${fmtEur(totalSettledNum)}`;
 
                 const meta = JSON.stringify({
                     originalDueDate: dealData.dueDate || '—',
@@ -438,17 +459,53 @@ export const ExtendDealModal: React.FC<ExtendDealModalProps> = ({
                     newDueDate: formattedDueDate,
                     newTotalPayout: newTotalPayout,
                     extendedAt: new Date().toISOString(),
+                    childDealId: childId,
                 });
 
-                onUpdateDeal({
+                const childDeal: DealData = {
                     ...dealData,
+                    id: childId,
+                    parentDealId: dealData.id,
+                    status: 'PAYED_AND_STORED',
+                    amount: `€${fmtEur(newTotalPayout)}`,
+                    dueDate: formattedDueDate,
+                    specialNote: `Spawned as rollover child contract from Parent Deal #${dealData.id}`,
+                    wizardData: {
+                        ...dealData.wizardData,
+                        amount: `€${fmtEur(newTotalPayout)}`,
+                        dealDuration: `${extensionDays} days remaining`,
+                        pawnDueDate: formattedDueDate
+                    }
+                };
+
+                const updatedParentDeal: DealData = {
+                    ...dealData,
+                    status: 'EXTENSION_CONFIRMED',
+                    childDealId: childId,
                     amount: `€${fmtEur(newTotalPayout)}`,
                     dueDate: formattedDueDate,
                     specialNote: `EXTENSION_META:${meta}`,
+                };
+
+                const resolvedNextRate = carryForwardFees ? 'Same as Parent' : 'Custom Fee Schedule';
+                const resolvedCashBook = ['Cash', 'Debit/Credit Card'].includes(paymentType) ? cashBookName : 'Digital Gateway Till';
+
+                setExtensionResult({
+                    childDealId: childId,
+                    amountPaid: totalSettledFormatted,
+                    newDueDate: formattedDueDate,
+                    nextFeeRate: resolvedNextRate,
+                    cashBookName: resolvedCashBook,
+                    childDealData: childDeal
                 });
+
+                if (onUpdateDeal) {
+                    onUpdateDeal(updatedParentDeal, childDeal);
+                }
+
+                setShowConfirmModal(true);
             }
-            onClose();
-        }, 1500);
+        }, 1200);
     };
 
     const canContinue = (() => {
@@ -1467,6 +1524,34 @@ export const ExtendDealModal: React.FC<ExtendDealModalProps> = ({
     };
 
     const isLastStep = step === TOTAL_STEPS;
+
+    if (!isOpen) return null;
+
+    if (showConfirmModal && extensionResult && dealData) {
+        return (
+            <DealExtensionConfirmModal
+                isOpen={true}
+                onClose={() => {
+                    setShowConfirmModal(false);
+                    onClose();
+                }}
+                onViewChild={() => {
+                    setShowConfirmModal(false);
+                    onClose();
+                    if (onViewChildDeal && extensionResult.childDealId) {
+                        onViewChildDeal(extensionResult.childDealId);
+                    }
+                }}
+                dealId={dealData.id}
+                childDealId={extensionResult.childDealId}
+                customerName={`${dealData.firstName} ${dealData.lastName}`}
+                amountPaid={extensionResult.amountPaid}
+                newDueDate={extensionResult.newDueDate}
+                nextFeeRate={extensionResult.nextFeeRate}
+                cashBookName={extensionResult.cashBookName}
+            />
+        );
+    }
 
     return (
         <div

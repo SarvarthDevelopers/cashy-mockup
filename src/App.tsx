@@ -288,9 +288,9 @@ function App() {
     });
   };
 
-  const handleUpdateDeal = (updatedDeal: DealData) => {
+  const handleUpdateDeal = (updatedDeal: DealData, newChildDeal?: DealData) => {
     const resolvedArea = getBusinessAreaForDeal(updatedDeal.items);
-    const resolvedDeal = {
+    const resolvedDeal: DealData = {
       ...updatedDeal,
       businessArea: resolvedArea,
       wizardData: {
@@ -337,12 +337,30 @@ function App() {
           }
         }
       }
+
+      // If a child deal contract was created from extension, register it into active deals
+      if (newChildDeal) {
+        const targetCol = foundColId || 'car-inbox';
+        newDeals[targetCol] = [newChildDeal, ...(newDeals[targetCol] || [])];
+      }
+
       return newDeals;
     });
     setSelectedDeal(resolvedDeal);
     const isClosed = resolvedDeal.specialNote?.startsWith('PAYBACK_META:') || resolvedDeal.status === 'CLOSED';
     if (isClosed) {
       setIsModalOpen(false);
+    }
+  };
+
+  const handleSelectDealById = (dealId: string) => {
+    for (const colId in dealsByColumn) {
+      const found = dealsByColumn[colId].find(d => d.id === dealId);
+      if (found) {
+        setSelectedDeal(found);
+        setIsModalOpen(true);
+        return;
+      }
     }
   };
 
@@ -498,12 +516,14 @@ function App() {
           onUpdateDeal={handleUpdateDeal}
           onExtend={handleExtendDeal}
           onPayback={handlePaybackDeal}
+          onSelectDeal={handleSelectDealById}
         />
         <ExtendDealModal
           isOpen={isExtendModalOpen}
           onClose={() => setIsExtendModalOpen(false)}
           dealData={selectedDeal || undefined}
           onUpdateDeal={handleUpdateDeal}
+          onViewChildDeal={handleSelectDealById}
         />
         <PaybackDealModal
           key={selectedDeal?.id ? `payback-${selectedDeal.id}` : 'payback-closed'}

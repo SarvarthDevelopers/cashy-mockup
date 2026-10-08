@@ -17,4 +17,6 @@ export * from './ImageUpload/ImageUpload';
 export * from './Tooltip/Tooltip';
 export * from './Modal/ConfirmationModal';
 export * from './PaybackDealModal/PaybackDealModal';
+export * from './PaybackDealModal/DealPaybackConfirmModal';
+export * from './ExtendDealModal/DealExtensionConfirmModal';
 

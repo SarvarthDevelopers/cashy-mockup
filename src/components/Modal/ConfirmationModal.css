@@ -24,6 +24,8 @@
   display: flex;
   flex-direction: column;
   gap: var(--space-400, 16px);
+  overflow-y: auto;
+  overscroll-behavior: contain;
 }
 
 .cashy-modal-content:focus {

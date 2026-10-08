@@ -11,6 +11,7 @@ import {
   Trash2 as TrashIcon,
   Plus as PlusIcon
 } from 'lucide-react';
+import { DealPaybackConfirmModal } from './DealPaybackConfirmModal';
 
 export interface FeeComponent {
     id: string;
@@ -143,6 +144,7 @@ export const PaybackDealModal: React.FC<PaybackDealModalProps> = ({
     const [cashBookName, setCashBookName] = useState(() => {
         return dealData?.countryCode === 'DE' ? 'Munich Main Cash' : 'Vienna Main Cash';
     });
+    const [showConfirmModal, setShowConfirmModal] = useState(false);
 
     const scrollContainerRef = useRef<HTMLDivElement>(null);
     const isAutoScrollingRef = useRef(false);
@@ -220,6 +222,7 @@ export const PaybackDealModal: React.FC<PaybackDealModalProps> = ({
                 setRemoveItemsFromStorage(true);
                 setPaymentType('Cash');
                 setCashBookName(dealData?.countryCode === 'DE' ? 'Munich Main Cash' : 'Vienna Main Cash');
+                setShowConfirmModal(false);
             }, 0);
             return () => clearTimeout(timer);
         }
@@ -333,7 +336,7 @@ export const PaybackDealModal: React.FC<PaybackDealModalProps> = ({
             }
 
             setIsSubmitting(false);
-            setStep(4); // Go to success step
+            setShowConfirmModal(true);
         }, 1500);
     };
 
@@ -971,6 +974,24 @@ Thank you for choosing CASHY.
 
     const isLastStepBeforeSuccess = step === 3;
     const isSuccessStep = step === 4;
+
+    if (showConfirmModal && dealData) {
+        return (
+            <DealPaybackConfirmModal
+                isOpen={true}
+                onClose={() => {
+                    setShowConfirmModal(false);
+                    handleFinish();
+                }}
+                dealId={dealData.id}
+                customerName={`${dealData.firstName} ${dealData.lastName}`}
+                amountPaid={`€ ${fmtEur(totalCollected)}`}
+                inventoryCheckout={removeItemsFromStorage ? 'Retrieved today' : 'Retained in vault'}
+                cashBookName={['Cash', 'Debit/Credit Card'].includes(paymentType) ? cashBookName : 'Bank / Online Account'}
+                onDownloadReceipt={downloadReceipt}
+            />
+        );
+    }
 
     return (
         <div
